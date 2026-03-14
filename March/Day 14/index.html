@@ -2,11 +2,165 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <link rel="stylesheet" href="style.css" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="./favicon-todo.svg" />
     <title>To do list</title>
   </head>
   <body>
-    <h1>To Do List</h1>
-    <p>Nothing here yet.</p>
+    <div id="page-loader" class="page-loader" aria-hidden="true">
+      <div class="loader-content">
+        <div class="loader-dots">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <p class="loader-text">Loading tasks...</p>
+      </div>
+    </div>
+    <main>
+      <a href="../../index.html" class="back-projects-btn">
+        <i class="fa-solid fa-arrow-left"></i>
+        <span>All Projects</span>
+      </a>
+      <h1>To Do List</h1>
+      <p class="app-subtitle">Plan your day, one task at a time.</p>
+      <div class="todo-summary" aria-live="polite">
+        <p class="todo-counter">
+          Checked: <strong id="checked-count">0</strong>
+          <span class="counter-divider">|</span>
+          Unchecked: <strong id="unchecked-count">0</strong>
+        </p>
+        <button type="button" class="clear-all-btn" id="clear-all-btn">
+          Clear all tasks
+        </button>
+        <p class="todo-congrats" id="todo-congrats" hidden>
+          Great job! You completed all your tasks.
+        </p>
+      </div>
+      <div class="todo-list" id="todo-list">
+        <div class="todo-item">
+          <div class="todo-item-label">
+            <input type="checkbox" name="0" id="0" value="0" />
+            <span class="todo-item-text">Buy groceries</span>
+          </div>
+          <div class="todo-item-actions">
+            <button
+              type="button"
+              class="todo-action-btn todo-edit-btn"
+              aria-label="Edit task"
+            >
+              <i title="Edit" class="fa-solid fa-pen"></i>
+            </button>
+            <button
+              type="button"
+              class="todo-action-btn todo-save-btn"
+              aria-label="Save task"
+            >
+              <i title="Save" class="fa-solid fa-floppy-disk"></i>
+            </button>
+            <button
+              type="button"
+              class="todo-action-btn todo-delete-btn"
+              aria-label="Delete task"
+            >
+              <i title="Delete" class="fa-solid fa-trash"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <form class="new-task-form">
+        <input
+          type="text"
+          placeholder="Write your task..."
+          class="new-task-input"
+          required
+        />
+        <button class="confirm-task">+</button>
+      </form>
+
+      <a
+        href="https://github.com/DEV-Thiago-Vieira"
+        class="github-footer-link"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Open Thiago Vieira GitHub profile"
+      >
+        <i class="fa-brands fa-github" aria-hidden="true"></i>
+        <span>DEV-Thiago-Vieira</span>
+      </a>
+
+      <div
+        id="completion-toast"
+        class="completion-toast"
+        role="status"
+        aria-live="polite"
+      >
+        <span class="toast-icon">🎉</span>
+        <span class="toast-msg">Task complete! Keep it up!</span>
+      </div>
+
+      <div class="modal-overlay" id="delete-modal" aria-hidden="true">
+        <div
+          class="modal-card"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="delete-modal-title"
+        >
+          <h2 id="delete-modal-title">Delete task?</h2>
+          <p>This action cannot be undone.</p>
+          <div class="modal-actions">
+            <button
+              type="button"
+              class="modal-btn modal-cancel-btn"
+              id="cancel-delete-btn"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              class="modal-btn modal-confirm-btn"
+              id="confirm-delete-btn"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-overlay" id="clear-all-modal" aria-hidden="true">
+        <div
+          class="modal-card"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="clear-all-modal-title"
+        >
+          <h2 id="clear-all-modal-title">Clear all tasks?</h2>
+          <p>This will remove all current tasks.</p>
+          <div class="modal-actions">
+            <button
+              type="button"
+              class="modal-btn modal-cancel-btn"
+              id="cancel-clear-all-btn"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              class="modal-btn modal-confirm-btn"
+              id="confirm-clear-all-btn"
+            >
+              Clear all
+            </button>
+          </div>
+        </div>
+      </div>
+    </main>
   </body>
+  <script
+    src="https://kit.fontawesome.com/afda6c43b4.js"
+    crossorigin="anonymous"
+  ></script>
+  <script src="script.js"></script>
 </html>
