@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css" />
+    <link rel="icon" type="image/svg+xml" href="./favicon-calendar.svg" />
+    <title>Micro Projects</title>
+  </head>
+  <body>
+    <main class="calendar-app">
+      <header class="app-header">
+        <h1>Project Calendar</h1>
+        <p class="app-subtitle">
+          One project a day. Browse your work like a monthly schedule.
+        </p>
+        <a
+          href="https://github.com/DEV-Thiago-Vieira"
+          class="github-link"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Open Thiago Vieira GitHub profile"
+        >
+          <i class="fa-brands fa-github" aria-hidden="true"></i>
+          <span>DEV-Thiago-Vieira</span>
+        </a>
+      </header>
+
+      <section class="calendar-summary" aria-live="polite">
+        <p>
+          Total: <strong id="total-projects">0</strong>
+          <span class="summary-divider">|</span>
+          This month: <strong id="month-projects">0</strong>
+          <span class="summary-divider">|</span>
+          <span class="streak-label">Daily streak:</span>
+          <strong id="daily-streak" class="streak-value">0</strong>
+          <span class="summary-divider">|</span>
+          Best streak: <strong id="best-streak">0</strong>
+        </p>
+      </section>
+
+      <section class="motivation-card" aria-live="polite">
+        <div class="motivation-head">
+          <h2 class="motivation-title">Consistency Rewards</h2>
+          <button type="button" class="progress-btn" id="open-progress-btn">
+            View progress
+          </button>
+        </div>
+        <p class="motivation-message" id="motivation-message">
+          Every day counts. Keep going.
+        </p>
+        <div
+          class="reward-progress-track"
+          role="progressbar"
+          aria-label="Streak progress"
+        >
+          <div class="reward-progress-bar" id="reward-progress-bar"></div>
+        </div>
+        <p class="reward-next" id="reward-next">Next reward: 7-day streak</p>
+        <div class="badge-list" id="badge-list"></div>
+      </section>
+
+      <section class="main-goal-card">
+        <div class="main-goal-head">
+          <h2 class="main-goal-title">Main Goal</h2>
+        </div>
+        <p class="main-goal-text">Create a back end to automatize this page.</p>
+      </section>
+
+      <section class="calendar-card" aria-label="Projects calendar">
+        <div class="calendar-toolbar">
+          <button
+            type="button"
+            class="toolbar-btn"
+            id="prev-month-btn"
+            aria-label="Previous month"
+          >
+            Previous
+          </button>
+          <h2 id="calendar-title">Month Year</h2>
+          <button
+            type="button"
+            class="toolbar-btn"
+            id="next-month-btn"
+            aria-label="Next month"
+          >
+            Next
+          </button>
+        </div>
+
+        <div class="weekday-row" aria-hidden="true">
+          <span>Sun</span>
+          <span>Mon</span>
+          <span>Tue</span>
+          <span>Wed</span>
+          <span>Thu</span>
+          <span>Fri</span>
+          <span>Sat</span>
+        </div>
+
+        <div class="calendar-grid" id="calendar-grid"></div>
+      </section>
+
+      <div class="progress-overlay" id="progress-overlay" aria-hidden="true">
+        <div
+          class="progress-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="progress-modal-title"
+        >
+          <div class="progress-modal-head">
+            <h2 id="progress-modal-title">Your Progress Dashboard</h2>
+            <button
+              type="button"
+              class="progress-close-btn"
+              id="close-progress-btn"
+              aria-label="Close progress dashboard"
+            >
+              <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+            </button>
+          </div>
+          <p class="progress-caption" id="progress-caption">
+            Data updates from your project calendar.
+          </p>
+          <section class="chart-card">
+            <h3>Finished Days by Month</h3>
+            <div class="month-chart" id="month-chart"></div>
+          </section>
+          <section class="chart-card">
+            <h3>Contribution Heatmap (Year View)</h3>
+            <div class="contrib-heatmap">
+              <div class="heatmap-months" id="heatmap-months"></div>
+              <div class="heatmap-body">
+                <div class="heatmap-weekdays" aria-hidden="true">
+                  <span>Mon</span>
+                  <span>Wed</span>
+                  <span>Fri</span>
+                </div>
+                <div class="heatmap-grid" id="heatmap-grid"></div>
+              </div>
+            </div>
+            <p class="meter-label" id="year-chart-label"></p>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <script
+      src="https://kit.fontawesome.com/afda6c43b4.js"
+      crossorigin="anonymous"
+    ></script>
+    <script src="data.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>

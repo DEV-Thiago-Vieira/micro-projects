@@ -1,0 +1,578 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+	font-family: 'Montserrat', sans-serif;
+}
+
+html,
+body {
+	background-color: #fcfcfd;
+	color: #1e1e1e;
+}
+
+body {
+	min-height: 100vh;
+	padding: 1rem;
+}
+
+.calendar-app {
+	width: min(100%, 980px);
+	margin: 0 auto;
+	display: flex;
+	flex-direction: column;
+	gap: 0.9rem;
+}
+
+.app-header {
+	text-align: center;
+}
+
+.app-header h1 {
+	font-size: clamp(1.7rem, 3.2vw, 2.25rem);
+	letter-spacing: 0.01em;
+}
+
+.app-subtitle {
+	color: #5f6674;
+	max-width: 44ch;
+	margin: 0.35rem auto 0;
+}
+
+.github-link {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.45rem;
+	margin-top: 0.65rem;
+	text-decoration: none;
+	border: 1px solid #cfd4dc;
+	background: #ffffff;
+	color: #2f3a4d;
+	border-radius: 10px;
+	padding: 0.45rem 0.75rem;
+	font-size: 0.9rem;
+	font-weight: 600;
+	transition: all 0.2s ease;
+}
+
+.github-link:hover {
+	background: #f4f6f9;
+}
+
+.calendar-summary {
+	border: 2px solid #cfd4dc;
+	border-radius: 12px;
+	background: #ffffff;
+	padding: 0.7rem 0.9rem;
+	color: #475063;
+	font-size: 0.95rem;
+}
+
+.summary-divider {
+	color: #a1a8b4;
+	margin: 0 0.4rem;
+}
+
+.streak-label {
+	color: #991b1b;
+	font-weight: 700;
+}
+
+.streak-value {
+	display: inline-block;
+	min-width: 2.1em;
+	text-align: center;
+	padding: 0.14em 0.58em;
+	border-radius: 999px;
+	border: 1px solid #dc2626;
+	background: #fff1f2;
+	color: #b91c1c;
+	font-weight: 700;
+	box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.8);
+}
+
+.main-goal-card {
+	border: 2px solid #bfdbfe;
+	border-radius: 14px;
+	background: #eff6ff;
+	padding: 0.85rem 0.9rem;
+	box-shadow: 0 8px 22px rgba(16, 24, 40, 0.06);
+}
+
+.main-goal-head {
+	margin-bottom: 0.25rem;
+}
+
+.main-goal-title {
+	font-size: 1rem;
+	font-weight: 700;
+	color: #1e40af;
+	margin: 0;
+}
+
+.main-goal-text {
+	margin: 0;
+	font-size: 0.9rem;
+	color: #1e3a8a;
+}
+
+.motivation-card {
+	border: 2px solid #cfd4dc;
+	border-radius: 14px;
+	background: #ffffff;
+	padding: 0.85rem 0.9rem;
+	box-shadow: 0 8px 22px rgba(16, 24, 40, 0.06);
+}
+
+.motivation-title {
+	font-size: 1rem;
+	margin-bottom: 0.35rem;
+}
+
+.motivation-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.6rem;
+	margin-bottom: 0.25rem;
+}
+
+.progress-btn {
+	border: 1px solid #cfd4dc;
+	background: #fff;
+	color: #2f3a4d;
+	border-radius: 8px;
+	padding: 0.32rem 0.56rem;
+	font-size: 0.78rem;
+	font-weight: 600;
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.progress-btn:hover {
+	background: #f4f6f9;
+}
+
+.motivation-message {
+	color: #374151;
+	font-size: 0.92rem;
+	margin-bottom: 0.45rem;
+}
+
+.reward-progress-track {
+	width: 100%;
+	height: 10px;
+	border-radius: 999px;
+	background: #edf1f7;
+	overflow: hidden;
+	border: 1px solid #d9dee8;
+}
+
+.reward-progress-bar {
+	height: 100%;
+	width: 0%;
+	background: linear-gradient(90deg, #ef4444 0%, #b91c1c 100%);
+	transition: width 0.3s ease;
+}
+
+.reward-next {
+	margin-top: 0.42rem;
+	font-size: 0.82rem;
+	color: #5f6674;
+}
+
+.badge-list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.35rem;
+	margin-top: 0.55rem;
+}
+
+.badge-chip {
+	display: inline-flex;
+	align-items: center;
+	padding: 0.22rem 0.48rem;
+	border-radius: 999px;
+	font-size: 0.7rem;
+	font-weight: 700;
+	border: 1px solid #d7dbe4;
+	background: #f7f8fb;
+	color: #6b7280;
+}
+
+.badge-chip.is-unlocked {
+	border-color: #fca5a5;
+	background: #fff1f2;
+	color: #b91c1c;
+}
+
+.progress-overlay {
+	position: fixed;
+	inset: 0;
+	display: none;
+	align-items: center;
+	justify-content: center;
+	background: rgba(0, 0, 0, 0.24);
+	padding: 1rem;
+	z-index: 50;
+}
+
+.progress-overlay.is-open {
+	display: flex;
+}
+
+.progress-modal {
+	width: min(100%, 760px);
+	max-height: 90vh;
+	overflow: auto;
+	border: 2px solid #cfd4dc;
+	border-radius: 14px;
+	background: #fff;
+	padding: 0.9rem;
+	box-shadow: 0 12px 28px rgba(15, 23, 42, 0.2);
+	display: flex;
+	flex-direction: column;
+	gap: 0.7rem;
+}
+
+.progress-modal-head {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 0.6rem;
+}
+
+.progress-modal-head h2 {
+	font-size: 1.05rem;
+}
+
+.progress-close-btn {
+	border: 1px solid #cfd4dc;
+	background: #fff;
+	color: #2f3a4d;
+	border-radius: 8px;
+	width: 34px;
+	height: 34px;
+	cursor: pointer;
+}
+
+.progress-caption {
+	font-size: 0.85rem;
+	color: #5f6674;
+}
+
+.chart-card {
+	border: 1px solid #d9dee8;
+	border-radius: 10px;
+	padding: 0.7rem;
+	background: #fcfdff;
+}
+
+.chart-card h3 {
+	font-size: 0.88rem;
+	margin-bottom: 0.45rem;
+	color: #374151;
+}
+
+.month-chart {
+	display: grid;
+	grid-template-columns: repeat(12, minmax(0, 1fr));
+	gap: 0.28rem;
+	align-items: stretch;
+	min-height: 158px;
+}
+
+.month-item {
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-end;
+	align-items: center;
+	gap: 0.3rem;
+	min-width: 0;
+}
+
+.month-bar-count {
+	font-size: 0.62rem;
+	font-weight: 700;
+	color: #475063;
+	line-height: 1;
+}
+
+.month-bar {
+	width: 100%;
+	border: 1px solid #d9dee8;
+	background: #eef2f7;
+	border-radius: 6px 6px 3px 3px;
+	min-height: 12px;
+}
+
+.month-bar.is-active {
+	border-color: #fca5a5;
+	background: linear-gradient(180deg, #ef4444 0%, #b91c1c 100%);
+}
+
+.month-bar-label {
+	line-height: 1;
+	font-size: 0.62rem;
+	color: #6b7280;
+}
+
+
+.contrib-heatmap {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+}
+
+.heatmap-months {
+	display: flex;
+	gap: 3px;
+	margin-left: 38px;
+	min-height: 14px;
+}
+
+.heatmap-month-label {
+	width: 12px;
+	font-size: 0.58rem;
+	color: #6b7280;
+	line-height: 1;
+	text-align: center;
+}
+
+.heatmap-body {
+	display: flex;
+	gap: 0.35rem;
+}
+
+.heatmap-weekdays {
+	width: 34px;
+	display: grid;
+	grid-template-rows: repeat(7, 12px);
+	row-gap: 3px;
+	font-size: 0.62rem;
+	color: #6b7280;
+}
+
+.heatmap-weekdays span:nth-child(1) {
+	grid-row: 2;
+}
+
+.heatmap-weekdays span:nth-child(2) {
+	grid-row: 4;
+}
+
+.heatmap-weekdays span:nth-child(3) {
+	grid-row: 6;
+}
+
+.heatmap-grid {
+	display: flex;
+	gap: 3px;
+	overflow-x: auto;
+	padding-bottom: 2px;
+}
+
+.heatmap-week {
+	display: grid;
+	grid-template-rows: repeat(7, 12px);
+	row-gap: 3px;
+}
+
+.heatmap-cell {
+	width: 12px;
+	height: 12px;
+	border-radius: 2px;
+	background: #ebedf0;
+}
+
+.heatmap-cell.level-0 {
+	background: #ebedf0;
+}
+
+.heatmap-cell.level-1 {
+	background: #ef4444;
+}
+
+.heatmap-cell.is-outside {
+	background: transparent;
+}
+
+.meter-label {
+	margin-top: 0.4rem;
+	font-size: 0.82rem;
+	color: #5f6674;
+}
+
+.calendar-card {
+	border: 2px solid #cfd4dc;
+	border-radius: 16px;
+	background: #ffffff;
+	padding: 0.85rem;
+	box-shadow: 0 8px 22px rgba(16, 24, 40, 0.06);
+}
+
+.calendar-toolbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.6rem;
+	margin-bottom: 0.85rem;
+}
+
+.calendar-toolbar h2 {
+	font-size: clamp(1rem, 2vw, 1.25rem);
+	text-align: center;
+}
+
+.toolbar-btn {
+	border: 1px solid #cfd4dc;
+	background: #fff;
+	color: #2f3a4d;
+	border-radius: 9px;
+	padding: 0.45rem 0.7rem;
+	font-size: 0.85rem;
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.toolbar-btn:hover {
+	background: #f4f6f9;
+}
+
+.weekday-row {
+	display: grid;
+	grid-template-columns: repeat(7, minmax(0, 1fr));
+	gap: 0.45rem;
+	margin-bottom: 0.45rem;
+}
+
+.weekday-row span {
+	text-align: center;
+	font-size: 0.78rem;
+	color: #738097;
+	font-weight: 600;
+	letter-spacing: 0.03em;
+}
+
+.calendar-grid {
+	display: grid;
+	grid-template-columns: repeat(7, minmax(0, 1fr));
+	gap: 0.45rem;
+}
+
+.calendar-day {
+	min-height: 108px;
+	border: 1px solid #d9dee8;
+	border-radius: 11px;
+	padding: 0.45rem;
+	background: #fcfdff;
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+}
+
+.calendar-day.has-project {
+	border-color: #73c79a;
+	background: #f7fdf9;
+}
+
+.calendar-day.is-padding {
+	opacity: 0.34;
+	background: #f6f8fb;
+}
+
+.day-number {
+	font-weight: 700;
+	font-size: 0.84rem;
+	color: #3e4758;
+}
+
+.project-pill {
+	display: block;
+	text-decoration: none;
+	border: 1px solid #9bd2b3;
+	background: #f2fbf6;
+	color: #2f8f5b;
+	border-radius: 8px;
+	padding: 0.28rem 0.4rem;
+	font-size: 0.72rem;
+	font-weight: 600;
+	line-height: 1.25;
+	transition: all 0.2s ease;
+}
+
+.project-pill:hover {
+	background: #dcf4e8;
+}
+
+.calendar-card.is-complete-month {
+	border-color: #73c79a;
+	background: linear-gradient(180deg, #ffffff 0%, #f3fbf7 100%);
+}
+
+.calendar-card.is-complete-month .calendar-toolbar h2 {
+	color: #1f8a55;
+}
+
+.calendar-card.is-complete-month .toolbar-btn {
+	border-color: #9bd2b3;
+	color: #1f8a55;
+	background: #f7fdf9;
+}
+
+.empty-day-note {
+	color: #a1a8b4;
+	font-size: 0.72rem;
+}
+
+@media (max-width: 800px) {
+	.calendar-grid,
+	.weekday-row {
+		gap: 0.35rem;
+	}
+
+	.calendar-day {
+		min-height: 92px;
+	}
+}
+
+@media (max-width: 600px) {
+	body {
+		padding: 0.65rem;
+	}
+
+	.calendar-card {
+		padding: 0.65rem;
+	}
+
+	.month-chart {
+		grid-template-columns: repeat(6, minmax(0, 1fr));
+		row-gap: 1.4rem;
+	}
+
+	.calendar-grid,
+	.weekday-row {
+		grid-template-columns: repeat(1, minmax(0, 1fr));
+	}
+
+	.weekday-row {
+		display: none;
+	}
+
+	.calendar-day {
+		min-height: auto;
+		flex-direction: row;
+		align-items: center;
+		gap: 0.55rem;
+	}
+
+	.day-number {
+		min-width: 28px;
+	}
+
+	.empty-day-note {
+		margin-left: auto;
+	}
+}
