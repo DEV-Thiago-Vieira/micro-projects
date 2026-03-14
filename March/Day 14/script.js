@@ -195,6 +195,7 @@ taskForm.addEventListener('submit', (event) => {
 
 	const newTask = createTaskElement(text);
 	todoList.appendChild(newTask);
+	sortTasks();
 	taskInput.value = '';
 	taskInput.focus();
 	saveTasksToStorage();
