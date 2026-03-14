@@ -11,12 +11,37 @@
       <h1>To Do List</h1>
       <em>A simple to do list developed with HTML, CSS, and JavaScript</em>
       <div class="list">
-        <label class="option">
-          <input type="checkbox" name="1" id="1" value="1" />
-          <span>Go to the gym</span>
-        </label>
-        <button class="new-task">Create new task</button>
+        <div class="option">
+          <label class="check">
+            <input type="checkbox" name="0" id="0" value="0" />
+            <span>Buy groceries</span>
+          </label>
+          <div class="icons">
+            <span class="icon"
+              ><i title="Edit" class="fa-solid fa-pen"></i
+            ></span>
+            <span class="icon"
+              ><i title="Save" class="fa-solid fa-floppy-disk"></i
+            ></span>
+            <span class="icon"
+              ><i title="Delete" class="fa-solid fa-trash"></i
+            ></span>
+          </div>
+        </div>
+        <form class="new-task-form">
+          <input
+            type="text"
+            placeholder="Write your task..."
+            class="new-task-input"
+            required
+          />
+          <button class="confirm-task">+</button>
+        </form>
       </div>
     </main>
   </body>
+  <script
+    src="https://kit.fontawesome.com/afda6c43b4.js"
+    crossorigin="anonymous"
+  ></script>
 </html>

@@ -4,6 +4,7 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    font-family: 'Montserrat', sans-serif;
 }
 
 html, body {
@@ -33,7 +34,8 @@ main {
     width: 80%;
 }
 
-.option {
+
+.check {
     display: flex;
     padding: 1em;
     gap: 10px;
@@ -50,9 +52,25 @@ main {
     background-color: rgba(0, 0, 0, 0.1);
 }
 
-.new-task {
+.new-task-form {
+    display: flex;
+    gap: 0.5em;
+}
+
+.new-task-input {
     padding: 1em;;
     width: 100%;
+    border-radius: 10px;
+    border: none;
+    border: 1px solid #1e1e1e;
+    color: rgb(0, 0, 0);
+    font-size: 1em;
+}
+
+.confirm-task {
+    padding: 1em;
+    font-size: 2em;
+    width: 30%;
     border-radius: 10px;
     border: none;
     background-color: #1e1e1e;
@@ -60,4 +78,35 @@ main {
     font-size: 1em;
     cursor: pointer;
     transition: all 0.2s ease;
+}
+
+.option {
+    position: relative;
+}
+
+.icons {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 0 20px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-left: auto;
+}
+
+.icon {
+    display: grid;
+    place-items: center;
+    height: 30px;
+    width: 30px;
+    border-radius: 50%;
+    background-color: transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.icon:hover {
+    background-color: #1e1e1e2a;
 }
