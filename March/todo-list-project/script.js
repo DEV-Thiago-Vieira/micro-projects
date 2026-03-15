@@ -104,6 +104,21 @@ let dropAfterTarget = false;
 let isTouchDragging = false;
 let touchDidMove = false;
 let suppressClickUntil = 0;
+let touchDragActivationTimer = null;
+let touchCandidateTaskId = null;
+let touchStartX = 0;
+let touchStartY = 0;
+
+const TOUCH_DRAG_HOLD_MS = 260;
+const TOUCH_MOVE_CANCEL_PX = 10;
+
+const cancelTouchDragActivation = () => {
+	if (touchDragActivationTimer) {
+		clearTimeout(touchDragActivationTimer);
+		touchDragActivationTimer = null;
+	}
+	touchCandidateTaskId = null;
+};
 
 const getCurrentDateStamp = () => {
 	const now = new Date();
@@ -1136,21 +1151,57 @@ todoList.addEventListener('touchstart', (event) => {
 		return;
 	}
 
-	draggedTaskId = task.id;
-	isTouchDragging = true;
+	touchStartX = event.touches[0].clientX;
+	touchStartY = event.touches[0].clientY;
 	touchDidMove = false;
-	taskItem.classList.add('is-dragging');
+	isTouchDragging = false;
+	touchCandidateTaskId = task.id;
+
+	if (touchDragActivationTimer) {
+		clearTimeout(touchDragActivationTimer);
+	}
+
+	touchDragActivationTimer = setTimeout(() => {
+		if (!touchCandidateTaskId) {
+			return;
+		}
+
+		draggedTaskId = touchCandidateTaskId;
+		isTouchDragging = true;
+		const dragItem = todoList.querySelector(`.todo-item[data-task-id="${draggedTaskId}"]`);
+		if (dragItem) {
+			dragItem.classList.add('is-dragging');
+		}
+		touchDragActivationTimer = null;
+	}, TOUCH_DRAG_HOLD_MS);
 }, { passive: true });
 
 todoList.addEventListener('touchmove', (event) => {
-	if (!isTouchDragging || !draggedTaskId || event.touches.length !== 1) {
+	if (event.touches.length !== 1) {
+		return;
+	}
+
+	const touch = event.touches[0];
+
+	if (!isTouchDragging) {
+		if (!touchCandidateTaskId) {
+			return;
+		}
+
+		const movedX = Math.abs(touch.clientX - touchStartX);
+		const movedY = Math.abs(touch.clientY - touchStartY);
+		if (movedX > TOUCH_MOVE_CANCEL_PX || movedY > TOUCH_MOVE_CANCEL_PX) {
+			cancelTouchDragActivation();
+		}
+		return;
+	}
+
+	if (!draggedTaskId) {
 		return;
 	}
 
 	touchDidMove = true;
 	event.preventDefault();
-
-	const touch = event.touches[0];
 	const hoveredElement = document.elementFromPoint(touch.clientX, touch.clientY);
 	const targetItem = hoveredElement ? hoveredElement.closest('.todo-item') : null;
 	if (!targetItem) {
@@ -1171,6 +1222,8 @@ todoList.addEventListener('touchmove', (event) => {
 }, { passive: false });
 
 todoList.addEventListener('touchend', () => {
+	cancelTouchDragActivation();
+
 	if (!isTouchDragging || !draggedTaskId) {
 		return;
 	}
@@ -1186,6 +1239,8 @@ todoList.addEventListener('touchend', () => {
 });
 
 todoList.addEventListener('touchcancel', () => {
+	cancelTouchDragActivation();
+
 	if (!isTouchDragging) {
 		return;
 	}
