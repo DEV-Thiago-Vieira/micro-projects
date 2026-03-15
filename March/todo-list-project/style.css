@@ -211,7 +211,7 @@ h1 {
 }
 
 .todo-list {
-    --visible-tasks: 5;
+    --visible-tasks: 3;
     --peek-task: 0.5;
     --task-row-height: 60px;
     --task-gap: .5em;
@@ -714,6 +714,35 @@ h1 {
 
 .todo-action-btn:hover {
     background-color: #1e1e1e2a;
+}
+
+.todo-action-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.todo-action-btn:disabled:hover {
+    background-color: transparent;
+}
+
+.todo-item[draggable="true"] .todo-item-label {
+    cursor: grab;
+}
+
+.todo-item[draggable="true"]:active .todo-item-label {
+    cursor: grabbing;
+}
+
+.todo-item.is-dragging {
+    opacity: 0.45;
+}
+
+.todo-item.is-drop-before .todo-item-label {
+    box-shadow: inset 0 3px 0 #2f8f5b;
+}
+
+.todo-item.is-drop-after .todo-item-label {
+    box-shadow: inset 0 -3px 0 #2f8f5b;
 }
 
 .todo-action-btn.is-hidden {
