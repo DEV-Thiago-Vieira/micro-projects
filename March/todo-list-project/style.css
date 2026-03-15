@@ -88,7 +88,7 @@ body {
     justify-content: center;
     min-height: 100vh;
     min-height: 100dvh;
-    padding: 24px 12px 88px;
+    padding: 50px 12px 85px;
 }
 
 main {
@@ -98,7 +98,6 @@ main {
     max-width: 600px;
     width: 100%;
     margin-inline: auto;
-    margin: 100px 0;
 }
 
 .back-projects-btn {
