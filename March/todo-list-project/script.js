@@ -98,6 +98,13 @@ const getTaskTextElement = (taskItem) => taskItem.querySelector('.todo-item-text
 const getSaveButton = (taskItem) => taskItem.querySelector('.todo-save-btn');
 const getEditButton = (taskItem) => taskItem.querySelector('.todo-edit-btn');
 
+let draggedTaskId = null;
+let dropTargetTaskId = null;
+let dropAfterTarget = false;
+let isTouchDragging = false;
+let touchDidMove = false;
+let suppressClickUntil = 0;
+
 const getCurrentDateStamp = () => {
 	const now = new Date();
 	const year = now.getFullYear();
@@ -411,10 +418,104 @@ const sortTasks = () => {
 	[...unchecked, ...checked].forEach((item) => todoList.appendChild(item));
 };
 
+const reorderUncheckedTasksByDrop = (dragTaskId, targetTaskId, placeAfter) => {
+	const uncheckedTasks = state.tasks.filter((task) => !task.done);
+	const fromIndex = uncheckedTasks.findIndex((task) => task.id === dragTaskId);
+	if (fromIndex === -1) {
+		return false;
+	}
+
+	const toIndex = uncheckedTasks.findIndex((task) => task.id === targetTaskId);
+	if (toIndex === -1) {
+		return false;
+	}
+
+	if (dragTaskId === targetTaskId) {
+		return false;
+	}
+
+	const reorderedUnchecked = [...uncheckedTasks];
+	const [movedTask] = reorderedUnchecked.splice(fromIndex, 1);
+	const targetIndexAfterRemoval = reorderedUnchecked.findIndex((task) => task.id === targetTaskId);
+	if (targetIndexAfterRemoval === -1) {
+		return false;
+	}
+
+	const insertIndex = placeAfter ? targetIndexAfterRemoval + 1 : targetIndexAfterRemoval;
+	reorderedUnchecked.splice(insertIndex, 0, movedTask);
+
+	state.tasks = [
+		...reorderedUnchecked,
+		...state.tasks.filter((task) => task.done),
+	];
+
+	return true;
+};
+
+const moveUncheckedTaskToEnd = (taskId) => {
+	const uncheckedTasks = state.tasks.filter((task) => !task.done);
+	const fromIndex = uncheckedTasks.findIndex((task) => task.id === taskId);
+	if (fromIndex === -1 || fromIndex === uncheckedTasks.length - 1) {
+		return false;
+	}
+
+	const reorderedUnchecked = [...uncheckedTasks];
+	const [movedTask] = reorderedUnchecked.splice(fromIndex, 1);
+	reorderedUnchecked.push(movedTask);
+
+	state.tasks = [
+		...reorderedUnchecked,
+		...state.tasks.filter((task) => task.done),
+	];
+
+	return true;
+};
+
+const clearDropIndicators = (keepDragging = false) => {
+	todoList
+		.querySelectorAll('.todo-item.is-drop-before, .todo-item.is-drop-after, .todo-item.is-dragging')
+		.forEach((item) => {
+			item.classList.remove('is-drop-before', 'is-drop-after', 'is-dragging');
+			if (keepDragging && item.dataset.taskId === draggedTaskId) {
+				item.classList.add('is-dragging');
+			}
+		});
+	dropTargetTaskId = null;
+	dropAfterTarget = false;
+};
+
+const updateDropIndicator = (targetItem, placeAfter) => {
+	todoList
+		.querySelectorAll('.todo-item.is-drop-before, .todo-item.is-drop-after')
+		.forEach((item) => {
+			item.classList.remove('is-drop-before', 'is-drop-after');
+		});
+	targetItem.classList.add(placeAfter ? 'is-drop-after' : 'is-drop-before');
+};
+
+const handleDropReorder = () => {
+	if (!draggedTaskId) {
+		return;
+	}
+
+	let didReorder = false;
+	if (dropTargetTaskId) {
+		didReorder = reorderUncheckedTasksByDrop(draggedTaskId, dropTargetTaskId, dropAfterTarget);
+	} else {
+		didReorder = moveUncheckedTaskToEnd(draggedTaskId);
+	}
+
+	if (didReorder) {
+		renderTasks();
+		saveStateToStorage();
+	}
+};
+
 const createTaskElement = (task) => {
 	const taskElement = document.createElement('div');
 	taskElement.className = 'todo-item';
 	taskElement.dataset.taskId = task.id;
+	taskElement.draggable = !task.done;
 
 	taskElement.innerHTML = `
 		<div class="todo-item-label">
@@ -845,6 +946,11 @@ scheduleList.addEventListener('click', (event) => {
 });
 
 todoList.addEventListener('click', (event) => {
+	if (Date.now() < suppressClickUntil) {
+		event.preventDefault();
+		return;
+	}
+
 	const taskItem = event.target.closest('.todo-item');
 	if (taskItem) {
 		const clickedActionButton = event.target.closest('.todo-action-btn');
@@ -924,6 +1030,7 @@ todoList.addEventListener('click', (event) => {
 		}
 		showDeleteModal(task.id);
 	}
+
 });
 
 todoList.addEventListener('change', (event) => {
@@ -945,6 +1052,148 @@ todoList.addEventListener('change', (event) => {
 	taskItem.classList.toggle('is-done', event.target.checked);
 	sortTasks();
 	saveStateToStorage();
+});
+
+todoList.addEventListener('dragstart', (event) => {
+	const taskItem = event.target.closest('.todo-item');
+	if (!taskItem) {
+		return;
+	}
+
+	const task = findTaskById(taskItem.dataset.taskId);
+	if (!task || task.done) {
+		event.preventDefault();
+		return;
+	}
+
+	draggedTaskId = task.id;
+	taskItem.classList.add('is-dragging');
+	event.dataTransfer.effectAllowed = 'move';
+	event.dataTransfer.setData('text/plain', task.id);
+});
+
+todoList.addEventListener('dragover', (event) => {
+	if (!draggedTaskId) {
+		return;
+	}
+
+	const targetItem = event.target.closest('.todo-item');
+	if (!targetItem) {
+		event.preventDefault();
+		clearDropIndicators();
+		return;
+	}
+
+	const targetTask = findTaskById(targetItem.dataset.taskId);
+	if (!targetTask || targetTask.done || targetTask.id === draggedTaskId) {
+		return;
+	}
+
+	event.preventDefault();
+	const rect = targetItem.getBoundingClientRect();
+	const placeAfter = event.clientY - rect.top > rect.height / 2;
+	dropTargetTaskId = targetTask.id;
+	dropAfterTarget = placeAfter;
+	updateDropIndicator(targetItem, placeAfter);
+});
+
+todoList.addEventListener('drop', (event) => {
+	if (!draggedTaskId) {
+		return;
+	}
+
+	event.preventDefault();
+	handleDropReorder();
+	clearDropIndicators();
+	draggedTaskId = null;
+});
+
+todoList.addEventListener('dragend', () => {
+	clearDropIndicators();
+	draggedTaskId = null;
+});
+
+todoList.addEventListener('touchstart', (event) => {
+	if (event.touches.length !== 1) {
+		return;
+	}
+
+	const taskItem = event.target.closest('.todo-item');
+	if (!taskItem) {
+		return;
+	}
+
+	if (
+		event.target.closest('.todo-action-btn') ||
+		event.target.closest('input[type="checkbox"]') ||
+		taskItem.classList.contains('is-editing')
+	) {
+		return;
+	}
+
+	const task = findTaskById(taskItem.dataset.taskId);
+	if (!task || task.done) {
+		return;
+	}
+
+	draggedTaskId = task.id;
+	isTouchDragging = true;
+	touchDidMove = false;
+	taskItem.classList.add('is-dragging');
+}, { passive: true });
+
+todoList.addEventListener('touchmove', (event) => {
+	if (!isTouchDragging || !draggedTaskId || event.touches.length !== 1) {
+		return;
+	}
+
+	touchDidMove = true;
+	event.preventDefault();
+
+	const touch = event.touches[0];
+	const hoveredElement = document.elementFromPoint(touch.clientX, touch.clientY);
+	const targetItem = hoveredElement ? hoveredElement.closest('.todo-item') : null;
+	if (!targetItem) {
+		clearDropIndicators(true);
+		return;
+	}
+
+	const targetTask = findTaskById(targetItem.dataset.taskId);
+	if (!targetTask || targetTask.done || targetTask.id === draggedTaskId) {
+		return;
+	}
+
+	const rect = targetItem.getBoundingClientRect();
+	const placeAfter = touch.clientY - rect.top > rect.height / 2;
+	dropTargetTaskId = targetTask.id;
+	dropAfterTarget = placeAfter;
+	updateDropIndicator(targetItem, placeAfter);
+}, { passive: false });
+
+todoList.addEventListener('touchend', () => {
+	if (!isTouchDragging || !draggedTaskId) {
+		return;
+	}
+
+	handleDropReorder();
+	clearDropIndicators();
+	if (touchDidMove) {
+		suppressClickUntil = Date.now() + 250;
+	}
+	draggedTaskId = null;
+	isTouchDragging = false;
+	touchDidMove = false;
+});
+
+todoList.addEventListener('touchcancel', () => {
+	if (!isTouchDragging) {
+		return;
+	}
+
+	clearDropIndicators();
+	draggedTaskId = null;
+	isTouchDragging = false;
+	touchDidMove = false;
 });
 
 cancelDeleteButton.addEventListener('click', hideDeleteModal);
