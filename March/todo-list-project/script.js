@@ -99,18 +99,21 @@ const getSaveButton = (taskItem) => taskItem.querySelector('.todo-save-btn');
 const getEditButton = (taskItem) => taskItem.querySelector('.todo-edit-btn');
 
 let draggedTaskId = null;
-let dropTargetTaskId = null;
-let dropAfterTarget = false;
+let dropInsertIndex = null;
 let isTouchDragging = false;
 let touchDidMove = false;
 let suppressClickUntil = 0;
+let lastDragPointerY = null;
+let dragAutoScrollFrame = null;
 let touchDragActivationTimer = null;
 let touchCandidateTaskId = null;
 let touchStartX = 0;
 let touchStartY = 0;
 
-const TOUCH_DRAG_HOLD_MS = 260;
+const TOUCH_DRAG_HOLD_MS = 180;
 const TOUCH_MOVE_CANCEL_PX = 10;
+const DRAG_SCROLL_EDGE_PX = 56;
+const DRAG_SCROLL_MAX_STEP = 16;
 
 const cancelTouchDragActivation = () => {
 	if (touchDragActivationTimer) {
@@ -118,6 +121,54 @@ const cancelTouchDragActivation = () => {
 		touchDragActivationTimer = null;
 	}
 	touchCandidateTaskId = null;
+};
+
+const stopDragAutoScroll = () => {
+	if (dragAutoScrollFrame !== null) {
+		cancelAnimationFrame(dragAutoScrollFrame);
+		dragAutoScrollFrame = null;
+	}
+};
+
+const getDragAutoScrollStep = (pointerY) => {
+	if (typeof pointerY !== 'number') {
+		return 0;
+	}
+
+	const rect = todoList.getBoundingClientRect();
+	if (pointerY < rect.top + DRAG_SCROLL_EDGE_PX) {
+		const intensity = (rect.top + DRAG_SCROLL_EDGE_PX - pointerY) / DRAG_SCROLL_EDGE_PX;
+		return -Math.max(2, Math.round(DRAG_SCROLL_MAX_STEP * intensity));
+	}
+
+	if (pointerY > rect.bottom - DRAG_SCROLL_EDGE_PX) {
+		const intensity = (pointerY - (rect.bottom - DRAG_SCROLL_EDGE_PX)) / DRAG_SCROLL_EDGE_PX;
+		return Math.max(2, Math.round(DRAG_SCROLL_MAX_STEP * intensity));
+	}
+
+	return 0;
+};
+
+const runDragAutoScroll = () => {
+	if (!draggedTaskId || typeof lastDragPointerY !== 'number') {
+		stopDragAutoScroll();
+		return;
+	}
+
+	const step = getDragAutoScrollStep(lastDragPointerY);
+	if (step !== 0) {
+		todoList.scrollTop += step;
+		dropInsertIndex = getDropInsertIndexFromPointer(lastDragPointerY);
+		updateDropIndicatorByInsertIndex(dropInsertIndex);
+	}
+
+	dragAutoScrollFrame = requestAnimationFrame(runDragAutoScroll);
+};
+
+const ensureDragAutoScroll = () => {
+	if (dragAutoScrollFrame === null) {
+		dragAutoScrollFrame = requestAnimationFrame(runDragAutoScroll);
+	}
 };
 
 const getCurrentDateStamp = () => {
@@ -433,50 +484,23 @@ const sortTasks = () => {
 	[...unchecked, ...checked].forEach((item) => todoList.appendChild(item));
 };
 
-const reorderUncheckedTasksByDrop = (dragTaskId, targetTaskId, placeAfter) => {
+const reorderUncheckedTasksByInsertIndex = (dragTaskId, rawInsertIndex) => {
 	const uncheckedTasks = state.tasks.filter((task) => !task.done);
 	const fromIndex = uncheckedTasks.findIndex((task) => task.id === dragTaskId);
 	if (fromIndex === -1) {
 		return false;
 	}
 
-	const toIndex = uncheckedTasks.findIndex((task) => task.id === targetTaskId);
-	if (toIndex === -1) {
-		return false;
-	}
-
-	if (dragTaskId === targetTaskId) {
-		return false;
-	}
+	const insertIndexClamped = Math.max(0, Math.min(rawInsertIndex, uncheckedTasks.length));
 
 	const reorderedUnchecked = [...uncheckedTasks];
 	const [movedTask] = reorderedUnchecked.splice(fromIndex, 1);
-	const targetIndexAfterRemoval = reorderedUnchecked.findIndex((task) => task.id === targetTaskId);
-	if (targetIndexAfterRemoval === -1) {
+	const normalizedInsertIndex = insertIndexClamped > fromIndex ? insertIndexClamped - 1 : insertIndexClamped;
+	if (normalizedInsertIndex === fromIndex) {
 		return false;
 	}
 
-	const insertIndex = placeAfter ? targetIndexAfterRemoval + 1 : targetIndexAfterRemoval;
-	reorderedUnchecked.splice(insertIndex, 0, movedTask);
-
-	state.tasks = [
-		...reorderedUnchecked,
-		...state.tasks.filter((task) => task.done),
-	];
-
-	return true;
-};
-
-const moveUncheckedTaskToEnd = (taskId) => {
-	const uncheckedTasks = state.tasks.filter((task) => !task.done);
-	const fromIndex = uncheckedTasks.findIndex((task) => task.id === taskId);
-	if (fromIndex === -1 || fromIndex === uncheckedTasks.length - 1) {
-		return false;
-	}
-
-	const reorderedUnchecked = [...uncheckedTasks];
-	const [movedTask] = reorderedUnchecked.splice(fromIndex, 1);
-	reorderedUnchecked.push(movedTask);
+	reorderedUnchecked.splice(normalizedInsertIndex, 0, movedTask);
 
 	state.tasks = [
 		...reorderedUnchecked,
@@ -495,17 +519,69 @@ const clearDropIndicators = (keepDragging = false) => {
 				item.classList.add('is-dragging');
 			}
 		});
-	dropTargetTaskId = null;
-	dropAfterTarget = false;
+	dropInsertIndex = null;
 };
 
-const updateDropIndicator = (targetItem, placeAfter) => {
+const getUncheckedTaskItems = () => {
+	return Array.from(todoList.querySelectorAll('.todo-item')).filter(
+		(item) => !item.classList.contains('is-done'),
+	);
+};
+
+const getDropInsertIndexFromPointer = (clientY) => {
+	const uncheckedItems = getUncheckedTaskItems();
+	if (uncheckedItems.length === 0) {
+		return null;
+	}
+
+	const firstRect = uncheckedItems[0].getBoundingClientRect();
+	if (clientY <= firstRect.top) {
+		return 0;
+	}
+
+	const lastRect = uncheckedItems[uncheckedItems.length - 1].getBoundingClientRect();
+	if (clientY >= lastRect.bottom) {
+		return uncheckedItems.length;
+	}
+
+	for (let index = 0; index < uncheckedItems.length; index += 1) {
+		const rect = uncheckedItems[index].getBoundingClientRect();
+		const midpoint = rect.top + rect.height / 2;
+		if (clientY < midpoint) {
+			return index;
+		}
+	}
+
+	return uncheckedItems.length;
+};
+
+const updateDropIndicatorByInsertIndex = (insertIndex) => {
 	todoList
 		.querySelectorAll('.todo-item.is-drop-before, .todo-item.is-drop-after')
 		.forEach((item) => {
 			item.classList.remove('is-drop-before', 'is-drop-after');
 		});
-	targetItem.classList.add(placeAfter ? 'is-drop-after' : 'is-drop-before');
+
+	if (insertIndex === null) {
+		return;
+	}
+
+	const uncheckedItems = getUncheckedTaskItems();
+	if (uncheckedItems.length === 0) {
+		return;
+	}
+
+	if (insertIndex <= 0) {
+		uncheckedItems[0].classList.add('is-drop-before');
+		return;
+	}
+
+	if (insertIndex >= uncheckedItems.length) {
+		uncheckedItems[uncheckedItems.length - 1].classList.add('is-drop-after');
+		return;
+	}
+
+	uncheckedItems[insertIndex].classList.add('is-drop-before');
 };
 
 const handleDropReorder = () => {
@@ -513,12 +589,16 @@ const handleDropReorder = () => {
 		return;
 	}
 
-	let didReorder = false;
-	if (dropTargetTaskId) {
-		didReorder = reorderUncheckedTasksByDrop(draggedTaskId, dropTargetTaskId, dropAfterTarget);
-	} else {
-		didReorder = moveUncheckedTaskToEnd(draggedTaskId);
+	const resolvedInsertIndex =
+		dropInsertIndex === null && typeof lastDragPointerY === 'number'
+			? getDropInsertIndexFromPointer(lastDragPointerY)
+			: dropInsertIndex;
+
+	if (resolvedInsertIndex === null) {
+		return;
 	}
+
+	const didReorder = reorderUncheckedTasksByInsertIndex(draggedTaskId, resolvedInsertIndex);
 
 	if (didReorder) {
 		renderTasks();
@@ -1082,9 +1162,11 @@ todoList.addEventListener('dragstart', (event) => {
 	}
 
 	draggedTaskId = task.id;
+	lastDragPointerY = null;
 	taskItem.classList.add('is-dragging');
 	event.dataTransfer.effectAllowed = 'move';
 	event.dataTransfer.setData('text/plain', task.id);
+	ensureDragAutoScroll();
 });
 
 todoList.addEventListener('dragover', (event) => {
@@ -1092,24 +1174,11 @@ todoList.addEventListener('dragover', (event) => {
 		return;
 	}
 
-	const targetItem = event.target.closest('.todo-item');
-	if (!targetItem) {
-		event.preventDefault();
-		clearDropIndicators();
-		return;
-	}
-
-	const targetTask = findTaskById(targetItem.dataset.taskId);
-	if (!targetTask || targetTask.done || targetTask.id === draggedTaskId) {
-		return;
-	}
-
 	event.preventDefault();
-	const rect = targetItem.getBoundingClientRect();
-	const placeAfter = event.clientY - rect.top > rect.height / 2;
-	dropTargetTaskId = targetTask.id;
-	dropAfterTarget = placeAfter;
-	updateDropIndicator(targetItem, placeAfter);
+	lastDragPointerY = event.clientY;
+	dropInsertIndex = getDropInsertIndexFromPointer(event.clientY);
+	updateDropIndicatorByInsertIndex(dropInsertIndex);
+	ensureDragAutoScroll();
 });
 
 todoList.addEventListener('drop', (event) => {
@@ -1118,14 +1187,22 @@ todoList.addEventListener('drop', (event) => {
 	}
 
 	event.preventDefault();
+	lastDragPointerY = event.clientY;
 	handleDropReorder();
 	clearDropIndicators();
 	draggedTaskId = null;
+	lastDragPointerY = null;
+	stopDragAutoScroll();
 });
 
 todoList.addEventListener('dragend', () => {
+	if (draggedTaskId) {
+		handleDropReorder();
+	}
 	clearDropIndicators();
 	draggedTaskId = null;
+	lastDragPointerY = null;
+	stopDragAutoScroll();
 });
 
 todoList.addEventListener('touchstart', (event) => {
@@ -1168,10 +1245,12 @@ todoList.addEventListener('touchstart', (event) => {
 
 		draggedTaskId = touchCandidateTaskId;
 		isTouchDragging = true;
+		lastDragPointerY = touchStartY;
 		const dragItem = todoList.querySelector(`.todo-item[data-task-id="${draggedTaskId}"]`);
 		if (dragItem) {
 			dragItem.classList.add('is-dragging');
 		}
+		ensureDragAutoScroll();
 		touchDragActivationTimer = null;
 	}, TOUCH_DRAG_HOLD_MS);
 }, { passive: true });
@@ -1202,23 +1281,13 @@ todoList.addEventListener('touchmove', (event) => {
 
 	touchDidMove = true;
 	event.preventDefault();
+	lastDragPointerY = touch.clientY;
 	const hoveredElement = document.elementFromPoint(touch.clientX, touch.clientY);
-	const targetItem = hoveredElement ? hoveredElement.closest('.todo-item') : null;
-	if (!targetItem) {
-		clearDropIndicators(true);
-		return;
-	}
+	void hoveredElement;
 
-	const targetTask = findTaskById(targetItem.dataset.taskId);
-	if (!targetTask || targetTask.done || targetTask.id === draggedTaskId) {
-		return;
-	}
-
-	const rect = targetItem.getBoundingClientRect();
-	const placeAfter = touch.clientY - rect.top > rect.height / 2;
-	dropTargetTaskId = targetTask.id;
-	dropAfterTarget = placeAfter;
-	updateDropIndicator(targetItem, placeAfter);
+	dropInsertIndex = getDropInsertIndexFromPointer(touch.clientY);
+	updateDropIndicatorByInsertIndex(dropInsertIndex);
+	ensureDragAutoScroll();
 }, { passive: false });
 
 todoList.addEventListener('touchend', () => {
@@ -1236,6 +1305,8 @@ todoList.addEventListener('touchend', () => {
 	draggedTaskId = null;
 	isTouchDragging = false;
 	touchDidMove = false;
+	lastDragPointerY = null;
+	stopDragAutoScroll();
 });
 
 todoList.addEventListener('touchcancel', () => {
@@ -1249,6 +1320,8 @@ todoList.addEventListener('touchcancel', () => {
 	draggedTaskId = null;
 	isTouchDragging = false;
 	touchDidMove = false;
+	lastDragPointerY = null;
+	stopDragAutoScroll();
 });
 
 cancelDeleteButton.addEventListener('click', hideDeleteModal);

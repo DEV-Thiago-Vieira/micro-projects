@@ -725,11 +725,7 @@ h1 {
     background-color: transparent;
 }
 
-.todo-item[draggable="true"] .todo-item-label {
-    cursor: grab;
-}
-
-.todo-item[draggable="true"]:active .todo-item-label {
+.todo-item.is-dragging .todo-item-label {
     cursor: grabbing;
 }
 
@@ -738,11 +734,15 @@ h1 {
 }
 
 .todo-item.is-drop-before .todo-item-label {
-    box-shadow: inset 0 3px 0 #2f8f5b;
+    box-shadow: inset 0 4px 0 #22c55e;
+    border-top-color: #22c55e;
+    background-image: linear-gradient(180deg, rgba(34, 197, 94, 0.12), rgba(34, 197, 94, 0));
 }
 
 .todo-item.is-drop-after .todo-item-label {
-    box-shadow: inset 0 -3px 0 #2f8f5b;
+    box-shadow: inset 0 -4px 0 #22c55e;
+    border-bottom-color: #22c55e;
+    background-image: linear-gradient(0deg, rgba(34, 197, 94, 0.12), rgba(34, 197, 94, 0));
 }
 
 .todo-action-btn.is-hidden {
