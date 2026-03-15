@@ -5,6 +5,15 @@
     <link rel="stylesheet" href="style.css" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="./favicon-todo.svg" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <meta name="theme-color" content="#22c55e" />
+    <meta
+      name="description"
+      content="Installable to-do list with recurring schedules and streak tracking."
+    />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="To Do List" />
     <title>To do list</title>
   </head>
   <body>
@@ -31,9 +40,21 @@
           <span class="counter-divider">|</span>
           Unchecked: <strong id="unchecked-count">0</strong>
         </p>
-        <button type="button" class="clear-all-btn" id="clear-all-btn">
-          Clear all tasks
-        </button>
+        <div class="summary-actions">
+          <button
+            type="button"
+            class="clear-all-btn install-app-btn"
+            id="install-app-btn"
+          >
+            Install app
+          </button>
+          <button type="button" class="clear-all-btn" id="open-schedule-btn">
+            Daily schedules
+          </button>
+          <button type="button" class="clear-all-btn" id="clear-all-btn">
+            Clear all tasks
+          </button>
+        </div>
         <p class="todo-congrats" id="todo-congrats" hidden>
           Great job! You completed all your tasks.
         </p>
@@ -79,6 +100,32 @@
         />
         <button class="confirm-task">+</button>
       </form>
+
+      <section class="streak-card" aria-live="polite">
+        <div class="streak-head">
+          <h2>Consistency Rewards</h2>
+          <button type="button" class="progress-btn" id="open-progress-btn">
+            View progress
+          </button>
+        </div>
+        <p class="streak-stats">
+          Current streak: <strong id="current-streak">0</strong>
+          <span class="counter-divider">|</span>
+          Best streak: <strong id="best-streak">0</strong>
+        </p>
+        <p class="streak-message" id="streak-message">
+          Finish at least one task today to keep your streak alive.
+        </p>
+        <div
+          class="reward-progress-track"
+          role="progressbar"
+          aria-label="Streak progress"
+        >
+          <div class="reward-progress-bar" id="reward-progress-bar"></div>
+        </div>
+        <p class="reward-next" id="reward-next">Next goal: 3 days</p>
+        <div class="badge-list" id="badge-list"></div>
+      </section>
 
       <a
         href="https://github.com/DEV-Thiago-Vieira"
@@ -154,6 +201,74 @@
               Clear all
             </button>
           </div>
+        </div>
+      </div>
+
+      <div class="modal-overlay" id="schedule-modal" aria-hidden="true">
+        <div
+          class="modal-card schedule-modal-card"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="schedule-modal-title"
+        >
+          <div class="schedule-modal-head">
+            <h2 id="schedule-modal-title">Daily Schedules</h2>
+            <button
+              type="button"
+              class="schedule-close-btn"
+              id="close-schedule-btn"
+              aria-label="Close daily schedules"
+            >
+              <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+            </button>
+          </div>
+          <p class="schedule-subtitle">
+            Scheduled tasks are added every day and can only be removed by
+            deleting the schedule.
+          </p>
+          <form class="schedule-form" id="schedule-form">
+            <input
+              type="text"
+              id="schedule-input"
+              class="schedule-input"
+              placeholder="Schedule a daily task..."
+              required
+            />
+            <button type="submit" class="schedule-submit-btn">Schedule</button>
+          </form>
+          <ul class="schedule-list" id="schedule-list"></ul>
+        </div>
+      </div>
+
+      <div class="modal-overlay" id="progress-modal" aria-hidden="true">
+        <div
+          class="modal-card progress-modal-card"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="progress-modal-title"
+        >
+          <div class="schedule-modal-head">
+            <h2 id="progress-modal-title">Progress Dashboard</h2>
+            <button
+              type="button"
+              class="schedule-close-btn"
+              id="close-progress-btn"
+              aria-label="Close progress dashboard"
+            >
+              <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+            </button>
+          </div>
+
+          <section class="chart-card">
+            <h3>Completed Tasks (Last 7 Days)</h3>
+            <div class="week-chart" id="week-chart"></div>
+          </section>
+
+          <section class="chart-card">
+            <h3>Consistency by Month (Year View)</h3>
+            <div class="month-chart" id="month-chart"></div>
+            <p class="meter-label" id="year-chart-label"></p>
+          </section>
         </div>
       </div>
     </main>
