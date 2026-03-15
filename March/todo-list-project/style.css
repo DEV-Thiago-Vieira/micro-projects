@@ -98,6 +98,7 @@ main {
     max-width: 600px;
     width: 100%;
     margin-inline: auto;
+    margin: 100px 0;
 }
 
 .back-projects-btn {
@@ -124,6 +125,13 @@ main {
     background-color: #f4f6f9;
 }
 
+@media (display-mode: standalone) {
+    .back-projects-btn,
+    #install-app-btn {
+        display: none !important;
+    }
+}
+
 h1 {
     font-size: 2rem;
     line-height: 1.1;
@@ -147,6 +155,11 @@ h1 {
     justify-content: space-between;
     gap: 0.5em;
     margin-bottom: 0.4em;
+}
+
+.summary-actions {
+    display: flex;
+    gap: 0.45em;
 }
 
 .todo-counter {
@@ -178,6 +191,16 @@ h1 {
 .clear-all-btn:disabled {
     opacity: 0.45;
     cursor: not-allowed;
+}
+
+.install-app-btn {
+    border-color: #86efac;
+    background-color: #f0fdf4;
+    color: #166534;
+}
+
+.install-app-btn:hover {
+    background-color: #dcfce7;
 }
 
 .todo-congrats {
@@ -284,6 +307,325 @@ h1 {
     border: 2px solid #cfd4dc;
     border-radius: 12px;
     background-color: #ffffff;
+}
+
+.streak-card {
+    width: 80%;
+    margin-top: 0.8em;
+    border: 2px solid #cfd4dc;
+    border-radius: 14px;
+    background: #ffffff;
+    padding: 0.85em;
+    box-shadow: 0 8px 22px rgba(16, 24, 40, 0.06);
+}
+
+.streak-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.7em;
+    margin-bottom: 0.35em;
+}
+
+.streak-head h2 {
+    font-size: 1.02rem;
+}
+
+.progress-btn {
+    border: 1px solid #cfd4dc;
+    background: #fff;
+    color: #2f3a4d;
+    border-radius: 8px;
+    padding: 0.32rem 0.56rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.progress-btn:hover {
+    background: #f4f6f9;
+}
+
+.streak-stats {
+    font-size: 0.93rem;
+    color: #374151;
+    margin-bottom: 0.35em;
+}
+
+.streak-message {
+    color: #374151;
+    font-size: 0.9rem;
+    margin-bottom: 0.45rem;
+}
+
+.reward-progress-track {
+    width: 100%;
+    height: 10px;
+    border-radius: 999px;
+    background: #edf1f7;
+    overflow: hidden;
+    border: 1px solid #d9dee8;
+}
+
+.reward-progress-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #ef4444 0%, #b91c1c 100%);
+    transition: width 0.3s ease;
+}
+
+.reward-next {
+    margin-top: 0.42rem;
+    font-size: 0.82rem;
+    color: #5f6674;
+}
+
+.badge-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-top: 0.55rem;
+}
+
+.badge-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.22rem 0.48rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    border: 1px solid #fca5a5;
+    background: #fff1f2;
+    color: #b91c1c;
+}
+
+.schedule-subtitle {
+    color: #5f6674;
+    font-size: 0.86rem;
+    margin-bottom: 0.7em;
+}
+
+.schedule-form {
+    display: flex;
+    gap: 0.45em;
+}
+
+.schedule-input {
+    flex: 1;
+    min-width: 0;
+    padding: 0.75em 0.9em;
+    border-radius: 10px;
+    border: 1px solid #d5dae2;
+    background-color: #fcfcfd;
+    font-size: 0.95rem;
+}
+
+.schedule-input:focus {
+    outline: none;
+    border-color: #9aa3b2;
+}
+
+.schedule-submit-btn {
+    border: none;
+    border-radius: 10px;
+    background-color: #1e1e1e;
+    color: #fff;
+    padding: 0.7em 0.9em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.schedule-submit-btn:hover {
+    background-color: #303030;
+}
+
+.schedule-list {
+    margin-top: 0.7em;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4em;
+}
+
+.schedule-list:empty::before {
+    content: 'No daily schedules yet.';
+    color: #7a808d;
+    font-size: 0.84rem;
+}
+
+.schedule-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6em;
+    border: 1px solid #d7dce4;
+    border-radius: 9px;
+    padding: 0.55em 0.7em;
+    background-color: #fbfcfd;
+}
+
+.schedule-item span {
+    font-size: 0.92rem;
+    color: #2f3a4d;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.schedule-remove-btn {
+    border: 1px solid #cfd4dc;
+    background-color: #fff;
+    color: #2f3a4d;
+    border-radius: 8px;
+    padding: 0.4em 0.65em;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.schedule-remove-btn:hover {
+    background-color: #f4f6f9;
+}
+
+.schedule-modal-card {
+    width: min(100%, 560px);
+    max-height: 88vh;
+    overflow-y: auto;
+}
+
+.schedule-modal-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5em;
+    margin-bottom: 0.3em;
+}
+
+.schedule-close-btn {
+    border: 1px solid #cfd4dc;
+    background: #fff;
+    color: #2f3a4d;
+    border-radius: 8px;
+    width: 34px;
+    height: 34px;
+    cursor: pointer;
+}
+
+.progress-modal-card {
+    width: min(100%, 740px);
+    max-height: 90vh;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+}
+
+.chart-card {
+    border: 1px solid #d9dee8;
+    border-radius: 10px;
+    padding: 0.7rem;
+    background: #fcfdff;
+}
+
+.chart-card h3 {
+    font-size: 0.88rem;
+    margin-bottom: 0.45rem;
+    color: #374151;
+}
+
+.week-chart {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 0.35rem;
+    align-items: end;
+    min-height: 160px;
+}
+
+.week-item {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 0.32rem;
+    min-width: 0;
+}
+
+.week-bar-count {
+    font-size: 0.7rem;
+    color: #475063;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.week-bar {
+    width: 100%;
+    border: 1px solid #d9dee8;
+    border-radius: 6px 6px 3px 3px;
+    min-height: 12px;
+    background: #eef2f7;
+}
+
+.week-bar.is-active {
+    border-color: #fca5a5;
+    background: linear-gradient(180deg, #ef4444 0%, #b91c1c 100%);
+}
+
+.week-bar-label {
+    font-size: 0.72rem;
+    color: #6b7280;
+}
+
+.month-chart {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 0.28rem;
+    align-items: stretch;
+    min-height: 158px;
+}
+
+.month-item {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 0.3rem;
+    min-width: 0;
+}
+
+.month-bar-count {
+    font-size: 0.62rem;
+    font-weight: 700;
+    color: #475063;
+    line-height: 1;
+}
+
+.month-bar {
+    width: 100%;
+    border: 1px solid #d9dee8;
+    background: #eef2f7;
+    border-radius: 6px 6px 3px 3px;
+    min-height: 12px;
+}
+
+.month-bar.is-active {
+    border-color: #fca5a5;
+    background: linear-gradient(180deg, #ef4444 0%, #b91c1c 100%);
+}
+
+.month-bar-label {
+    line-height: 1;
+    font-size: 0.62rem;
+    color: #6b7280;
+}
+
+.meter-label {
+    margin-top: 0.42rem;
+    font-size: 0.82rem;
+    color: #5f6674;
 }
 
 .new-task-input {
@@ -413,6 +755,19 @@ h1 {
     color: #5a5a5a;
 }
 
+.todo-item.is-scheduled .todo-item-label {
+    border-left: 4px solid #2f8f5b;
+}
+
+.todo-item.is-scheduled .todo-delete-btn {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.todo-item.is-scheduled .todo-delete-btn:hover {
+    background-color: transparent;
+}
+
 .completion-toast {
     position: fixed;
     bottom: 60px;
@@ -433,6 +788,18 @@ h1 {
     transition: opacity 0.3s ease, transform 0.3s ease;
     z-index: 200;
     white-space: nowrap;
+}
+
+.completion-toast.is-warning {
+    background: linear-gradient(180deg, #facc15 0%, #f59e0b 100%);
+    color: #3f2f00;
+    box-shadow: 0 4px 18px rgba(245, 158, 11, 0.45);
+}
+
+.completion-toast.is-error {
+    background: linear-gradient(180deg, #ef4444 0%, #b91c1c 100%);
+    color: #fff;
+    box-shadow: 0 4px 18px rgba(185, 28, 28, 0.45);
 }
 
 .completion-toast.is-visible {
@@ -538,7 +905,28 @@ h1 {
         width: 100%;
     }
 
+    .summary-actions {
+        width: 100%;
+    }
+
+    .summary-actions .clear-all-btn {
+        flex: 1;
+        text-align: center;
+    }
+
     .new-task-form {
+        width: 100%;
+    }
+
+    .streak-card {
+        width: 100%;
+    }
+
+    .schedule-form {
+        flex-direction: column;
+    }
+
+    .schedule-submit-btn {
         width: 100%;
     }
 
