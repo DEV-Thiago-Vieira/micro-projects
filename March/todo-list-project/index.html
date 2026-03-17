@@ -32,8 +32,11 @@
         <i class="fa-solid fa-arrow-left"></i>
         <span>All Projects</span>
       </a>
+      <button type="button" class="theme-toggle-btn" id="theme-toggle-btn">
+        🌙 Dark
+      </button>
       <h1>To Do List</h1>
-      <p class="app-subtitle">Plan your day, one task at a time.</p>
+      <p class="app-subtitle">The secret to success is consistency.</p>
       <div class="todo-summary" aria-live="polite">
         <p class="todo-counter">
           Checked: <strong id="checked-count">0</strong>
@@ -127,16 +130,18 @@
         <div class="badge-list" id="badge-list"></div>
       </section>
 
-      <a
-        href="https://github.com/DEV-Thiago-Vieira"
-        class="github-footer-link"
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label="Open Thiago Vieira GitHub profile"
-      >
-        <i class="fa-brands fa-github" aria-hidden="true"></i>
-        <span>DEV-Thiago-Vieira</span>
-      </a>
+      <div class="footer-actions">
+        <a
+          href="https://github.com/DEV-Thiago-Vieira"
+          class="github-footer-link"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Open Thiago Vieira GitHub profile"
+        >
+          <i class="fa-brands fa-github" aria-hidden="true"></i>
+          <span>DEV-Thiago-Vieira</span>
+        </a>
+      </div>
 
       <div
         id="completion-toast"
@@ -226,6 +231,36 @@
             Scheduled tasks are added every day and can only be removed by
             deleting the schedule.
           </p>
+
+          <div class="goal-section">
+            <h3 class="goal-section-title">Goals</h3>
+            <form class="goal-form" id="goal-form">
+              <input
+                type="text"
+                id="goal-title-input"
+                class="schedule-input"
+                placeholder="Goal name (e.g. Learn Spanish)..."
+                required
+              />
+              <select id="goal-type-select" class="goal-select">
+                <option value="habit">Habit (indefinite)</option>
+                <option value="period">Period goal</option>
+              </select>
+              <input
+                type="number"
+                id="goal-duration-input"
+                class="goal-duration-input"
+                min="1"
+                placeholder="Days"
+                disabled
+              />
+              <button type="submit" class="schedule-submit-btn">
+                Create goal
+              </button>
+            </form>
+            <ul class="goal-list" id="goal-list"></ul>
+          </div>
+
           <form class="schedule-form" id="schedule-form">
             <input
               type="text"
@@ -234,6 +269,9 @@
               placeholder="Schedule a daily task..."
               required
             />
+            <select id="schedule-goal-select" class="goal-select">
+              <option value="">No goal</option>
+            </select>
             <button type="submit" class="schedule-submit-btn">Schedule</button>
           </form>
           <ul class="schedule-list" id="schedule-list"></ul>
@@ -268,6 +306,11 @@
             <h3>Consistency by Month (Year View)</h3>
             <div class="month-chart" id="month-chart"></div>
             <p class="meter-label" id="year-chart-label"></p>
+          </section>
+
+          <section class="chart-card">
+            <h3>Goal Progress</h3>
+            <ul class="goal-progress-list" id="goal-progress-list"></ul>
           </section>
         </div>
       </div>

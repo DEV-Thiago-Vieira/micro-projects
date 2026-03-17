@@ -6,11 +6,18 @@ const uncheckedCountElement = document.getElementById('unchecked-count');
 const clearAllButton = document.getElementById('clear-all-btn');
 const installAppButton = document.getElementById('install-app-btn');
 const backProjectsButton = document.querySelector('.back-projects-btn');
+const themeToggleButton = document.getElementById('theme-toggle-btn');
 const congratsMessage = document.getElementById('todo-congrats');
 
 const scheduleForm = document.getElementById('schedule-form');
 const scheduleInput = document.getElementById('schedule-input');
 const scheduleList = document.getElementById('schedule-list');
+const scheduleGoalSelect = document.getElementById('schedule-goal-select');
+const goalForm = document.getElementById('goal-form');
+const goalTitleInput = document.getElementById('goal-title-input');
+const goalTypeSelect = document.getElementById('goal-type-select');
+const goalDurationInput = document.getElementById('goal-duration-input');
+const goalList = document.getElementById('goal-list');
 const openScheduleButton = document.getElementById('open-schedule-btn');
 const scheduleModal = document.getElementById('schedule-modal');
 const closeScheduleButton = document.getElementById('close-schedule-btn');
@@ -21,6 +28,7 @@ const progressModal = document.getElementById('progress-modal');
 const weekChart = document.getElementById('week-chart');
 const monthChart = document.getElementById('month-chart');
 const yearChartLabel = document.getElementById('year-chart-label');
+const goalProgressList = document.getElementById('goal-progress-list');
 
 const currentStreakElement = document.getElementById('current-streak');
 const bestStreakElement = document.getElementById('best-streak');
@@ -39,8 +47,10 @@ const confirmClearAllButton = document.getElementById('confirm-clear-all-btn');
 const TASKS_STORAGE_KEY = 'todo-items-v2';
 const LEGACY_TASKS_STORAGE_KEY = 'todo-items-v1';
 const SCHEDULES_STORAGE_KEY = 'todo-schedules-v1';
+const GOALS_STORAGE_KEY = 'todo-goals-v1';
 const LAST_SYNC_DATE_STORAGE_KEY = 'todo-last-sync-date-v1';
 const STATS_STORAGE_KEY = 'todo-stats-v1';
+const THEME_STORAGE_KEY = 'todo-theme-v1';
 
 const monthNames = [
 	'Jan',
@@ -62,9 +72,11 @@ const baseGoals = [3, 7, 14, 30, 60, 90];
 const state = {
 	tasks: [],
 	schedules: [],
+	goals: [],
 	lastSyncDate: null,
 	stats: {
 		dailyCompletions: {},
+		goalDailyCompletions: {},
 	},
 };
 
@@ -72,8 +84,40 @@ let pendingDeleteTaskId = null;
 let toastTimer = null;
 let deferredInstallPrompt = null;
 
+const getStoredTheme = () => {
+	const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+	return savedTheme === 'dark' ? 'dark' : 'light';
+};
+
+const applyTheme = (theme) => {
+	const isDarkTheme = theme === 'dark';
+	document.body.classList.toggle('is-dark', isDarkTheme);
+
+	if (themeToggleButton) {
+		themeToggleButton.textContent = isDarkTheme ? '☀️ Light' : '🌙 Dark';
+		themeToggleButton.setAttribute(
+			'aria-label',
+			isDarkTheme ? 'Switch to light mode' : 'Switch to dark mode',
+		);
+	}
+
+	const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+	if (themeColorMeta) {
+		themeColorMeta.setAttribute('content', isDarkTheme ? '#0f172a' : '#22c55e');
+	}
+};
+
+const toggleTheme = () => {
+	const nextTheme = document.body.classList.contains('is-dark') ? 'light' : 'dark';
+	localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
+	applyTheme(nextTheme);
+};
+
 const isStandaloneMode = () =>
 	window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+const isTouchReorderMode =
+	window.matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
 
 const updateInstallButtonState = () => {
 	if (!installAppButton) {
@@ -199,6 +243,40 @@ const isDuplicateScheduleText = (text, excludedScheduleId = null) => {
 	);
 };
 
+const isDuplicateGoalTitle = (title, excludedGoalId = null) => {
+	const normalizedTitle = normalizeText(title);
+	return state.goals.some(
+		(goal) => goal.id !== excludedGoalId && normalizeText(goal.title) === normalizedTitle,
+	);
+};
+
+const parseDateStampUtc = (dateStamp) => {
+	const [year, month, day] = dateStamp.split('-').map(Number);
+	return Date.UTC(year, month - 1, day);
+};
+
+const daysBetweenDateStamps = (fromDateStamp, toDateStamp) => {
+	const fromUtc = parseDateStampUtc(fromDateStamp);
+	const toUtc = parseDateStampUtc(toDateStamp);
+	return Math.floor((toUtc - fromUtc) / (1000 * 60 * 60 * 24));
+};
+
+const isGoalActiveOnDate = (goal, dateStamp) => {
+	if (!goal || !dateStamp) {
+		return false;
+	}
+
+	if (daysBetweenDateStamps(goal.startDate, dateStamp) < 0) {
+		return false;
+	}
+
+	if (goal.type === 'period' && goal.endDate) {
+		return daysBetweenDateStamps(dateStamp, goal.endDate) >= 0;
+	}
+
+	return true;
+};
+
 const getDailyCompletionCount = (dateStamp) => {
 	return Number(state.stats.dailyCompletions[dateStamp] || 0);
 };
@@ -223,6 +301,40 @@ const adjustTodayCompletionCount = (delta) => {
 	setDailyCompletionCount(today, current + delta);
 };
 
+const getGoalDailyCompletionCount = (goalId, dateStamp) => {
+	return Number(state.stats.goalDailyCompletions?.[goalId]?.[dateStamp] || 0);
+};
+
+const setGoalDailyCompletionCount = (goalId, dateStamp, count) => {
+	if (!goalId || !dateStamp) {
+		return;
+	}
+
+	if (!state.stats.goalDailyCompletions[goalId]) {
+		state.stats.goalDailyCompletions[goalId] = {};
+	}
+
+	const nextValue = Math.max(0, Math.floor(count));
+	if (nextValue === 0) {
+		delete state.stats.goalDailyCompletions[goalId][dateStamp];
+		if (Object.keys(state.stats.goalDailyCompletions[goalId]).length === 0) {
+			delete state.stats.goalDailyCompletions[goalId];
+		}
+		return;
+	}
+
+	state.stats.goalDailyCompletions[goalId][dateStamp] = nextValue;
+};
+
+const adjustGoalCompletionCount = (goalId, dateStamp, delta) => {
+	if (!goalId || !dateStamp || delta === 0) {
+		return;
+	}
+
+	const current = getGoalDailyCompletionCount(goalId, dateStamp);
+	setGoalDailyCompletionCount(goalId, dateStamp, current + delta);
+};
+
 const getSortedCompletionDays = () => {
 	return Object.keys(state.stats.dailyCompletions)
 		.filter((dateStamp) => Number(state.stats.dailyCompletions[dateStamp]) > 0)
@@ -242,7 +354,12 @@ const getCurrentStreak = () => {
 	};
 
 	const lastDay = completionDays[completionDays.length - 1];
-	if (lastDay !== today) {
+	const todayUtc = parseUtc(today);
+	const lastDayUtc = parseUtc(lastDay);
+	const daysSinceLastCompletion = (todayUtc - lastDayUtc) / (1000 * 60 * 60 * 24);
+
+	// Keep streak visible if the latest completion was yesterday.
+	if (daysSinceLastCompletion > 1) {
 		return 0;
 	}
 
@@ -436,6 +553,139 @@ const renderProgressCharts = () => {
 	const elapsedDays = Math.floor((todayUtc - yearStartUtc) / (1000 * 60 * 60 * 24)) + 1;
 	const consistencyPercent = elapsedDays > 0 ? Math.round((activeDays / elapsedDays) * 100) : 0;
 	yearChartLabel.textContent = `${activeDays}/${totalDaysInYear} active days in ${currentYear} (${consistencyPercent}% consistency)`;
+	renderGoalProgress();
+};
+
+const getGoalTrackingEndDate = (goal, todayDateStamp) => {
+	if (goal.type === 'period' && goal.endDate) {
+		return daysBetweenDateStamps(goal.endDate, todayDateStamp) < 0 ? goal.endDate : todayDateStamp;
+	}
+
+	return todayDateStamp;
+};
+
+const getDateStampsInRange = (startDateStamp, endDateStamp) => {
+	if (daysBetweenDateStamps(startDateStamp, endDateStamp) < 0) {
+		return [];
+	}
+
+	const dates = [];
+	let cursorUtc = parseDateStampUtc(startDateStamp);
+	const endUtc = parseDateStampUtc(endDateStamp);
+
+	while (cursorUtc <= endUtc) {
+		const date = new Date(cursorUtc);
+		const dateStamp = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
+		dates.push(dateStamp);
+		cursorUtc += 1000 * 60 * 60 * 24;
+	}
+
+	return dates;
+};
+
+const renderGoalOptions = () => {
+	if (!scheduleGoalSelect) {
+		return;
+	}
+
+	const previousValue = scheduleGoalSelect.value;
+	scheduleGoalSelect.innerHTML = '<option value="">No goal</option>';
+
+	state.goals.forEach((goal) => {
+		const option = document.createElement('option');
+		option.value = goal.id;
+		option.textContent = goal.title;
+		scheduleGoalSelect.appendChild(option);
+	});
+
+	if (previousValue && state.goals.some((goal) => goal.id === previousValue)) {
+		scheduleGoalSelect.value = previousValue;
+	}
+};
+
+const renderGoals = () => {
+	if (!goalList) {
+		return;
+	}
+
+	goalList.innerHTML = '';
+	state.goals.forEach((goal) => {
+		const scheduleCount = state.schedules.filter((schedule) => schedule.goalId === goal.id).length;
+		const goalItem = document.createElement('li');
+		goalItem.className = 'goal-item';
+		goalItem.dataset.goalId = goal.id;
+
+		const goalTypeLabel = goal.type === 'period' && goal.endDate
+			? `${goal.startDate} to ${goal.endDate}`
+			: 'Habit (indefinite)';
+
+		goalItem.innerHTML = `
+			<div class="goal-item-text">
+				<strong>${goal.title}</strong>
+				<span>${goalTypeLabel} | ${scheduleCount} task${scheduleCount === 1 ? '' : 's'}</span>
+			</div>
+			<button type="button" class="goal-remove-btn">Remove goal</button>
+		`;
+
+		goalList.appendChild(goalItem);
+	});
+
+	renderGoalOptions();
+};
+
+const renderGoalProgress = () => {
+	if (!goalProgressList) {
+		return;
+	}
+
+	goalProgressList.innerHTML = '';
+	if (state.goals.length === 0) {
+		const emptyItem = document.createElement('li');
+		emptyItem.className = 'goal-progress-item goal-progress-empty';
+		emptyItem.textContent = 'No goals yet. Create one in Daily Schedules.';
+		goalProgressList.appendChild(emptyItem);
+		return;
+	}
+
+	const today = getCurrentDateStamp();
+
+	state.goals.forEach((goal) => {
+		const attachedSchedules = state.schedules.filter((schedule) => schedule.goalId === goal.id);
+		const trackingEndDate = getGoalTrackingEndDate(goal, today);
+		const trackingDates = getDateStampsInRange(goal.startDate, trackingEndDate);
+		const validDates = trackingDates.filter((dateStamp) => isGoalActiveOnDate(goal, dateStamp));
+
+		const expectedCompletions = validDates.length * attachedSchedules.length;
+		const goalDateCompletions = state.stats.goalDailyCompletions?.[goal.id] || {};
+		let completedCompletions = 0;
+		validDates.forEach((dateStamp) => {
+			completedCompletions += Number(goalDateCompletions[dateStamp] || 0);
+		});
+
+		const progressPercent = expectedCompletions > 0
+			? Math.min(Math.round((completedCompletions / expectedCompletions) * 100), 100)
+			: 0;
+
+		const goalItem = document.createElement('li');
+		goalItem.className = 'goal-progress-item';
+		goalItem.innerHTML = `
+			<div class="goal-progress-head">
+				<strong>${goal.title}</strong>
+				<span>${progressPercent}%</span>
+			</div>
+			<p class="goal-progress-meta">
+				${goal.type === 'period' && goal.endDate ? `Period: ${goal.startDate} to ${goal.endDate}` : `Habit since ${goal.startDate}`}
+			</p>
+			<p class="goal-progress-meta">
+				${completedCompletions}/${expectedCompletions} completed checks • ${attachedSchedules.length} attached task${attachedSchedules.length === 1 ? '' : 's'}
+			</p>
+			<div class="goal-progress-track">
+				<div class="goal-progress-fill" style="width: ${progressPercent}%"></div>
+			</div>
+		`;
+
+		goalProgressList.appendChild(goalItem);
+	});
 };
 
 const showToast = (message, icon = '🎉', variant = 'success') => {
@@ -610,7 +860,7 @@ const createTaskElement = (task) => {
 	const taskElement = document.createElement('div');
 	taskElement.className = 'todo-item';
 	taskElement.dataset.taskId = task.id;
-	taskElement.draggable = !task.done;
+	taskElement.draggable = !task.done && !isTouchReorderMode;
 
 	taskElement.innerHTML = `
 		<div class="todo-item-label">
@@ -652,6 +902,7 @@ const findTaskById = (taskId) => state.tasks.find((task) => task.id === taskId);
 const saveStateToStorage = () => {
 	localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(state.tasks));
 	localStorage.setItem(SCHEDULES_STORAGE_KEY, JSON.stringify(state.schedules));
+	localStorage.setItem(GOALS_STORAGE_KEY, JSON.stringify(state.goals));
 	localStorage.setItem(LAST_SYNC_DATE_STORAGE_KEY, state.lastSyncDate || '');
 	localStorage.setItem(STATS_STORAGE_KEY, JSON.stringify(state.stats));
 	updateTaskSummary();
@@ -723,8 +974,40 @@ const loadStoredSchedules = () => {
 			.map((schedule) => ({
 				id: typeof schedule.id === 'string' ? schedule.id : createId('schedule'),
 				text: schedule.text.trim() || 'Untitled scheduled task',
+				goalId: typeof schedule.goalId === 'string' ? schedule.goalId : null,
 				createdAt: typeof schedule.createdAt === 'number' ? schedule.createdAt : Date.now(),
 			}));
+	} catch {
+		return [];
+	}
+};
+
+const loadStoredGoals = () => {
+	const rawGoals = localStorage.getItem(GOALS_STORAGE_KEY);
+	if (!rawGoals) {
+		return [];
+	}
+
+	try {
+		const parsed = JSON.parse(rawGoals);
+		if (!Array.isArray(parsed)) {
+			return [];
+		}
+
+		return parsed
+			.filter((goal) => goal && typeof goal.title === 'string')
+			.map((goal) => {
+				const startDate = typeof goal.startDate === 'string' ? goal.startDate : getCurrentDateStamp();
+				const isPeriodGoal = goal.type === 'period' && typeof goal.endDate === 'string';
+				return {
+					id: typeof goal.id === 'string' ? goal.id : createId('goal'),
+					title: goal.title.trim() || 'Untitled goal',
+					type: isPeriodGoal ? 'period' : 'habit',
+					startDate,
+					endDate: isPeriodGoal ? goal.endDate : null,
+					createdAt: typeof goal.createdAt === 'number' ? goal.createdAt : Date.now(),
+				};
+			});
 	} catch {
 		return [];
 	}
@@ -733,18 +1016,18 @@ const loadStoredSchedules = () => {
 const loadStoredStats = () => {
 	const rawStats = localStorage.getItem(STATS_STORAGE_KEY);
 	if (!rawStats) {
-		return { dailyCompletions: {} };
+		return { dailyCompletions: {}, goalDailyCompletions: {} };
 	}
 
 	try {
 		const parsed = JSON.parse(rawStats);
 		if (!parsed || typeof parsed !== 'object') {
-			return { dailyCompletions: {} };
+			return { dailyCompletions: {}, goalDailyCompletions: {} };
 		}
 
 		const dailyCompletions = parsed.dailyCompletions;
 		if (!dailyCompletions || typeof dailyCompletions !== 'object') {
-			return { dailyCompletions: {} };
+			return { dailyCompletions: {}, goalDailyCompletions: {} };
 		}
 
 		const normalized = {};
@@ -755,9 +1038,30 @@ const loadStoredStats = () => {
 			}
 		});
 
-		return { dailyCompletions: normalized };
+		const goalDailyCompletions = {};
+		if (parsed.goalDailyCompletions && typeof parsed.goalDailyCompletions === 'object') {
+			Object.entries(parsed.goalDailyCompletions).forEach(([goalId, dailyMap]) => {
+				if (!dailyMap || typeof dailyMap !== 'object') {
+					return;
+				}
+
+				const normalizedGoalMap = {};
+				Object.entries(dailyMap).forEach(([dateStamp, count]) => {
+					const numericCount = Number(count);
+					if (!Number.isNaN(numericCount) && numericCount > 0) {
+						normalizedGoalMap[dateStamp] = Math.floor(numericCount);
+					}
+				});
+
+				if (Object.keys(normalizedGoalMap).length > 0) {
+					goalDailyCompletions[goalId] = normalizedGoalMap;
+				}
+			});
+		}
+
+		return { dailyCompletions: normalized, goalDailyCompletions };
 	} catch {
-		return { dailyCompletions: {} };
+		return { dailyCompletions: {}, goalDailyCompletions: {} };
 	}
 };
 
@@ -839,8 +1143,10 @@ const renderSchedules = () => {
 		const scheduleItem = document.createElement('li');
 		scheduleItem.className = 'schedule-item';
 		scheduleItem.dataset.scheduleId = schedule.id;
+		const goal = state.goals.find((item) => item.id === schedule.goalId);
+		const goalLabel = goal ? `<small class="schedule-goal-badge">${goal.title}</small>` : '';
 		scheduleItem.innerHTML = `
-			<span>${schedule.text}</span>
+			<span>${schedule.text} ${goalLabel}</span>
 			<button type="button" class="schedule-remove-btn">Remove schedule</button>
 		`;
 		scheduleList.appendChild(scheduleItem);
@@ -849,12 +1155,20 @@ const renderSchedules = () => {
 
 const initializeState = () => {
 	state.tasks = loadStoredTasks();
+	state.goals = loadStoredGoals();
 	state.schedules = loadStoredSchedules();
+	state.schedules = state.schedules.map((schedule) => ({
+		...schedule,
+		goalId: schedule.goalId && state.goals.some((goal) => goal.id === schedule.goalId)
+			? schedule.goalId
+			: null,
+	}));
 	state.stats = loadStoredStats();
 	state.lastSyncDate = localStorage.getItem(LAST_SYNC_DATE_STORAGE_KEY) || null;
 
 	syncScheduledTasksForToday();
 	renderTasks();
+	renderGoals();
 	renderSchedules();
 	renderStreakDashboard();
 	renderProgressCharts();
@@ -886,34 +1200,79 @@ const hideClearAllModal = () => {
 const showScheduleModal = () => {
 	scheduleModal.classList.add('is-open');
 	scheduleModal.setAttribute('aria-hidden', 'false');
+	document.body.classList.add('is-schedule-open');
 };
 
 const hideScheduleModal = () => {
 	scheduleModal.classList.remove('is-open');
 	scheduleModal.setAttribute('aria-hidden', 'true');
+	document.body.classList.remove('is-schedule-open');
 };
 
 const showProgressModal = () => {
 	renderProgressCharts();
 	progressModal.classList.add('is-open');
 	progressModal.setAttribute('aria-hidden', 'false');
+	document.body.classList.add('is-progress-open');
 };
 
 const hideProgressModal = () => {
 	progressModal.classList.remove('is-open');
 	progressModal.setAttribute('aria-hidden', 'true');
+	document.body.classList.remove('is-progress-open');
+};
+
+const getGoalIdFromTask = (task) => {
+	if (!task?.isScheduled || !task.scheduleId) {
+		return null;
+	}
+
+	const schedule = state.schedules.find((item) => item.id === task.scheduleId);
+	return schedule?.goalId || null;
 };
 
 const applyTaskDoneState = (task, isDone) => {
 	const wasDone = Boolean(task.done);
 	task.done = Boolean(isDone);
+	const taskGoalId = getGoalIdFromTask(task);
+	const completionDate = task.createdForDate || getCurrentDateStamp();
 	if (!wasDone && task.done) {
 		adjustTodayCompletionCount(1);
+		adjustGoalCompletionCount(taskGoalId, completionDate, 1);
 		showCompletionToast();
 	}
 	if (wasDone && !task.done) {
 		adjustTodayCompletionCount(-1);
+		adjustGoalCompletionCount(taskGoalId, completionDate, -1);
 	}
+};
+
+const finishTaskEditing = (taskItem, task) => {
+	if (!taskItem || !task) {
+		return;
+	}
+
+	const taskText = getTaskTextElement(taskItem);
+	const saveButton = getSaveButton(taskItem);
+	const editButton = getEditButton(taskItem);
+	const nextText = taskText.textContent.trim() || 'Untitled task';
+
+	task.text = nextText;
+	taskText.textContent = nextText;
+	taskText.contentEditable = 'false';
+	taskItem.classList.remove('is-editing');
+	saveButton.classList.remove('is-visible');
+	editButton.classList.remove('is-hidden');
+
+	if (task.isScheduled) {
+		const schedule = state.schedules.find((item) => item.id === task.scheduleId);
+		if (schedule) {
+			schedule.text = nextText;
+			renderSchedules();
+		}
+	}
+
+	saveStateToStorage();
 };
 
 clearAllButton.addEventListener('click', showClearAllModal);
@@ -921,6 +1280,21 @@ openScheduleButton.addEventListener('click', showScheduleModal);
 closeScheduleButton.addEventListener('click', hideScheduleModal);
 openProgressButton.addEventListener('click', showProgressModal);
 closeProgressButton.addEventListener('click', hideProgressModal);
+
+if (themeToggleButton) {
+	themeToggleButton.addEventListener('click', toggleTheme);
+}
+
+if (goalTypeSelect && goalDurationInput) {
+	goalTypeSelect.addEventListener('change', () => {
+		const isPeriodGoal = goalTypeSelect.value === 'period';
+		goalDurationInput.disabled = !isPeriodGoal;
+		goalDurationInput.required = isPeriodGoal;
+		if (!isPeriodGoal) {
+			goalDurationInput.value = '';
+		}
+	});
+}
 
 if (installAppButton) {
 	installAppButton.addEventListener('click', async () => {
@@ -986,6 +1360,7 @@ scheduleForm.addEventListener('submit', (event) => {
 	if (!text) {
 		return;
 	}
+	const selectedGoalId = scheduleGoalSelect?.value || null;
 
 	const hasSameSchedule = isDuplicateScheduleText(text);
 	if (hasSameSchedule) {
@@ -998,6 +1373,7 @@ scheduleForm.addEventListener('submit', (event) => {
 	const newSchedule = {
 		id: createId('schedule'),
 		text,
+		goalId: selectedGoalId,
 		createdAt: Date.now(),
 	};
 
@@ -1012,10 +1388,90 @@ scheduleForm.addEventListener('submit', (event) => {
 	});
 
 	renderSchedules();
+	renderGoals();
 	renderTasks();
 	scheduleInput.value = '';
+	if (scheduleGoalSelect) {
+		scheduleGoalSelect.value = '';
+	}
 	scheduleInput.focus();
 	showSuccessToast('Daily schedule created successfully.');
+	saveStateToStorage();
+});
+
+goalForm.addEventListener('submit', (event) => {
+	event.preventDefault();
+	const title = goalTitleInput.value.trim();
+	if (!title) {
+		return;
+	}
+
+	if (isDuplicateGoalTitle(title)) {
+		showDuplicateWarning('This goal already exists.');
+		goalTitleInput.focus();
+		goalTitleInput.select();
+		return;
+	}
+
+	const today = getCurrentDateStamp();
+	const isPeriodGoal = goalTypeSelect.value === 'period';
+	const durationDays = Math.max(1, Number(goalDurationInput.value || 0));
+	let endDate = null;
+
+	if (isPeriodGoal) {
+		if (!Number.isFinite(durationDays) || durationDays < 1) {
+			showDuplicateWarning('Choose a valid number of days for a period goal.');
+			goalDurationInput.focus();
+			return;
+		}
+		const endUtc = parseDateStampUtc(today) + ((durationDays - 1) * 24 * 60 * 60 * 1000);
+		const endDateObj = new Date(endUtc);
+		endDate = `${endDateObj.getUTCFullYear()}-${String(endDateObj.getUTCMonth() + 1).padStart(2, '0')}-${String(endDateObj.getUTCDate()).padStart(2, '0')}`;
+	}
+
+	state.goals.push({
+		id: createId('goal'),
+		title,
+		type: isPeriodGoal ? 'period' : 'habit',
+		startDate: today,
+		endDate,
+		createdAt: Date.now(),
+	});
+
+	renderGoals();
+	renderProgressCharts();
+	goalTitleInput.value = '';
+	goalTypeSelect.value = 'habit';
+	goalDurationInput.value = '';
+	goalDurationInput.disabled = true;
+	goalDurationInput.required = false;
+	goalTitleInput.focus();
+	showSuccessToast('Goal created successfully.');
+	saveStateToStorage();
+});
+
+goalList.addEventListener('click', (event) => {
+	const removeButton = event.target.closest('.goal-remove-btn');
+	if (!removeButton) {
+		return;
+	}
+
+	const goalItem = removeButton.closest('.goal-item');
+	if (!goalItem) {
+		return;
+	}
+
+	const goalId = goalItem.dataset.goalId;
+	state.goals = state.goals.filter((goal) => goal.id !== goalId);
+	state.schedules = state.schedules.map((schedule) =>
+		schedule.goalId === goalId ? { ...schedule, goalId: null } : schedule,
+	);
+	delete state.stats.goalDailyCompletions[goalId];
+
+	renderGoals();
+	renderSchedules();
+	renderProgressCharts();
+	showSuccessToast('Goal removed successfully.');
 	saveStateToStorage();
 });
 
@@ -1035,6 +1491,8 @@ scheduleList.addEventListener('click', (event) => {
 	state.tasks = state.tasks.filter((task) => task.scheduleId !== scheduleId);
 
 	renderSchedules();
+	renderGoals();
+	renderProgressCharts();
 	renderTasks();
 	showSuccessToast('Daily schedule removed successfully.');
 	saveStateToStorage();
@@ -1100,23 +1558,7 @@ todoList.addEventListener('click', (event) => {
 	}
 
 	if (clickedButton.classList.contains('todo-save-btn')) {
-		const nextText = taskText.textContent.trim() || 'Untitled task';
-		task.text = nextText;
-		taskText.textContent = nextText;
-		taskText.contentEditable = 'false';
-		clickedTaskItem.classList.remove('is-editing');
-		saveButton.classList.remove('is-visible');
-		editButton.classList.remove('is-hidden');
-
-		if (task.isScheduled) {
-			const schedule = state.schedules.find((item) => item.id === task.scheduleId);
-			if (schedule) {
-				schedule.text = nextText;
-				renderSchedules();
-			}
-		}
-
-		saveStateToStorage();
+		finishTaskEditing(clickedTaskItem, task);
 	}
 
 	if (clickedButton.classList.contains('todo-delete-btn')) {
@@ -1126,6 +1568,31 @@ todoList.addEventListener('click', (event) => {
 		showDeleteModal(task.id);
 	}
 
+});
+
+todoList.addEventListener('keydown', (event) => {
+	if (event.key !== 'Enter') {
+		return;
+	}
+
+	const editableText = event.target.closest('.todo-item-text');
+	if (!editableText || editableText.contentEditable !== 'true') {
+		return;
+	}
+
+	event.preventDefault();
+
+	const taskItem = editableText.closest('.todo-item');
+	if (!taskItem) {
+		return;
+	}
+
+	const task = findTaskById(taskItem.dataset.taskId);
+	if (!task) {
+		return;
+	}
+
+	finishTaskEditing(taskItem, task);
 });
 
 todoList.addEventListener('change', (event) => {
@@ -1150,6 +1617,11 @@ todoList.addEventListener('change', (event) => {
 });
 
 todoList.addEventListener('dragstart', (event) => {
+	if (isTouchReorderMode) {
+		event.preventDefault();
+		return;
+	}
+
 	const taskItem = event.target.closest('.todo-item');
 	if (!taskItem) {
 		return;
@@ -1360,6 +1832,7 @@ progressModal.addEventListener('click', (event) => {
 });
 
 initializeState();
+applyTheme(getStoredTheme());
 
 window.addEventListener('beforeinstallprompt', (event) => {
 	event.preventDefault();
