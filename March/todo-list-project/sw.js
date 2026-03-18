@@ -1,4 +1,4 @@
-const CACHE_NAME = 'todo-list-pwa-v4';
+const CACHE_NAME = 'todo-list-pwa-v12';
 const APP_SHELL = [
   './',
   './index.html',

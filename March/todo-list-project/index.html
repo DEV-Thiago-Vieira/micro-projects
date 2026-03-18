@@ -161,7 +161,7 @@
           aria-labelledby="delete-modal-title"
         >
           <h2 id="delete-modal-title">Delete task?</h2>
-          <p>This action cannot be undone.</p>
+          <p id="delete-modal-message">This action cannot be undone.</p>
           <div class="modal-actions">
             <button
               type="button"
@@ -261,6 +261,21 @@
             <ul class="goal-list" id="goal-list"></ul>
           </div>
 
+          <div class="finished-goals-wrap">
+            <button
+              type="button"
+              class="finished-goals-toggle-btn"
+              id="toggle-finished-goals-btn"
+              aria-expanded="false"
+              hidden
+            >
+              See finished goals
+            </button>
+            <div class="finished-goals-panel" id="finished-goals-panel" hidden>
+              <ul class="finished-goals-list" id="finished-goals-list"></ul>
+            </div>
+          </div>
+
           <form class="schedule-form" id="schedule-form">
             <input
               type="text"
@@ -275,6 +290,37 @@
             <button type="submit" class="schedule-submit-btn">Schedule</button>
           </form>
           <ul class="schedule-list" id="schedule-list"></ul>
+        </div>
+      </div>
+
+      <div class="modal-overlay" id="remove-goal-modal" aria-hidden="true">
+        <div
+          class="modal-card"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="remove-goal-modal-title"
+        >
+          <h2 id="remove-goal-modal-title">Remove goal?</h2>
+          <p>
+            This will detach the goal from related schedules and stop tracking
+            it.
+          </p>
+          <div class="modal-actions">
+            <button
+              type="button"
+              class="modal-btn modal-cancel-btn"
+              id="cancel-remove-goal-btn"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              class="modal-btn modal-confirm-btn"
+              id="confirm-remove-goal-btn"
+            >
+              Remove goal
+            </button>
+          </div>
         </div>
       </div>
 

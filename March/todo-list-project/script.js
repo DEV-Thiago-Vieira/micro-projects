@@ -18,6 +18,9 @@ const goalTitleInput = document.getElementById('goal-title-input');
 const goalTypeSelect = document.getElementById('goal-type-select');
 const goalDurationInput = document.getElementById('goal-duration-input');
 const goalList = document.getElementById('goal-list');
+const toggleFinishedGoalsButton = document.getElementById('toggle-finished-goals-btn');
+const finishedGoalsPanel = document.getElementById('finished-goals-panel');
+const finishedGoalsList = document.getElementById('finished-goals-list');
 const openScheduleButton = document.getElementById('open-schedule-btn');
 const scheduleModal = document.getElementById('schedule-modal');
 const closeScheduleButton = document.getElementById('close-schedule-btn');
@@ -38,11 +41,16 @@ const rewardNextElement = document.getElementById('reward-next');
 const badgeListElement = document.getElementById('badge-list');
 
 const deleteModal = document.getElementById('delete-modal');
+const deleteModalTitle = document.getElementById('delete-modal-title');
+const deleteModalMessage = document.getElementById('delete-modal-message');
 const cancelDeleteButton = document.getElementById('cancel-delete-btn');
 const confirmDeleteButton = document.getElementById('confirm-delete-btn');
 const clearAllModal = document.getElementById('clear-all-modal');
 const cancelClearAllButton = document.getElementById('cancel-clear-all-btn');
 const confirmClearAllButton = document.getElementById('confirm-clear-all-btn');
+const removeGoalModal = document.getElementById('remove-goal-modal');
+const cancelRemoveGoalButton = document.getElementById('cancel-remove-goal-btn');
+const confirmRemoveGoalButton = document.getElementById('confirm-remove-goal-btn');
 
 const TASKS_STORAGE_KEY = 'todo-items-v2';
 const LEGACY_TASKS_STORAGE_KEY = 'todo-items-v1';
@@ -81,6 +89,8 @@ const state = {
 };
 
 let pendingDeleteTaskId = null;
+let pendingDeleteScheduleId = null;
+let pendingRemoveGoalId = null;
 let toastTimer = null;
 let deferredInstallPrompt = null;
 
@@ -225,6 +235,20 @@ const getCurrentDateStamp = () => {
 
 const createId = (prefix) => `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
+const GOAL_PALETTE = [
+	'#3b82f6', '#8b5cf6', '#ec4899', '#f97316',
+	'#14b8a6', '#84cc16', '#f59e0b', '#06b6d4',
+	'#10b981', '#ef4444',
+];
+
+const getGoalColor = (goalId) => {
+	let hash = 0;
+	for (let i = 0; i < goalId.length; i++) {
+		hash = (hash * 31 + goalId.charCodeAt(i)) & 0xffff;
+	}
+	return GOAL_PALETTE[hash % GOAL_PALETTE.length];
+};
+
 const normalizeText = (text) => text.trim().toLowerCase();
 
 const isDuplicateTaskText = (text, excludedTaskId = null) => {
@@ -276,6 +300,37 @@ const isGoalActiveOnDate = (goal, dateStamp) => {
 
 	return true;
 };
+
+const isGoalFinished = (goal, dateStamp = getCurrentDateStamp()) => {
+	if (!goal) {
+		return false;
+	}
+
+	if (typeof goal.finishedAt === 'string' && goal.finishedAt) {
+		return true;
+	}
+
+	if (goal.type !== 'period' || !goal.endDate) {
+		return false;
+	}
+
+	return daysBetweenDateStamps(goal.endDate, dateStamp) > 0;
+};
+
+const isScheduleFinished = (schedule, dateStamp = getCurrentDateStamp()) => {
+	if (!schedule?.goalId) {
+		return false;
+	}
+
+	const goal = state.goals.find((item) => item.id === schedule.goalId);
+	return Boolean(goal) && isGoalFinished(goal, dateStamp);
+};
+
+const getActiveGoals = (dateStamp = getCurrentDateStamp()) =>
+	state.goals.filter((goal) => !isGoalFinished(goal, dateStamp));
+
+const getFinishedGoals = (dateStamp = getCurrentDateStamp()) =>
+	state.goals.filter((goal) => isGoalFinished(goal, dateStamp));
 
 const getDailyCompletionCount = (dateStamp) => {
 	return Number(state.stats.dailyCompletions[dateStamp] || 0);
@@ -591,7 +646,7 @@ const renderGoalOptions = () => {
 	const previousValue = scheduleGoalSelect.value;
 	scheduleGoalSelect.innerHTML = '<option value="">No goal</option>';
 
-	state.goals.forEach((goal) => {
+	getActiveGoals().forEach((goal) => {
 		const option = document.createElement('option');
 		option.value = goal.id;
 		option.textContent = goal.title;
@@ -603,13 +658,30 @@ const renderGoalOptions = () => {
 	}
 };
 
+const buildGoalOptionsMarkup = (selectedGoalId = '') => {
+	const options = ['<option value="">No goal</option>'];
+	getActiveGoals().forEach((goal) => {
+		const selected = goal.id === selectedGoalId ? ' selected' : '';
+		options.push(`<option value="${goal.id}"${selected}>${goal.title}</option>`);
+	});
+	return options.join('');
+};
+
+const getGoalDurationDays = (goal) => {
+	if (!goal || goal.type !== 'period' || !goal.endDate) {
+		return '';
+	}
+
+	return String(Math.max(1, daysBetweenDateStamps(goal.startDate, goal.endDate) + 1));
+};
+
 const renderGoals = () => {
 	if (!goalList) {
 		return;
 	}
 
 	goalList.innerHTML = '';
-	state.goals.forEach((goal) => {
+	getActiveGoals().forEach((goal) => {
 		const scheduleCount = state.schedules.filter((schedule) => schedule.goalId === goal.id).length;
 		const goalItem = document.createElement('li');
 		goalItem.className = 'goal-item';
@@ -620,17 +692,145 @@ const renderGoals = () => {
 			: 'Habit (indefinite)';
 
 		goalItem.innerHTML = `
-			<div class="goal-item-text">
-				<strong>${goal.title}</strong>
-				<span>${goalTypeLabel} | ${scheduleCount} task${scheduleCount === 1 ? '' : 's'}</span>
+			<div class="goal-item-view">
+				<div class="goal-item-text">
+					<strong>${goal.title}</strong>
+					<span>${goalTypeLabel} | ${scheduleCount} task${scheduleCount === 1 ? '' : 's'}</span>
+				</div>
+				<div class="goal-item-actions">
+					<button type="button" class="goal-edit-btn">Edit</button>
+					<button type="button" class="goal-finish-btn">Finish</button>
+					<button type="button" class="goal-remove-btn">Remove goal</button>
+				</div>
 			</div>
-			<button type="button" class="goal-remove-btn">Remove goal</button>
+			<form class="goal-edit-form">
+				<input type="text" class="goal-edit-title-input" required />
+				<select class="goal-edit-type-select">
+					<option value="habit">Habit (indefinite)</option>
+					<option value="period">Period goal</option>
+				</select>
+				<input type="number" class="goal-edit-duration-input" min="1" placeholder="Days" />
+				<button type="button" class="goal-save-btn">Save</button>
+				<button type="button" class="goal-cancel-btn">Cancel</button>
+			</form>
 		`;
+
+		const titleInput = goalItem.querySelector('.goal-edit-title-input');
+		if (titleInput) {
+			titleInput.value = goal.title;
+		}
+
+		const typeSelect = goalItem.querySelector('.goal-edit-type-select');
+		const durationInput = goalItem.querySelector('.goal-edit-duration-input');
+		if (typeSelect) {
+			typeSelect.value = goal.type;
+		}
+		if (durationInput) {
+			durationInput.value = getGoalDurationDays(goal);
+			durationInput.disabled = goal.type !== 'period';
+			durationInput.required = goal.type === 'period';
+		}
 
 		goalList.appendChild(goalItem);
 	});
 
 	renderGoalOptions();
+};
+
+const renderFinishedGoals = () => {
+	if (!toggleFinishedGoalsButton || !finishedGoalsPanel || !finishedGoalsList) {
+		return;
+	}
+
+	const finishedGoals = getFinishedGoals();
+	toggleFinishedGoalsButton.hidden = false;
+	const isExpanded = !finishedGoalsPanel.hidden;
+	toggleFinishedGoalsButton.textContent = `${isExpanded ? 'Hide' : 'See'} finished goals (${finishedGoals.length})`;
+	toggleFinishedGoalsButton.setAttribute('aria-expanded', String(isExpanded));
+
+	finishedGoalsList.innerHTML = '';
+	if (finishedGoals.length === 0) {
+		const emptyItem = document.createElement('li');
+		emptyItem.className = 'finished-goal-empty';
+		emptyItem.textContent = 'No finished goals yet.';
+		finishedGoalsList.appendChild(emptyItem);
+		return;
+	}
+
+	finishedGoals.forEach((goal) => {
+		const item = document.createElement('li');
+		item.className = 'finished-goal-item';
+		item.dataset.goalId = goal.id;
+
+		const head = document.createElement('div');
+		head.className = 'finished-goal-head';
+		const title = document.createElement('strong');
+		title.textContent = goal.title;
+		const meta = document.createElement('span');
+		meta.textContent = `Ended on ${goal.finishedAt || goal.endDate}`;
+		const unfinishBtn = document.createElement('button');
+		unfinishBtn.type = 'button';
+		unfinishBtn.className = 'goal-unfinish-btn';
+		unfinishBtn.textContent = 'Reactivate';
+		head.appendChild(title);
+		head.appendChild(meta);
+		head.appendChild(unfinishBtn);
+		item.appendChild(head);
+
+		const linkedSchedules = state.schedules.filter((schedule) => schedule.goalId === goal.id);
+		if (linkedSchedules.length > 0) {
+			const taskList = document.createElement('ul');
+			taskList.className = 'finished-goal-task-list';
+			linkedSchedules.forEach((schedule) => {
+				const taskItem = document.createElement('li');
+				taskItem.textContent = schedule.text;
+				taskList.appendChild(taskItem);
+			});
+			item.appendChild(taskList);
+		}
+
+		finishedGoalsList.appendChild(item);
+	});
+};
+
+const buildGoalProgressItem = (goal, today, extraClass = '') => {
+	const attachedSchedules = state.schedules.filter((schedule) => schedule.goalId === goal.id);
+	const trackingEndDate = getGoalTrackingEndDate(goal, today);
+	const trackingDates = getDateStampsInRange(goal.startDate, trackingEndDate);
+	const validDates = trackingDates.filter((dateStamp) => isGoalActiveOnDate(goal, dateStamp));
+
+	const baseExpectedCompletions = validDates.length * attachedSchedules.length;
+	const goalDateCompletions = state.stats.goalDailyCompletions?.[goal.id] || {};
+	let completedCompletions = 0;
+	validDates.forEach((dateStamp) => {
+		completedCompletions += Number(goalDateCompletions[dateStamp] || 0);
+	});
+
+	// Keep the denominator coherent with historical tracked completions.
+	const expectedCompletions = Math.max(baseExpectedCompletions, completedCompletions);
+
+	const progressPercent = expectedCompletions > 0
+		? Math.min(Math.round((completedCompletions / expectedCompletions) * 100), 100)
+		: 0;
+
+	const goalItem = document.createElement('li');
+	goalItem.className = `goal-progress-item${extraClass ? ' ' + extraClass : ''}`;
+	goalItem.innerHTML = `
+		<div class="goal-progress-head">
+			<strong>${goal.title}</strong>
+			<span>${progressPercent}%</span>
+		</div>
+		<p class="goal-progress-meta">
+			${goal.type === 'period' && goal.endDate ? `Period: ${goal.startDate} to ${goal.endDate}` : `Habit since ${goal.startDate}`}
+		</p>
+		<p class="goal-progress-meta">
+			${completedCompletions}/${expectedCompletions} completed checks • ${attachedSchedules.length} attached task${attachedSchedules.length === 1 ? '' : 's'}
+		</p>
+		<div class="goal-progress-track">
+			<div class="goal-progress-fill" style="width: ${progressPercent}%"></div>
+		</div>
+	`;
+	return goalItem;
 };
 
 const renderGoalProgress = () => {
@@ -639,53 +839,52 @@ const renderGoalProgress = () => {
 	}
 
 	goalProgressList.innerHTML = '';
-	if (state.goals.length === 0) {
+	const activeGoals = getActiveGoals();
+	const finishedGoals = getFinishedGoals();
+	const today = getCurrentDateStamp();
+
+	if (activeGoals.length === 0 && finishedGoals.length === 0) {
 		const emptyItem = document.createElement('li');
 		emptyItem.className = 'goal-progress-item goal-progress-empty';
-		emptyItem.textContent = 'No goals yet. Create one in Daily Schedules.';
+		emptyItem.textContent = 'No goals yet.';
 		goalProgressList.appendChild(emptyItem);
 		return;
 	}
 
-	const today = getCurrentDateStamp();
+	activeGoals.forEach((goal) => {
+		goalProgressList.appendChild(buildGoalProgressItem(goal, today));
+	});
 
-	state.goals.forEach((goal) => {
-		const attachedSchedules = state.schedules.filter((schedule) => schedule.goalId === goal.id);
-		const trackingEndDate = getGoalTrackingEndDate(goal, today);
-		const trackingDates = getDateStampsInRange(goal.startDate, trackingEndDate);
-		const validDates = trackingDates.filter((dateStamp) => isGoalActiveOnDate(goal, dateStamp));
+	if (finishedGoals.length > 0) {
+		const wrapItem = document.createElement('li');
+		wrapItem.className = 'goal-progress-finished-wrap';
 
-		const expectedCompletions = validDates.length * attachedSchedules.length;
-		const goalDateCompletions = state.stats.goalDailyCompletions?.[goal.id] || {};
-		let completedCompletions = 0;
-		validDates.forEach((dateStamp) => {
-			completedCompletions += Number(goalDateCompletions[dateStamp] || 0);
+		const toggleBtn = document.createElement('button');
+		toggleBtn.type = 'button';
+		toggleBtn.className = 'goal-progress-finished-toggle';
+		toggleBtn.textContent = `Show finished goals (${finishedGoals.length})`;
+		toggleBtn.setAttribute('aria-expanded', 'false');
+
+		const panel = document.createElement('ul');
+		panel.className = 'goal-progress-finished-list';
+		panel.classList.remove('is-open');
+		panel.hidden = true;
+
+		finishedGoals.forEach((goal) => {
+			panel.appendChild(buildGoalProgressItem(goal, today, 'goal-progress-item--finished'));
 		});
 
-		const progressPercent = expectedCompletions > 0
-			? Math.min(Math.round((completedCompletions / expectedCompletions) * 100), 100)
-			: 0;
+		toggleBtn.addEventListener('click', () => {
+			const isOpen = panel.classList.toggle('is-open');
+			panel.hidden = !isOpen;
+			toggleBtn.setAttribute('aria-expanded', String(isOpen));
+			toggleBtn.textContent = `${isOpen ? 'Hide' : 'Show'} finished goals (${finishedGoals.length})`;
+		});
 
-		const goalItem = document.createElement('li');
-		goalItem.className = 'goal-progress-item';
-		goalItem.innerHTML = `
-			<div class="goal-progress-head">
-				<strong>${goal.title}</strong>
-				<span>${progressPercent}%</span>
-			</div>
-			<p class="goal-progress-meta">
-				${goal.type === 'period' && goal.endDate ? `Period: ${goal.startDate} to ${goal.endDate}` : `Habit since ${goal.startDate}`}
-			</p>
-			<p class="goal-progress-meta">
-				${completedCompletions}/${expectedCompletions} completed checks • ${attachedSchedules.length} attached task${attachedSchedules.length === 1 ? '' : 's'}
-			</p>
-			<div class="goal-progress-track">
-				<div class="goal-progress-fill" style="width: ${progressPercent}%"></div>
-			</div>
-		`;
-
-		goalProgressList.appendChild(goalItem);
-	});
+		wrapItem.appendChild(toggleBtn);
+		wrapItem.appendChild(panel);
+		goalProgressList.appendChild(wrapItem);
+	}
 };
 
 const showToast = (message, icon = '🎉', variant = 'success') => {
@@ -865,7 +1064,9 @@ const createTaskElement = (task) => {
 	taskElement.innerHTML = `
 		<div class="todo-item-label">
 			<input type="checkbox" />
-			<span class="todo-item-text"></span>
+			<div class="todo-item-label-content">
+				<span class="todo-item-text"></span>
+			</div>
 		</div>
 		<div class="todo-item-actions">
 			<button type="button" class="todo-action-btn todo-edit-btn" aria-label="Edit task">
@@ -892,6 +1093,22 @@ const createTaskElement = (task) => {
 	if (task.isScheduled) {
 		deleteButton.setAttribute('aria-disabled', 'true');
 		deleteButton.setAttribute('title', 'Remove this from Daily Schedules to delete it');
+
+		if (task.scheduleId) {
+			const schedule = state.schedules.find((s) => s.id === task.scheduleId);
+			if (schedule?.goalId) {
+				const goal = state.goals.find((g) => g.id === schedule.goalId);
+				if (goal) {
+					const color = getGoalColor(goal.id);
+					taskElement.style.setProperty('--task-goal-color', color);
+					taskElement.classList.add('has-goal-color');
+					const badge = document.createElement('span');
+					badge.className = 'task-goal-badge';
+					badge.textContent = goal.title;
+					taskTextElement.parentElement.appendChild(badge);
+				}
+			}
+		}
 	}
 
 	return taskElement;
@@ -1005,6 +1222,7 @@ const loadStoredGoals = () => {
 					type: isPeriodGoal ? 'period' : 'habit',
 					startDate,
 					endDate: isPeriodGoal ? goal.endDate : null,
+					finishedAt: typeof goal.finishedAt === 'string' ? goal.finishedAt : null,
 					createdAt: typeof goal.createdAt === 'number' ? goal.createdAt : Date.now(),
 				};
 			});
@@ -1068,6 +1286,22 @@ const loadStoredStats = () => {
 const syncScheduledTasksForToday = () => {
 	const today = getCurrentDateStamp();
 	const needsNewDaySync = state.lastSyncDate !== today;
+	const isScheduleActiveForDate = (schedule, dateStamp) => {
+		if (!schedule?.goalId) {
+			return true;
+		}
+
+		const goal = state.goals.find((item) => item.id === schedule.goalId);
+		if (!goal) {
+			return true;
+		}
+
+		if (isGoalFinished(goal, dateStamp)) {
+			return false;
+		}
+
+		return isGoalActiveOnDate(goal, dateStamp);
+	};
 
 	// Keep one scheduled task instance per schedule/day in case storage was duplicated.
 	const seenScheduledKeys = new Set();
@@ -1087,6 +1321,10 @@ const syncScheduledTasksForToday = () => {
 	if (needsNewDaySync) {
 		state.tasks = state.tasks.filter((task) => !task.isScheduled);
 		state.schedules.forEach((schedule) => {
+			if (!isScheduleActiveForDate(schedule, today)) {
+				return;
+			}
+
 			state.tasks.push({
 				id: createId('task'),
 				text: schedule.text,
@@ -1104,10 +1342,19 @@ const syncScheduledTasksForToday = () => {
 		if (!task.isScheduled) {
 			return true;
 		}
-		return state.schedules.some((schedule) => schedule.id === task.scheduleId);
+		const linkedSchedule = state.schedules.find((schedule) => schedule.id === task.scheduleId);
+		if (!linkedSchedule) {
+			return false;
+		}
+
+		return isScheduleActiveForDate(linkedSchedule, task.createdForDate || today);
 	});
 
 	state.schedules.forEach((schedule) => {
+		if (!isScheduleActiveForDate(schedule, today)) {
+			return;
+		}
+
 		const hasTaskForToday = state.tasks.some(
 			(task) =>
 				task.isScheduled &&
@@ -1139,18 +1386,65 @@ const renderTasks = () => {
 
 const renderSchedules = () => {
 	scheduleList.innerHTML = '';
-	state.schedules.forEach((schedule) => {
+	state.schedules
+		.filter((schedule) => !isScheduleFinished(schedule))
+		.forEach((schedule) => {
 		const scheduleItem = document.createElement('li');
 		scheduleItem.className = 'schedule-item';
 		scheduleItem.dataset.scheduleId = schedule.id;
 		const goal = state.goals.find((item) => item.id === schedule.goalId);
 		const goalLabel = goal ? `<small class="schedule-goal-badge">${goal.title}</small>` : '';
 		scheduleItem.innerHTML = `
-			<span>${schedule.text} ${goalLabel}</span>
-			<button type="button" class="schedule-remove-btn">Remove schedule</button>
+			<div class="schedule-item-view">
+				<span>${schedule.text} ${goalLabel}</span>
+				<div class="schedule-item-actions">
+					<button type="button" class="schedule-edit-btn">Edit</button>
+					<button type="button" class="schedule-remove-btn">Remove schedule</button>
+				</div>
+			</div>
+			<form class="schedule-edit-form">
+				<input type="text" class="schedule-edit-input" required />
+				<select class="schedule-edit-goal-select">${buildGoalOptionsMarkup(schedule.goalId || '')}</select>
+				<button type="button" class="schedule-save-btn">Save</button>
+				<button type="button" class="schedule-cancel-btn">Cancel</button>
+			</form>
 		`;
+
+		const editInput = scheduleItem.querySelector('.schedule-edit-input');
+		if (editInput) {
+			editInput.value = schedule.text;
+		}
 		scheduleList.appendChild(scheduleItem);
-	});
+		});
+};
+
+const updateScheduleItemView = (scheduleItem, schedule) => {
+	if (!scheduleItem || !schedule) {
+		return;
+	}
+
+	const labelElement = scheduleItem.querySelector('.schedule-item-view span');
+	if (labelElement) {
+		labelElement.textContent = schedule.text;
+		const goal = state.goals.find((item) => item.id === schedule.goalId);
+		if (goal) {
+			labelElement.appendChild(document.createTextNode(' '));
+			const badge = document.createElement('small');
+			badge.className = 'schedule-goal-badge';
+			badge.textContent = goal.title;
+			labelElement.appendChild(badge);
+		}
+	}
+
+	const editInput = scheduleItem.querySelector('.schedule-edit-input');
+	if (editInput) {
+		editInput.value = schedule.text;
+	}
+
+	const goalSelect = scheduleItem.querySelector('.schedule-edit-goal-select');
+	if (goalSelect) {
+		goalSelect.innerHTML = buildGoalOptionsMarkup(schedule.goalId || '');
+	}
 };
 
 const initializeState = () => {
@@ -1169,20 +1463,40 @@ const initializeState = () => {
 	syncScheduledTasksForToday();
 	renderTasks();
 	renderGoals();
+	renderFinishedGoals();
 	renderSchedules();
 	renderStreakDashboard();
 	renderProgressCharts();
 	saveStateToStorage();
 };
 
-const showDeleteModal = (taskId) => {
+const showDeleteModal = ({
+	taskId = null,
+	scheduleId = null,
+	title = 'Delete task?',
+	message = 'This action cannot be undone.',
+} = {}) => {
 	pendingDeleteTaskId = taskId;
+	pendingDeleteScheduleId = scheduleId;
+	if (deleteModalTitle) {
+		deleteModalTitle.textContent = title;
+	}
+	if (deleteModalMessage) {
+		deleteModalMessage.textContent = message;
+	}
 	deleteModal.classList.add('is-open');
 	deleteModal.setAttribute('aria-hidden', 'false');
 };
 
 const hideDeleteModal = () => {
 	pendingDeleteTaskId = null;
+	pendingDeleteScheduleId = null;
+	if (deleteModalTitle) {
+		deleteModalTitle.textContent = 'Delete task?';
+	}
+	if (deleteModalMessage) {
+		deleteModalMessage.textContent = 'This action cannot be undone.';
+	}
 	deleteModal.classList.remove('is-open');
 	deleteModal.setAttribute('aria-hidden', 'true');
 };
@@ -1198,6 +1512,10 @@ const hideClearAllModal = () => {
 };
 
 const showScheduleModal = () => {
+	syncScheduledTasksForToday();
+	renderGoals();
+	renderFinishedGoals();
+	renderSchedules();
 	scheduleModal.classList.add('is-open');
 	scheduleModal.setAttribute('aria-hidden', 'false');
 	document.body.classList.add('is-schedule-open');
@@ -1222,6 +1540,48 @@ const hideProgressModal = () => {
 	document.body.classList.remove('is-progress-open');
 };
 
+const showRemoveGoalModal = (goalId) => {
+	pendingRemoveGoalId = goalId;
+	removeGoalModal.classList.add('is-open');
+	removeGoalModal.setAttribute('aria-hidden', 'false');
+};
+
+const hideRemoveGoalModal = () => {
+	pendingRemoveGoalId = null;
+	removeGoalModal.classList.remove('is-open');
+	removeGoalModal.setAttribute('aria-hidden', 'true');
+};
+
+const removeGoalById = (goalId) => {
+	state.goals = state.goals.filter((goal) => goal.id !== goalId);
+	state.schedules = state.schedules.map((schedule) =>
+		schedule.goalId === goalId ? { ...schedule, goalId: null } : schedule,
+	);
+	delete state.stats.goalDailyCompletions[goalId];
+
+	syncScheduledTasksForToday();
+	renderGoals();
+	renderFinishedGoals();
+	renderSchedules();
+	renderProgressCharts();
+	renderTasks();
+	showSuccessToast('Goal removed successfully.');
+	saveStateToStorage();
+};
+
+const removeScheduleById = (scheduleId) => {
+	state.schedules = state.schedules.filter((schedule) => schedule.id !== scheduleId);
+	state.tasks = state.tasks.filter((task) => task.scheduleId !== scheduleId);
+
+	renderSchedules();
+	renderGoals();
+	renderFinishedGoals();
+	renderProgressCharts();
+	renderTasks();
+	showSuccessToast('Daily schedule removed successfully.');
+	saveStateToStorage();
+};
+
 const getGoalIdFromTask = (task) => {
 	if (!task?.isScheduled || !task.scheduleId) {
 		return null;
@@ -1229,6 +1589,24 @@ const getGoalIdFromTask = (task) => {
 
 	const schedule = state.schedules.find((item) => item.id === task.scheduleId);
 	return schedule?.goalId || null;
+};
+
+const transferCompletedScheduleScoresToGoal = (scheduleId, previousGoalId, nextGoalId) => {
+	if (previousGoalId === nextGoalId) {
+		return;
+	}
+
+	state.tasks
+		.filter((task) => task.isScheduled && task.scheduleId === scheduleId && task.done)
+		.forEach((task) => {
+			const completionDate = task.createdForDate || getCurrentDateStamp();
+			if (previousGoalId) {
+				adjustGoalCompletionCount(previousGoalId, completionDate, -1);
+			}
+			if (nextGoalId) {
+				adjustGoalCompletionCount(nextGoalId, completionDate, 1);
+			}
+		});
 };
 
 const applyTaskDoneState = (task, isDone) => {
@@ -1389,6 +1767,7 @@ scheduleForm.addEventListener('submit', (event) => {
 
 	renderSchedules();
 	renderGoals();
+	renderFinishedGoals();
 	renderTasks();
 	scheduleInput.value = '';
 	if (scheduleGoalSelect) {
@@ -1435,10 +1814,12 @@ goalForm.addEventListener('submit', (event) => {
 		type: isPeriodGoal ? 'period' : 'habit',
 		startDate: today,
 		endDate,
+		finishedAt: null,
 		createdAt: Date.now(),
 	});
 
 	renderGoals();
+	renderFinishedGoals();
 	renderProgressCharts();
 	goalTitleInput.value = '';
 	goalTypeSelect.value = 'habit';
@@ -1451,6 +1832,121 @@ goalForm.addEventListener('submit', (event) => {
 });
 
 goalList.addEventListener('click', (event) => {
+	const editButton = event.target.closest('.goal-edit-btn');
+	if (editButton) {
+		const goalItem = editButton.closest('.goal-item');
+		if (!goalItem) {
+			return;
+		}
+
+		goalItem.classList.add('is-editing');
+		const titleInput = goalItem.querySelector('.goal-edit-title-input');
+		if (titleInput) {
+			titleInput.focus();
+			titleInput.select();
+		}
+		return;
+	}
+
+	const cancelButton = event.target.closest('.goal-cancel-btn');
+	if (cancelButton) {
+		const goalItem = cancelButton.closest('.goal-item');
+		if (!goalItem) {
+			return;
+		}
+
+		goalItem.classList.remove('is-editing');
+		return;
+	}
+
+	const finishButton = event.target.closest('.goal-finish-btn');
+	if (finishButton) {
+		const goalItem = finishButton.closest('.goal-item');
+		if (!goalItem) {
+			return;
+		}
+
+		const goalId = goalItem.dataset.goalId;
+		const goal = state.goals.find((item) => item.id === goalId);
+		if (!goal) {
+			return;
+		}
+
+		goal.finishedAt = getCurrentDateStamp();
+		syncScheduledTasksForToday();
+		renderGoals();
+		renderFinishedGoals();
+		renderSchedules();
+		renderProgressCharts();
+		renderTasks();
+		showSuccessToast('Goal marked as finished.');
+		saveStateToStorage();
+		return;
+	}
+
+	const saveButton = event.target.closest('.goal-save-btn');
+	if (saveButton) {
+		const goalItem = saveButton.closest('.goal-item');
+		if (!goalItem) {
+			return;
+		}
+
+		const goalId = goalItem.dataset.goalId;
+		const goal = state.goals.find((item) => item.id === goalId);
+		if (!goal) {
+			return;
+		}
+
+		const titleInput = goalItem.querySelector('.goal-edit-title-input');
+		const typeSelect = goalItem.querySelector('.goal-edit-type-select');
+		const durationInput = goalItem.querySelector('.goal-edit-duration-input');
+
+		const nextTitle = titleInput?.value.trim() || '';
+		const nextType = typeSelect?.value === 'period' ? 'period' : 'habit';
+
+		if (!nextTitle) {
+			showDuplicateWarning('Goal name cannot be empty.');
+			titleInput?.focus();
+			return;
+		}
+
+		if (isDuplicateGoalTitle(nextTitle, goalId)) {
+			showDuplicateWarning('This goal already exists.');
+			titleInput?.focus();
+			titleInput?.select();
+			return;
+		}
+
+		let nextEndDate = null;
+		if (nextType === 'period') {
+			const durationDays = Number(durationInput?.value || 0);
+			if (!Number.isFinite(durationDays) || durationDays < 1) {
+				showDuplicateWarning('Choose a valid number of days for a period goal.');
+				durationInput?.focus();
+				return;
+			}
+
+			const endUtc = parseDateStampUtc(goal.startDate) + ((Math.floor(durationDays) - 1) * 24 * 60 * 60 * 1000);
+			const endDateObj = new Date(endUtc);
+			nextEndDate = `${endDateObj.getUTCFullYear()}-${String(endDateObj.getUTCMonth() + 1).padStart(2, '0')}-${String(endDateObj.getUTCDate()).padStart(2, '0')}`;
+		}
+
+		goal.title = nextTitle;
+		goal.type = nextType;
+		goal.endDate = nextEndDate;
+
+		goalItem.classList.remove('is-editing');
+		syncScheduledTasksForToday();
+		renderGoals();
+		renderFinishedGoals();
+		renderSchedules();
+		renderProgressCharts();
+		renderTasks();
+		showSuccessToast('Goal updated successfully.');
+		saveStateToStorage();
+		return;
+	}
+
 	const removeButton = event.target.closest('.goal-remove-btn');
 	if (!removeButton) {
 		return;
@@ -1462,20 +1958,176 @@ goalList.addEventListener('click', (event) => {
 	}
 
 	const goalId = goalItem.dataset.goalId;
-	state.goals = state.goals.filter((goal) => goal.id !== goalId);
-	state.schedules = state.schedules.map((schedule) =>
-		schedule.goalId === goalId ? { ...schedule, goalId: null } : schedule,
-	);
-	delete state.stats.goalDailyCompletions[goalId];
+	showRemoveGoalModal(goalId);
+});
 
-	renderGoals();
-	renderSchedules();
-	renderProgressCharts();
-	showSuccessToast('Goal removed successfully.');
-	saveStateToStorage();
+cancelRemoveGoalButton.addEventListener('click', hideRemoveGoalModal);
+
+if (finishedGoalsList) {
+	finishedGoalsList.addEventListener('click', (event) => {
+		const unfinishBtn = event.target.closest('.goal-unfinish-btn');
+		if (!unfinishBtn) {
+			return;
+		}
+
+		const item = unfinishBtn.closest('.finished-goal-item');
+		if (!item) {
+			return;
+		}
+
+		const goalId = item.dataset.goalId;
+		const goal = state.goals.find((g) => g.id === goalId);
+		if (!goal) {
+			return;
+		}
+
+		goal.finishedAt = null;
+		// If it's a period goal whose end date is already in the past, extend to today so it's active.
+		if (goal.type === 'period' && goal.endDate) {
+			const today = getCurrentDateStamp();
+			if (daysBetweenDateStamps(goal.endDate, today) > 0) {
+				goal.endDate = today;
+			}
+		}
+
+		syncScheduledTasksForToday();
+		renderGoals();
+		renderFinishedGoals();
+		renderSchedules();
+		renderProgressCharts();
+		renderTasks();
+		showSuccessToast('Goal reactivated.');
+		saveStateToStorage();
+	});
+}
+
+confirmRemoveGoalButton.addEventListener('click', () => {
+	if (!pendingRemoveGoalId) {
+		hideRemoveGoalModal();
+		return;
+	}
+
+	const goalIdToRemove = pendingRemoveGoalId;
+	hideRemoveGoalModal();
+	removeGoalById(goalIdToRemove);
+});
+
+if (toggleFinishedGoalsButton && finishedGoalsPanel) {
+	toggleFinishedGoalsButton.addEventListener('click', () => {
+		finishedGoalsPanel.hidden = !finishedGoalsPanel.hidden;
+		renderFinishedGoals();
+	});
+}
+
+goalList.addEventListener('change', (event) => {
+	const typeSelect = event.target.closest('.goal-edit-type-select');
+	if (!typeSelect) {
+		return;
+	}
+
+	const goalItem = typeSelect.closest('.goal-item');
+	if (!goalItem) {
+		return;
+	}
+
+	const durationInput = goalItem.querySelector('.goal-edit-duration-input');
+	if (!durationInput) {
+		return;
+	}
+
+	const isPeriod = typeSelect.value === 'period';
+	durationInput.disabled = !isPeriod;
+	durationInput.required = isPeriod;
+	if (!isPeriod) {
+		durationInput.value = '';
+	}
 });
 
 scheduleList.addEventListener('click', (event) => {
+	const editButton = event.target.closest('.schedule-edit-btn');
+	if (editButton) {
+		const scheduleItem = editButton.closest('.schedule-item');
+		if (!scheduleItem) {
+			return;
+		}
+
+		const scheduleId = scheduleItem.dataset.scheduleId;
+		const schedule = state.schedules.find((item) => item.id === scheduleId);
+		const goalSelect = scheduleItem.querySelector('.schedule-edit-goal-select');
+		if (schedule && goalSelect) {
+			goalSelect.innerHTML = buildGoalOptionsMarkup(schedule.goalId || '');
+		}
+
+		scheduleItem.classList.add('is-editing');
+		const editInput = scheduleItem.querySelector('.schedule-edit-input');
+		if (editInput) {
+			editInput.focus();
+			editInput.select();
+		}
+		return;
+	}
+
+	const cancelButton = event.target.closest('.schedule-cancel-btn');
+	if (cancelButton) {
+		const scheduleItem = cancelButton.closest('.schedule-item');
+		if (!scheduleItem) {
+			return;
+		}
+		scheduleItem.classList.remove('is-editing');
+		return;
+	}
+
+	const saveButton = event.target.closest('.schedule-save-btn');
+	if (saveButton) {
+		const scheduleItem = saveButton.closest('.schedule-item');
+		if (!scheduleItem) {
+			return;
+		}
+
+		const scheduleId = scheduleItem.dataset.scheduleId;
+		const schedule = state.schedules.find((item) => item.id === scheduleId);
+		if (!schedule) {
+			return;
+		}
+
+		const editInput = scheduleItem.querySelector('.schedule-edit-input');
+		const goalSelect = scheduleItem.querySelector('.schedule-edit-goal-select');
+		const nextText = editInput?.value.trim() || '';
+		const nextGoalId = goalSelect?.value || null;
+
+		if (!nextText) {
+			showDuplicateWarning('Schedule text cannot be empty.');
+			editInput?.focus();
+			return;
+		}
+
+		if (isDuplicateScheduleText(nextText, scheduleId)) {
+			showDuplicateWarning('This daily schedule already exists.');
+			editInput?.focus();
+			editInput?.select();
+			return;
+		}
+
+		const previousGoalId = schedule.goalId || null;
+		schedule.text = nextText;
+		schedule.goalId = nextGoalId;
+
+		state.tasks = state.tasks.map((task) =>
+			task.scheduleId === scheduleId ? { ...task, text: nextText } : task,
+		);
+		transferCompletedScheduleScoresToGoal(scheduleId, previousGoalId, nextGoalId);
+
+		updateScheduleItemView(scheduleItem, schedule);
+		scheduleItem.classList.remove('is-editing');
+		renderGoals();
+		renderFinishedGoals();
+		renderProgressCharts();
+		renderTasks();
+		showSuccessToast('Daily schedule updated successfully.');
+		saveStateToStorage();
+		return;
+	}
+
 	const removeButton = event.target.closest('.schedule-remove-btn');
 	if (!removeButton) {
 		return;
@@ -1487,15 +2139,49 @@ scheduleList.addEventListener('click', (event) => {
 	}
 
 	const scheduleId = scheduleItem.dataset.scheduleId;
-	state.schedules = state.schedules.filter((schedule) => schedule.id !== scheduleId);
-	state.tasks = state.tasks.filter((task) => task.scheduleId !== scheduleId);
+	const schedule = state.schedules.find((item) => item.id === scheduleId);
+	if (!schedule) {
+		return;
+	}
 
-	renderSchedules();
-	renderGoals();
-	renderProgressCharts();
-	renderTasks();
-	showSuccessToast('Daily schedule removed successfully.');
-	saveStateToStorage();
+	if (schedule.goalId) {
+		const linkedTaskCount = state.schedules.filter((item) => item.goalId === schedule.goalId).length;
+		if (linkedTaskCount <= 1) {
+			showDuplicateWarning('This is the only task in the goal. Add another task before removing it.');
+			return;
+		}
+
+		showDeleteModal({
+			scheduleId,
+			title: 'Remove goal task?',
+			message: 'This task is linked to a goal. This action cannot be undone.',
+		});
+		return;
+	}
+
+	removeScheduleById(scheduleId);
+});
+
+scheduleList.addEventListener('keydown', (event) => {
+	if (event.key !== 'Enter') {
+		return;
+	}
+
+	const editInput = event.target.closest('.schedule-edit-input');
+	if (!editInput) {
+		return;
+	}
+
+	event.preventDefault();
+	const scheduleItem = editInput.closest('.schedule-item');
+	if (!scheduleItem) {
+		return;
+	}
+
+	const saveButton = scheduleItem.querySelector('.schedule-save-btn');
+	if (saveButton) {
+		saveButton.click();
+	}
 });
 
 todoList.addEventListener('click', (event) => {
@@ -1565,7 +2251,7 @@ todoList.addEventListener('click', (event) => {
 		if (task.isScheduled) {
 			return;
 		}
-		showDeleteModal(task.id);
+		showDeleteModal({ taskId: task.id });
 	}
 
 });
@@ -1803,7 +2489,16 @@ confirmDeleteButton.addEventListener('click', () => {
 		state.tasks = state.tasks.filter((task) => task.id !== pendingDeleteTaskId);
 		renderTasks();
 		saveStateToStorage();
+		hideDeleteModal();
+		return;
 	}
+
+	if (pendingDeleteScheduleId) {
+		removeScheduleById(pendingDeleteScheduleId);
+		hideDeleteModal();
+		return;
+	}
+
 	hideDeleteModal();
 });
 
@@ -1828,6 +2523,12 @@ scheduleModal.addEventListener('click', (event) => {
 progressModal.addEventListener('click', (event) => {
 	if (event.target === progressModal) {
 		hideProgressModal();
+	}
+});
+
+removeGoalModal.addEventListener('click', (event) => {
+	if (event.target === removeGoalModal) {
+		hideRemoveGoalModal();
 	}
 });
 
