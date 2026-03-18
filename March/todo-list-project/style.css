@@ -440,10 +440,10 @@ h1 {
 
 .goal-form {
     display: grid;
-    grid-template-columns: minmax(170px, 1fr) 140px auto;
+    grid-template-columns: minmax(170px, 1fr) 130px 64px auto;
     grid-template-areas:
-        'title title title'
-        'type days submit';
+        'title title title title'
+        'type days color submit';
     gap: 0.45em;
 }
 
@@ -459,6 +459,10 @@ h1 {
     grid-area: days;
 }
 
+#goal-color-input {
+    grid-area: color;
+}
+
 #goal-form .schedule-submit-btn {
     grid-area: submit;
 }
@@ -471,6 +475,29 @@ h1 {
     border: 1px solid #d5dae2;
     background-color: #fcfcfd;
     font-size: 0.9rem;
+}
+
+.goal-color-input,
+.goal-edit-color-input {
+    width: 100%;
+    min-width: 56px;
+    height: 42px;
+    padding: 0.2em;
+    border-radius: 10px;
+    border: 1px solid #d5dae2;
+    background-color: #fcfcfd;
+    cursor: pointer;
+}
+
+.goal-color-input::-webkit-color-swatch-wrapper,
+.goal-edit-color-input::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+.goal-color-input::-webkit-color-swatch,
+.goal-edit-color-input::-webkit-color-swatch {
+    border: none;
+    border-radius: 8px;
 }
 
 .goal-duration-input:disabled {
@@ -527,6 +554,7 @@ h1 {
 
 .finished-goal-item {
     border: 1px solid #d7dce4;
+    border-left: 4px solid var(--goal-color, #d7dce4);
     border-radius: 9px;
     background: #fff;
     padding: 0.55em 0.65em;
@@ -590,6 +618,7 @@ h1 {
     flex-direction: column;
     gap: 0.6em;
     border: 1px solid #d7dce4;
+    border-left: 4px solid var(--goal-color, #d7dce4);
     border-radius: 9px;
     padding: 0.5em 0.65em;
     background-color: #fff;
@@ -610,6 +639,15 @@ h1 {
     gap: 0.35em;
     flex-wrap: wrap;
     justify-content: flex-end;
+    flex-shrink: 0;
+}
+
+.goal-color-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 999px;
+    background-color: var(--goal-color, #94a3b8);
+    border: 1px solid rgba(15, 23, 42, 0.15);
     flex-shrink: 0;
 }
 
@@ -703,7 +741,7 @@ h1 {
 
 .goal-edit-form {
     display: none;
-    grid-template-columns: minmax(0, 1fr) minmax(140px, 1fr) 90px auto auto;
+    grid-template-columns: minmax(0, 1fr) minmax(140px, 1fr) 90px 56px auto auto;
     gap: 0.4em;
 }
 
@@ -717,7 +755,8 @@ h1 {
 
 .goal-edit-title-input,
 .goal-edit-type-select,
-.goal-edit-duration-input {
+.goal-edit-duration-input,
+.goal-edit-color-input {
     width: 100%;
     min-width: 0;
     padding: 0.62em 0.72em;
@@ -725,6 +764,11 @@ h1 {
     border: 1px solid #d5dae2;
     background-color: #fcfcfd;
     font-size: 0.9rem;
+}
+
+.goal-edit-color-input {
+    padding: 0.2em;
+    height: 42px;
 }
 
 .goal-edit-duration-input:disabled {
@@ -851,9 +895,9 @@ body.is-progress-open .github-footer-link {
     margin-left: 0.35em;
     padding: 0.13em 0.38em;
     border-radius: 999px;
-    background: #fef2f2;
-    border: 1px solid #fecaca;
-    color: #b91c1c;
+    background: color-mix(in srgb, var(--goal-badge-color, #b91c1c) 14%, white);
+    border: 1px solid color-mix(in srgb, var(--goal-badge-color, #b91c1c) 45%, white);
+    color: var(--goal-badge-color, #b91c1c);
     font-size: 0.66rem;
     font-weight: 700;
     vertical-align: middle;
@@ -960,7 +1004,7 @@ body.is-progress-open .github-footer-link {
 .modal-card.schedule-modal-card {
     background-color: #f7faff;
     border-color: #d8e1ee;
-    width: 520px;
+    width: 600px;
     max-height: 90vh;
     overflow-y: auto;
     overflow-x: hidden;
@@ -1148,6 +1192,7 @@ body.is-progress-open .github-footer-link {
 
 .goal-progress-item {
     border: 1px solid #d9dee8;
+    border-left: 4px solid var(--goal-color, #d9dee8);
     border-radius: 9px;
     padding: 0.55rem;
     background: #fff;
@@ -1174,7 +1219,7 @@ body.is-progress-open .github-footer-link {
 .goal-progress-head span {
     font-size: 0.8rem;
     font-weight: 700;
-    color: #b91c1c;
+    color: var(--goal-color, #b91c1c);
 }
 
 .goal-progress-section-title {
@@ -1261,7 +1306,7 @@ body.is-progress-open .github-footer-link {
 .goal-progress-fill {
     height: 100%;
     width: 0%;
-    background: linear-gradient(180deg, #ef4444 0%, #b91c1c 100%);
+    background: var(--goal-color, #b91c1c);
 }
 
 .new-task-input {
@@ -1539,6 +1584,18 @@ body.is-progress-open .github-footer-link {
     justify-content: center;
     background-color: rgba(0, 0, 0, 0.22);
     padding: 1em;
+    z-index: 1000;
+}
+
+#schedule-modal,
+#progress-modal {
+    z-index: 1000;
+}
+
+#delete-modal,
+#clear-all-modal,
+#remove-goal-modal {
+    z-index: 1100;
 }
 
 .modal-overlay.is-open {
@@ -1891,13 +1948,13 @@ body.is-dark .goal-progress-track {
 }
 
 body.is-dark .schedule-goal-badge {
-    background: #3f1d1d;
-    border-color: #7f1d1d;
-    color: #fecaca;
+    background: color-mix(in srgb, var(--goal-badge-color, #fca5a5) 24%, #0f172a);
+    border-color: color-mix(in srgb, var(--goal-badge-color, #fca5a5) 60%, #0f172a);
+    color: color-mix(in srgb, var(--goal-badge-color, #fca5a5) 78%, #ffffff);
 }
 
 body.is-dark .goal-progress-head span {
-    color: #fca5a5;
+    color: color-mix(in srgb, var(--goal-color, #fca5a5) 75%, #ffffff);
 }
 
 body.is-dark .todo-action-btn:hover {
@@ -2019,6 +2076,7 @@ body.is-dark .todo-item:hover {
     #goal-title-input,
     #goal-type-select,
     #goal-duration-input,
+    #goal-color-input,
     #goal-form .schedule-submit-btn {
         grid-area: auto;
     }
@@ -2038,6 +2096,7 @@ body.is-dark .todo-item:hover {
     #goal-title-input,
     #goal-type-select,
     #goal-duration-input,
+    #goal-color-input,
     #goal-form .schedule-submit-btn {
         grid-area: auto;
     }

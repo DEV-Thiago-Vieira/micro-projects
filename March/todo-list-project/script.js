@@ -17,6 +17,7 @@ const goalForm = document.getElementById('goal-form');
 const goalTitleInput = document.getElementById('goal-title-input');
 const goalTypeSelect = document.getElementById('goal-type-select');
 const goalDurationInput = document.getElementById('goal-duration-input');
+const goalColorInput = document.getElementById('goal-color-input');
 const goalList = document.getElementById('goal-list');
 const toggleFinishedGoalsButton = document.getElementById('toggle-finished-goals-btn');
 const finishedGoalsPanel = document.getElementById('finished-goals-panel');
@@ -241,12 +242,119 @@ const GOAL_PALETTE = [
 	'#10b981', '#ef4444',
 ];
 
-const getGoalColor = (goalId) => {
+const getGoalColorFromId = (goalId) => {
 	let hash = 0;
 	for (let i = 0; i < goalId.length; i++) {
 		hash = (hash * 31 + goalId.charCodeAt(i)) & 0xffff;
 	}
 	return GOAL_PALETTE[hash % GOAL_PALETTE.length];
+};
+
+const isHexColor = (value) => /^#[0-9a-f]{6}$/i.test(value);
+
+const normalizeGoalColor = (value) => {
+	if (typeof value !== 'string') {
+		return null;
+	}
+
+	const normalized = value.trim().toLowerCase();
+	return isHexColor(normalized) ? normalized : null;
+};
+
+const hslToHex = (hue, saturation, lightness) => {
+	const s = saturation / 100;
+	const l = lightness / 100;
+	const c = (1 - Math.abs(2 * l - 1)) * s;
+	const x = c * (1 - Math.abs((hue / 60) % 2 - 1));
+	const m = l - c / 2;
+
+	let rPrime = 0;
+	let gPrime = 0;
+	let bPrime = 0;
+
+	if (hue < 60) {
+		rPrime = c;
+		gPrime = x;
+	} else if (hue < 120) {
+		rPrime = x;
+		gPrime = c;
+	} else if (hue < 180) {
+		gPrime = c;
+		bPrime = x;
+	} else if (hue < 240) {
+		gPrime = x;
+		bPrime = c;
+	} else if (hue < 300) {
+		rPrime = x;
+		bPrime = c;
+	} else {
+		rPrime = c;
+		bPrime = x;
+	}
+
+	const toHex = (component) => {
+		const value = Math.round((component + m) * 255);
+		return value.toString(16).padStart(2, '0');
+	};
+
+	return `#${toHex(rPrime)}${toHex(gPrime)}${toHex(bPrime)}`;
+};
+
+const getGoalColor = (goal) => {
+	if (!goal) {
+		return '#3b82f6';
+	}
+
+	return normalizeGoalColor(goal.color) || getGoalColorFromId(goal.id);
+};
+
+const isGoalColorInUse = (color, excludedGoalId = null) => {
+	const normalizedColor = normalizeGoalColor(color);
+	if (!normalizedColor) {
+		return false;
+	}
+
+	return state.goals.some(
+		(goal) => goal.id !== excludedGoalId && getGoalColor(goal) === normalizedColor,
+	);
+};
+
+const getNextAvailableGoalColor = (excludedGoalId = null, preferredColor = null) => {
+	const normalizedPreferredColor = normalizeGoalColor(preferredColor);
+	if (normalizedPreferredColor && !isGoalColorInUse(normalizedPreferredColor, excludedGoalId)) {
+		return normalizedPreferredColor;
+	}
+
+	for (const color of GOAL_PALETTE) {
+		if (!isGoalColorInUse(color, excludedGoalId)) {
+			return color;
+		}
+	}
+
+	for (let i = 0; i < 360; i += 1) {
+		const hue = (i * 37) % 360;
+		const candidateColor = hslToHex(hue, 70, 52);
+		if (!isGoalColorInUse(candidateColor, excludedGoalId)) {
+			return candidateColor;
+		}
+	}
+
+	return normalizedPreferredColor || '#3b82f6';
+};
+
+const ensureDistinctGoalColors = () => {
+	const usedColors = new Set();
+
+	state.goals.forEach((goal) => {
+		let candidateColor = normalizeGoalColor(goal.color) || getGoalColorFromId(goal.id);
+
+		if (usedColors.has(candidateColor)) {
+			candidateColor = getNextAvailableGoalColor(goal.id, candidateColor);
+		}
+
+		goal.color = candidateColor;
+		usedColors.add(candidateColor);
+	});
 };
 
 const normalizeText = (text) => text.trim().toLowerCase();
@@ -683,9 +791,11 @@ const renderGoals = () => {
 	goalList.innerHTML = '';
 	getActiveGoals().forEach((goal) => {
 		const scheduleCount = state.schedules.filter((schedule) => schedule.goalId === goal.id).length;
+		const goalColor = getGoalColor(goal);
 		const goalItem = document.createElement('li');
 		goalItem.className = 'goal-item';
 		goalItem.dataset.goalId = goal.id;
+		goalItem.style.setProperty('--goal-color', goalColor);
 
 		const goalTypeLabel = goal.type === 'period' && goal.endDate
 			? `${goal.startDate} to ${goal.endDate}`
@@ -698,6 +808,7 @@ const renderGoals = () => {
 					<span>${goalTypeLabel} | ${scheduleCount} task${scheduleCount === 1 ? '' : 's'}</span>
 				</div>
 				<div class="goal-item-actions">
+					<span class="goal-color-dot" aria-hidden="true"></span>
 					<button type="button" class="goal-edit-btn">Edit</button>
 					<button type="button" class="goal-finish-btn">Finish</button>
 					<button type="button" class="goal-remove-btn">Remove goal</button>
@@ -710,6 +821,7 @@ const renderGoals = () => {
 					<option value="period">Period goal</option>
 				</select>
 				<input type="number" class="goal-edit-duration-input" min="1" placeholder="Days" />
+				<input type="color" class="goal-edit-color-input" aria-label="Goal color" title="Goal color" />
 				<button type="button" class="goal-save-btn">Save</button>
 				<button type="button" class="goal-cancel-btn">Cancel</button>
 			</form>
@@ -729,6 +841,11 @@ const renderGoals = () => {
 			durationInput.value = getGoalDurationDays(goal);
 			durationInput.disabled = goal.type !== 'period';
 			durationInput.required = goal.type === 'period';
+		}
+
+		const colorInput = goalItem.querySelector('.goal-edit-color-input');
+		if (colorInput) {
+			colorInput.value = goalColor;
 		}
 
 		goalList.appendChild(goalItem);
@@ -758,9 +875,11 @@ const renderFinishedGoals = () => {
 	}
 
 	finishedGoals.forEach((goal) => {
+		const goalColor = getGoalColor(goal);
 		const item = document.createElement('li');
 		item.className = 'finished-goal-item';
 		item.dataset.goalId = goal.id;
+		item.style.setProperty('--goal-color', goalColor);
 
 		const head = document.createElement('div');
 		head.className = 'finished-goal-head';
@@ -794,6 +913,7 @@ const renderFinishedGoals = () => {
 };
 
 const buildGoalProgressItem = (goal, today, extraClass = '') => {
+	const goalColor = getGoalColor(goal);
 	const attachedSchedules = state.schedules.filter((schedule) => schedule.goalId === goal.id);
 	const trackingEndDate = getGoalTrackingEndDate(goal, today);
 	const trackingDates = getDateStampsInRange(goal.startDate, trackingEndDate);
@@ -815,6 +935,7 @@ const buildGoalProgressItem = (goal, today, extraClass = '') => {
 
 	const goalItem = document.createElement('li');
 	goalItem.className = `goal-progress-item${extraClass ? ' ' + extraClass : ''}`;
+	goalItem.style.setProperty('--goal-color', goalColor);
 	goalItem.innerHTML = `
 		<div class="goal-progress-head">
 			<strong>${goal.title}</strong>
@@ -1099,7 +1220,7 @@ const createTaskElement = (task) => {
 			if (schedule?.goalId) {
 				const goal = state.goals.find((g) => g.id === schedule.goalId);
 				if (goal) {
-					const color = getGoalColor(goal.id);
+					const color = getGoalColor(goal);
 					taskElement.style.setProperty('--task-goal-color', color);
 					taskElement.classList.add('has-goal-color');
 					const badge = document.createElement('span');
@@ -1220,6 +1341,7 @@ const loadStoredGoals = () => {
 					id: typeof goal.id === 'string' ? goal.id : createId('goal'),
 					title: goal.title.trim() || 'Untitled goal',
 					type: isPeriodGoal ? 'period' : 'habit',
+					color: normalizeGoalColor(goal.color),
 					startDate,
 					endDate: isPeriodGoal ? goal.endDate : null,
 					finishedAt: typeof goal.finishedAt === 'string' ? goal.finishedAt : null,
@@ -1393,7 +1515,10 @@ const renderSchedules = () => {
 		scheduleItem.className = 'schedule-item';
 		scheduleItem.dataset.scheduleId = schedule.id;
 		const goal = state.goals.find((item) => item.id === schedule.goalId);
-		const goalLabel = goal ? `<small class="schedule-goal-badge">${goal.title}</small>` : '';
+		const goalColor = goal ? getGoalColor(goal) : null;
+		const goalLabel = goal
+			? `<small class="schedule-goal-badge" style="--goal-badge-color: ${goalColor};">${goal.title}</small>`
+			: '';
 		scheduleItem.innerHTML = `
 			<div class="schedule-item-view">
 				<span>${schedule.text} ${goalLabel}</span>
@@ -1431,6 +1556,7 @@ const updateScheduleItemView = (scheduleItem, schedule) => {
 			labelElement.appendChild(document.createTextNode(' '));
 			const badge = document.createElement('small');
 			badge.className = 'schedule-goal-badge';
+			badge.style.setProperty('--goal-badge-color', getGoalColor(goal));
 			badge.textContent = goal.title;
 			labelElement.appendChild(badge);
 		}
@@ -1450,6 +1576,7 @@ const updateScheduleItemView = (scheduleItem, schedule) => {
 const initializeState = () => {
 	state.tasks = loadStoredTasks();
 	state.goals = loadStoredGoals();
+	ensureDistinctGoalColors();
 	state.schedules = loadStoredSchedules();
 	state.schedules = state.schedules.map((schedule) => ({
 		...schedule,
@@ -1516,6 +1643,9 @@ const showScheduleModal = () => {
 	renderGoals();
 	renderFinishedGoals();
 	renderSchedules();
+	if (goalColorInput) {
+		goalColorInput.value = getNextAvailableGoalColor();
+	}
 	scheduleModal.classList.add('is-open');
 	scheduleModal.setAttribute('aria-hidden', 'false');
 	document.body.classList.add('is-schedule-open');
@@ -1795,7 +1925,20 @@ goalForm.addEventListener('submit', (event) => {
 	const today = getCurrentDateStamp();
 	const isPeriodGoal = goalTypeSelect.value === 'period';
 	const durationDays = Math.max(1, Number(goalDurationInput.value || 0));
+	const selectedColor = normalizeGoalColor(goalColorInput?.value);
 	let endDate = null;
+
+	if (!selectedColor) {
+		showDuplicateWarning('Choose a valid goal color.');
+		goalColorInput?.focus();
+		return;
+	}
+
+	if (isGoalColorInUse(selectedColor)) {
+		showDuplicateWarning('This color is already used by another goal.');
+		goalColorInput?.focus();
+		return;
+	}
 
 	if (isPeriodGoal) {
 		if (!Number.isFinite(durationDays) || durationDays < 1) {
@@ -1812,6 +1955,7 @@ goalForm.addEventListener('submit', (event) => {
 		id: createId('goal'),
 		title,
 		type: isPeriodGoal ? 'period' : 'habit',
+		color: selectedColor,
 		startDate: today,
 		endDate,
 		finishedAt: null,
@@ -1826,6 +1970,9 @@ goalForm.addEventListener('submit', (event) => {
 	goalDurationInput.value = '';
 	goalDurationInput.disabled = true;
 	goalDurationInput.required = false;
+	if (goalColorInput) {
+		goalColorInput.value = getNextAvailableGoalColor();
+	}
 	goalTitleInput.focus();
 	showSuccessToast('Goal created successfully.');
 	saveStateToStorage();
@@ -1900,6 +2047,7 @@ goalList.addEventListener('click', (event) => {
 		const titleInput = goalItem.querySelector('.goal-edit-title-input');
 		const typeSelect = goalItem.querySelector('.goal-edit-type-select');
 		const durationInput = goalItem.querySelector('.goal-edit-duration-input');
+		const colorInput = goalItem.querySelector('.goal-edit-color-input');
 
 		const nextTitle = titleInput?.value.trim() || '';
 		const nextType = typeSelect?.value === 'period' ? 'period' : 'habit';
@@ -1931,9 +2079,23 @@ goalList.addEventListener('click', (event) => {
 			nextEndDate = `${endDateObj.getUTCFullYear()}-${String(endDateObj.getUTCMonth() + 1).padStart(2, '0')}-${String(endDateObj.getUTCDate()).padStart(2, '0')}`;
 		}
 
+		const nextColor = normalizeGoalColor(colorInput?.value);
+		if (!nextColor) {
+			showDuplicateWarning('Choose a valid goal color.');
+			colorInput?.focus();
+			return;
+		}
+
+		if (isGoalColorInUse(nextColor, goalId)) {
+			showDuplicateWarning('This color is already used by another goal.');
+			colorInput?.focus();
+			return;
+		}
+
 		goal.title = nextTitle;
 		goal.type = nextType;
 		goal.endDate = nextEndDate;
+		goal.color = nextColor;
 
 		goalItem.classList.remove('is-editing');
 		syncScheduledTasksForToday();
@@ -2533,6 +2695,9 @@ removeGoalModal.addEventListener('click', (event) => {
 });
 
 initializeState();
+if (goalColorInput) {
+	goalColorInput.value = getNextAvailableGoalColor();
+}
 applyTheme(getStoredTheme());
 
 window.addEventListener('beforeinstallprompt', (event) => {
