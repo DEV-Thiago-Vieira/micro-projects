@@ -705,6 +705,30 @@ h1 {
     transition: all 0.2s ease;
 }
 
+.goal-move-btn {
+    width: 28px;
+    height: 28px;
+    border: 1px solid #d6deea;
+    background-color: #f8fbff;
+    color: #3d4a5e;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.goal-move-btn:hover {
+    background-color: #eaf1fb;
+}
+
+.goal-move-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
 .goal-edit-btn,
 .goal-save-btn {
     border-color: #c7d9f7;
@@ -838,6 +862,16 @@ body.is-progress-open .github-footer-link {
     gap: 0.4em;
 }
 
+.schedule-group-title {
+    margin-top: 0.35em;
+    padding: 0.2em 0.2em 0.1em;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #5f6674;
+}
+
 .schedule-list:empty::before {
     content: 'No daily schedules yet.';
     color: #7a808d;
@@ -914,6 +948,30 @@ body.is-progress-open .github-footer-link {
     cursor: pointer;
     flex-shrink: 0;
     transition: all 0.2s ease;
+}
+
+.schedule-move-btn {
+    width: 28px;
+    height: 28px;
+    border: 1px solid #d6deea;
+    background-color: #f8fbff;
+    color: #3d4a5e;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.schedule-move-btn:hover {
+    background-color: #eaf1fb;
+}
+
+.schedule-move-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
 }
 
 .schedule-remove-btn:hover {
@@ -1688,6 +1746,8 @@ body.is-dark .back-projects-btn,
 body.is-dark .theme-toggle-btn,
 body.is-dark .clear-all-btn,
 body.is-dark .progress-btn,
+body.is-dark .schedule-move-btn,
+body.is-dark .goal-move-btn,
 body.is-dark .schedule-remove-btn,
 body.is-dark .schedule-edit-btn,
 body.is-dark .schedule-save-btn,
@@ -1710,6 +1770,8 @@ body.is-dark .back-projects-btn:hover,
 body.is-dark .theme-toggle-btn:hover,
 body.is-dark .clear-all-btn:hover,
 body.is-dark .progress-btn:hover,
+body.is-dark .schedule-move-btn:hover,
+body.is-dark .goal-move-btn:hover,
 body.is-dark .schedule-remove-btn:hover,
 body.is-dark .schedule-edit-btn:hover,
 body.is-dark .schedule-save-btn:hover,
@@ -1741,14 +1803,21 @@ body.is-dark .streak-card,
 body.is-dark .schedule-item,
 body.is-dark .goal-section,
 body.is-dark .finished-goals-panel,
-body.is-dark .finished-goal-item,
-body.is-dark .goal-item,
 body.is-dark .chart-card,
 body.is-dark .modal-card,
+body.is-dark .finished-goal-item,
+body.is-dark .goal-item,
 body.is-dark .goal-progress-item {
     border-color: #334155;
     background-color: #0b1220;
     color: #e2e8f0;
+}
+
+/* Keep goal accent borders visible in dark mode. */
+body.is-dark .goal-item,
+body.is-dark .finished-goal-item,
+body.is-dark .goal-progress-item {
+    border-left-color: var(--goal-color, #475569);
 }
 
 body.is-dark .goal-progress-section-title {
@@ -2117,6 +2186,23 @@ body.is-dark .todo-item:hover {
     .schedule-item-actions {
         flex-wrap: wrap;
         justify-content: flex-end;
+    }
+
+    .schedule-item-view {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5em;
+    }
+
+    .schedule-item span {
+        width: 100%;
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+    }
+
+    .schedule-item-actions {
+        width: 100%;
     }
 }
 

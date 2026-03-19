@@ -783,15 +783,51 @@ const getGoalDurationDays = (goal) => {
 	return String(Math.max(1, daysBetweenDateStamps(goal.startDate, goal.endDate) + 1));
 };
 
+const moveGoalInActiveOrder = (goalId, direction) => {
+	if (!goalId || (direction !== -1 && direction !== 1)) {
+		return false;
+	}
+
+	const activeGoals = getActiveGoals();
+	const activeGoalIds = activeGoals.map((goal) => goal.id);
+	const fromIndex = activeGoalIds.indexOf(goalId);
+	if (fromIndex === -1) {
+		return false;
+	}
+
+	const toIndex = fromIndex + direction;
+	if (toIndex < 0 || toIndex >= activeGoalIds.length) {
+		return false;
+	}
+
+	const reorderedActiveGoalIds = [...activeGoalIds];
+	[reorderedActiveGoalIds[fromIndex], reorderedActiveGoalIds[toIndex]] = [
+		reorderedActiveGoalIds[toIndex],
+		reorderedActiveGoalIds[fromIndex],
+	];
+
+	const goalsById = new Map(state.goals.map((goal) => [goal.id, goal]));
+	const reorderedActiveGoals = reorderedActiveGoalIds
+		.map((id) => goalsById.get(id))
+		.filter(Boolean);
+	const finishedGoals = state.goals.filter((goal) => isGoalFinished(goal));
+	state.goals = [...reorderedActiveGoals, ...finishedGoals];
+
+	return true;
+};
+
 const renderGoals = () => {
 	if (!goalList) {
 		return;
 	}
 
 	goalList.innerHTML = '';
-	getActiveGoals().forEach((goal) => {
+	const activeGoals = getActiveGoals();
+	activeGoals.forEach((goal, index) => {
 		const scheduleCount = state.schedules.filter((schedule) => schedule.goalId === goal.id).length;
 		const goalColor = getGoalColor(goal);
+		const canMoveUp = index > 0;
+		const canMoveDown = index < activeGoals.length - 1;
 		const goalItem = document.createElement('li');
 		goalItem.className = 'goal-item';
 		goalItem.dataset.goalId = goal.id;
@@ -809,6 +845,8 @@ const renderGoals = () => {
 				</div>
 				<div class="goal-item-actions">
 					<span class="goal-color-dot" aria-hidden="true"></span>
+					<button type="button" class="goal-move-btn goal-move-up-btn" ${canMoveUp ? '' : 'disabled'} aria-label="Move goal up" title="Move up">↑</button>
+					<button type="button" class="goal-move-btn goal-move-down-btn" ${canMoveDown ? '' : 'disabled'} aria-label="Move goal down" title="Move down">↓</button>
 					<button type="button" class="goal-edit-btn">Edit</button>
 					<button type="button" class="goal-finish-btn">Finish</button>
 					<button type="button" class="goal-remove-btn">Remove goal</button>
@@ -1235,6 +1273,114 @@ const createTaskElement = (task) => {
 	return taskElement;
 };
 
+const getOrderedActiveSchedules = (dateStamp = getCurrentDateStamp()) => {
+	const goalOrderById = new Map(getActiveGoals(dateStamp).map((goal, index) => [goal.id, index]));
+	const scheduleOrderById = new Map(state.schedules.map((schedule, index) => [schedule.id, index]));
+	const noGoalOrder = Number.MAX_SAFE_INTEGER;
+	const noScheduleOrder = Number.MAX_SAFE_INTEGER;
+
+	return state.schedules
+		.filter((schedule) => !isScheduleFinished(schedule, dateStamp))
+		.sort((left, right) => {
+			const leftGoalOrder = left.goalId && goalOrderById.has(left.goalId)
+				? goalOrderById.get(left.goalId)
+				: noGoalOrder;
+			const rightGoalOrder = right.goalId && goalOrderById.has(right.goalId)
+				? goalOrderById.get(right.goalId)
+				: noGoalOrder;
+
+			if (leftGoalOrder !== rightGoalOrder) {
+				return leftGoalOrder - rightGoalOrder;
+			}
+
+			const leftScheduleOrder = scheduleOrderById.has(left.id)
+				? scheduleOrderById.get(left.id)
+				: noScheduleOrder;
+			const rightScheduleOrder = scheduleOrderById.has(right.id)
+				? scheduleOrderById.get(right.id)
+				: noScheduleOrder;
+			if (leftScheduleOrder !== rightScheduleOrder) {
+				return leftScheduleOrder - rightScheduleOrder;
+			}
+
+			return left.text.localeCompare(right.text);
+		});
+};
+
+const moveScheduleWithinGoalGroup = (scheduleId, direction) => {
+	if (!scheduleId || (direction !== -1 && direction !== 1)) {
+		return false;
+	}
+
+	const orderedSchedules = getOrderedActiveSchedules();
+	const fromIndex = orderedSchedules.findIndex((schedule) => schedule.id === scheduleId);
+	if (fromIndex === -1) {
+		return false;
+	}
+
+	const toIndex = fromIndex + direction;
+	if (toIndex < 0 || toIndex >= orderedSchedules.length) {
+		return false;
+	}
+
+	const fromSchedule = orderedSchedules[fromIndex];
+	const toSchedule = orderedSchedules[toIndex];
+	const fromGoalId = fromSchedule.goalId || null;
+	const toGoalId = toSchedule.goalId || null;
+
+	// Keep movement inside the same goal group to preserve grouped ordering.
+	if (fromGoalId !== toGoalId) {
+		return false;
+	}
+
+	const fromStateIndex = state.schedules.findIndex((schedule) => schedule.id === fromSchedule.id);
+	const toStateIndex = state.schedules.findIndex((schedule) => schedule.id === toSchedule.id);
+	if (fromStateIndex === -1 || toStateIndex === -1) {
+		return false;
+	}
+
+	[state.schedules[fromStateIndex], state.schedules[toStateIndex]] = [
+		state.schedules[toStateIndex],
+		state.schedules[fromStateIndex],
+	];
+
+	return true;
+};
+
+const sortScheduledTasksByGoalOrder = () => {
+	const orderedSchedules = getOrderedActiveSchedules();
+	const scheduleOrderById = new Map(
+		orderedSchedules.map((schedule, index) => [schedule.id, index]),
+	);
+	const noScheduleOrder = Number.MAX_SAFE_INTEGER;
+
+	const unscheduledTasks = state.tasks.filter((task) => !task.isScheduled);
+	const scheduledTasks = state.tasks
+		.filter((task) => task.isScheduled)
+		.sort((left, right) => {
+			const leftOrder = left.scheduleId && scheduleOrderById.has(left.scheduleId)
+				? scheduleOrderById.get(left.scheduleId)
+				: noScheduleOrder;
+			const rightOrder = right.scheduleId && scheduleOrderById.has(right.scheduleId)
+				? scheduleOrderById.get(right.scheduleId)
+				: noScheduleOrder;
+
+			if (leftOrder !== rightOrder) {
+				return leftOrder - rightOrder;
+			}
+
+			const leftDate = left.createdForDate || '';
+			const rightDate = right.createdForDate || '';
+			if (leftDate !== rightDate) {
+				return leftDate.localeCompare(rightDate);
+			}
+
+			return left.text.localeCompare(right.text);
+		});
+
+	state.tasks = [...unscheduledTasks, ...scheduledTasks];
+};
+
 const findTaskById = (taskId) => state.tasks.find((task) => task.id === taskId);
 
 const saveStateToStorage = () => {
@@ -1442,7 +1588,7 @@ const syncScheduledTasksForToday = () => {
 
 	if (needsNewDaySync) {
 		state.tasks = state.tasks.filter((task) => !task.isScheduled);
-		state.schedules.forEach((schedule) => {
+		getOrderedActiveSchedules(today).forEach((schedule) => {
 			if (!isScheduleActiveForDate(schedule, today)) {
 				return;
 			}
@@ -1456,6 +1602,7 @@ const syncScheduledTasksForToday = () => {
 				createdForDate: today,
 			});
 		});
+		sortScheduledTasksByGoalOrder();
 		state.lastSyncDate = today;
 		return;
 	}
@@ -1495,6 +1642,8 @@ const syncScheduledTasksForToday = () => {
 			});
 		}
 	});
+
+	sortScheduledTasksByGoalOrder();
 };
 
 const renderTasks = () => {
@@ -1508,13 +1657,38 @@ const renderTasks = () => {
 
 const renderSchedules = () => {
 	scheduleList.innerHTML = '';
-	state.schedules
-		.filter((schedule) => !isScheduleFinished(schedule))
-		.forEach((schedule) => {
+	const orderedSchedules = getOrderedActiveSchedules();
+	if (orderedSchedules.length === 0) {
+		return;
+	}
+
+	let currentGroupKey = null;
+	orderedSchedules.forEach((schedule, currentIndex) => {
+		const groupedGoal = schedule.goalId
+			? state.goals.find((item) => item.id === schedule.goalId)
+			: null;
+		const groupKey = groupedGoal?.id || '__no-goal__';
+		const previousSchedule = currentIndex > 0 ? orderedSchedules[currentIndex - 1] : null;
+		const nextSchedule = currentIndex < orderedSchedules.length - 1
+			? orderedSchedules[currentIndex + 1]
+			: null;
+		const previousGroupKey = previousSchedule ? (previousSchedule.goalId || '__no-goal__') : null;
+		const nextGroupKey = nextSchedule ? (nextSchedule.goalId || '__no-goal__') : null;
+		const canMoveUp = previousGroupKey === groupKey;
+		const canMoveDown = nextGroupKey === groupKey;
+
+		if (groupKey !== currentGroupKey) {
+			currentGroupKey = groupKey;
+			const groupTitle = document.createElement('li');
+			groupTitle.className = 'schedule-group-title';
+			groupTitle.textContent = groupedGoal ? groupedGoal.title : 'No goal';
+			scheduleList.appendChild(groupTitle);
+		}
+
 		const scheduleItem = document.createElement('li');
 		scheduleItem.className = 'schedule-item';
 		scheduleItem.dataset.scheduleId = schedule.id;
-		const goal = state.goals.find((item) => item.id === schedule.goalId);
+		const goal = groupedGoal;
 		const goalColor = goal ? getGoalColor(goal) : null;
 		const goalLabel = goal
 			? `<small class="schedule-goal-badge" style="--goal-badge-color: ${goalColor};">${goal.title}</small>`
@@ -1523,8 +1697,10 @@ const renderSchedules = () => {
 			<div class="schedule-item-view">
 				<span>${schedule.text} ${goalLabel}</span>
 				<div class="schedule-item-actions">
+					<button type="button" class="schedule-move-btn schedule-move-up-btn" ${canMoveUp ? '' : 'disabled'} aria-label="Move schedule up" title="Move up">↑</button>
+					<button type="button" class="schedule-move-btn schedule-move-down-btn" ${canMoveDown ? '' : 'disabled'} aria-label="Move schedule down" title="Move down">↓</button>
 					<button type="button" class="schedule-edit-btn">Edit</button>
-					<button type="button" class="schedule-remove-btn">Remove schedule</button>
+					<button type="button" class="schedule-remove-btn">Remove</button>
 				</div>
 			</div>
 			<form class="schedule-edit-form">
@@ -1540,7 +1716,7 @@ const renderSchedules = () => {
 			editInput.value = schedule.text;
 		}
 		scheduleList.appendChild(scheduleItem);
-		});
+	});
 };
 
 const updateScheduleItemView = (scheduleItem, schedule) => {
@@ -1979,6 +2155,30 @@ goalForm.addEventListener('submit', (event) => {
 });
 
 goalList.addEventListener('click', (event) => {
+	const moveUpButton = event.target.closest('.goal-move-up-btn');
+	const moveDownButton = event.target.closest('.goal-move-down-btn');
+	if (moveUpButton || moveDownButton) {
+		const goalItem = event.target.closest('.goal-item');
+		if (!goalItem) {
+			return;
+		}
+
+		const goalId = goalItem.dataset.goalId;
+		const direction = moveUpButton ? -1 : 1;
+		const moved = moveGoalInActiveOrder(goalId, direction);
+		if (!moved) {
+			return;
+		}
+
+		sortScheduledTasksByGoalOrder();
+		renderGoals();
+		renderSchedules();
+		renderProgressCharts();
+		renderTasks();
+		saveStateToStorage();
+		return;
+	}
+
 	const editButton = event.target.closest('.goal-edit-btn');
 	if (editButton) {
 		const goalItem = editButton.closest('.goal-item');
@@ -2206,6 +2406,29 @@ goalList.addEventListener('change', (event) => {
 });
 
 scheduleList.addEventListener('click', (event) => {
+	const moveUpButton = event.target.closest('.schedule-move-up-btn');
+	const moveDownButton = event.target.closest('.schedule-move-down-btn');
+	if (moveUpButton || moveDownButton) {
+		const scheduleItem = event.target.closest('.schedule-item');
+		if (!scheduleItem) {
+			return;
+		}
+
+		const scheduleId = scheduleItem.dataset.scheduleId;
+		const direction = moveUpButton ? -1 : 1;
+		const moved = moveScheduleWithinGoalGroup(scheduleId, direction);
+		if (!moved) {
+			return;
+		}
+
+		syncScheduledTasksForToday();
+		renderSchedules();
+		renderGoals();
+		renderTasks();
+		saveStateToStorage();
+		return;
+	}
+
 	const editButton = event.target.closest('.schedule-edit-btn');
 	if (editButton) {
 		const scheduleItem = editButton.closest('.schedule-item');
