@@ -36,7 +36,7 @@
         🌙 Dark
       </button>
       <h1>To Do List</h1>
-      <p class="app-subtitle">The secret to success is consistency.</p>
+      <p class="app-subtitle" id="app-subtitle">Progress, not perfection.</p>
       <div class="todo-summary" aria-live="polite">
         <p class="todo-counter">
           Checked: <strong id="checked-count">0</strong>
@@ -350,6 +350,88 @@
               <i class="fa-solid fa-xmark" aria-hidden="true"></i>
             </button>
           </div>
+
+          <div class="progress-streak-stats" id="progress-streak-stats">
+            <div class="progress-stat-card" id="progress-current-card">
+              <span class="progress-stat-label">Current Streak</span>
+              <strong class="progress-stat-value" id="progress-current-streak"
+                >0</strong
+              >
+              <span class="progress-stat-unit" id="progress-current-unit"
+                >days</span
+              >
+              <span class="progress-best-badge" id="progress-best-badge" hidden
+                >BEST STREAK</span
+              >
+            </div>
+            <div class="progress-stat-card" id="progress-best-card">
+              <span class="progress-stat-label">Best Streak</span>
+              <strong class="progress-stat-value" id="progress-best-streak"
+                >0</strong
+              >
+              <span class="progress-stat-unit" id="progress-best-unit"
+                >days</span
+              >
+            </div>
+          </div>
+
+          <section
+            class="progress-quote-card"
+            aria-labelledby="progress-quote-title"
+          >
+            <div class="progress-quote-head">
+              <h3 id="progress-quote-title">Motivation Quote</h3>
+              <button
+                type="button"
+                class="progress-quote-edit-icon"
+                id="edit-progress-quote-btn"
+                aria-label="Edit motivation quote"
+                title="Edit quote"
+              >
+                <i class="fa-solid fa-pen" aria-hidden="true"></i>
+              </button>
+            </div>
+            <p class="progress-quote-display" id="progress-quote-display"></p>
+            <div
+              class="progress-quote-editor"
+              id="progress-quote-editor"
+              hidden
+            >
+              <label class="progress-quote-label" for="progress-quote-input"
+                >Custom quote (optional)</label
+              >
+              <textarea
+                id="progress-quote-input"
+                class="progress-quote-input"
+                rows="2"
+                maxlength="180"
+                placeholder="Write your own motivation quote..."
+              ></textarea>
+              <div class="progress-quote-actions">
+                <button
+                  type="button"
+                  class="progress-quote-btn"
+                  id="save-progress-quote-btn"
+                >
+                  Save quote
+                </button>
+                <button
+                  type="button"
+                  class="progress-quote-btn progress-quote-btn-secondary"
+                  id="clear-progress-quote-btn"
+                >
+                  Use daily quote
+                </button>
+                <button
+                  type="button"
+                  class="progress-quote-btn progress-quote-btn-muted"
+                  id="cancel-progress-quote-btn"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </section>
 
           <section class="chart-card">
             <h3>Completed Tasks (Last 7 Days)</h3>

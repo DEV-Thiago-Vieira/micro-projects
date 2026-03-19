@@ -7,6 +7,44 @@
     font-family: 'Montserrat', sans-serif;
 }
 
+/* ── Custom Scrollbar ────────────────────────── */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(107, 114, 128, 0.25);
+    border-radius: 3px;
+    transition: background 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(107, 114, 128, 0.4);
+}
+
+body.is-dark ::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.2);
+}
+
+body.is-dark ::-webkit-scrollbar-thumb:hover {
+    background: rgba(148, 163, 184, 0.35);
+}
+
+/* Firefox scrollbar */
+* {
+    scrollbar-color: rgba(107, 114, 128, 0.25) transparent;
+    scrollbar-width: thin;
+}
+
+body.is-dark {
+    scrollbar-color: rgba(148, 163, 184, 0.2) transparent;
+}
+
 /* ── Page loader ─────────────────────────────── */
 .page-loader {
     position: fixed;
@@ -164,6 +202,7 @@ h1 {
     font-size: 0.98rem;
     max-width: 36ch;
     margin-bottom: 0.9em;
+    padding: 0;
 }
 
 .todo-summary {
@@ -242,6 +281,7 @@ h1 {
     max-height: calc((var(--visible-tasks) * var(--task-row-height)) + (var(--visible-tasks) * var(--task-gap)) + (var(--peek-task) * var(--task-row-height)));
     overflow-y: auto;
     scrollbar-gutter: stable;
+    padding-right: 6px;
 }
 
 .todo-item-label {
@@ -1067,6 +1107,7 @@ body.is-progress-open .github-footer-link {
     overflow-y: auto;
     overflow-x: hidden;
     padding-bottom: 1rem;
+    padding-right: 8px;
 }
 
 #schedule-modal {
@@ -1143,10 +1184,226 @@ body.is-progress-open .github-footer-link {
     background: #fcfdff;
 }
 
+.chart-card {
+    margin-bottom: 0;
+    margin-top: 0;
+}
+
+.chart-card:first-of-type {
+    margin-top: 0;
+}
+
 .chart-card h3 {
     font-size: 0.88rem;
     margin-bottom: 0.45rem;
     color: #374151;
+}
+
+.progress-streak-stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.6rem;
+    margin-bottom: 0;
+}
+
+.progress-stat-card {
+    border: 1px solid #d9dee8;
+    border-radius: 10px;
+    padding: 0.8rem;
+    background: #fcfdff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    text-align: center;
+}
+
+.progress-stat-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #6b7280;
+}
+
+.progress-stat-value {
+    font-size: 1.8rem;
+    color: #2f3a4d;
+    line-height: 1;
+}
+
+.progress-stat-unit {
+    font-size: 0.72rem;
+    color: #9ca3af;
+    font-weight: 500;
+}
+
+.progress-best-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #ef4444;
+    margin-top: 0.35rem;
+    padding: 0.25rem 0.5rem;
+    background: color-mix(in srgb, #ef4444 12%, white);
+    border-radius: 6px;
+    border: 1px solid color-mix(in srgb, #ef4444 35%, white);
+}
+
+.progress-streak-stats.is-best-streak {
+    grid-template-columns: 1fr;
+}
+
+.progress-streak-stats.is-best-streak .progress-stat-card:first-child {
+    grid-column: 1 / -1;
+}
+
+.progress-streak-stats.is-best-streak .progress-stat-card:last-child {
+    display: none;
+}
+
+.progress-quote-card {
+    border: 1px solid #d6dde8;
+    border-radius: 12px;
+    padding: 0.9rem;
+    background: #ffffff;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.progress-quote-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+}
+
+.progress-quote-card h3 {
+    font-size: 0.98rem;
+    margin: 0;
+    color: #1f2937;
+    font-weight: 700;
+}
+
+.progress-quote-edit-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid #d7deea;
+    background: #f8fafc;
+    color: #64748b;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.progress-quote-edit-icon:hover {
+    background: #eef2f7;
+    color: #334155;
+}
+
+.progress-quote-display {
+    margin: 0;
+    font-size: clamp(1rem, 2.4vw, 1.18rem);
+    line-height: 1.55;
+    color: #253244;
+    font-weight: 600;
+    text-align: center;
+    padding: 1rem 1.05rem;
+    border-radius: 12px;
+    background: #f8fafc;
+    border: 1px solid #dce4f0;
+    text-wrap: balance;
+}
+
+.progress-quote-label {
+    font-size: 0.78rem;
+    color: #475569;
+    font-weight: 600;
+}
+
+.progress-quote-input {
+    width: 100%;
+    resize: vertical;
+    min-height: 64px;
+    border: 1px solid #d3dcea;
+    border-radius: 10px;
+    padding: 0.65rem 0.75rem;
+    font: inherit;
+    font-size: 0.9rem;
+    color: #1f2937;
+    background: #ffffff;
+}
+
+.progress-quote-input:focus {
+    outline: none;
+    border-color: #94a3b8;
+    box-shadow: 0 0 0 3px color-mix(in srgb, #64748b 12%, white);
+}
+
+.progress-quote-actions {
+    display: flex;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+}
+
+.progress-quote-editor {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.progress-quote-editor[hidden] {
+    display: none;
+}
+
+.progress-quote-btn {
+    border: 1px solid #d3dcea;
+    background: #ffffff;
+    color: #334155;
+    border-radius: 10px;
+    padding: 0.42rem 0.72rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.progress-quote-btn:hover {
+    background: #f8fafc;
+}
+
+.progress-quote-btn-secondary {
+    border-color: #fecaca;
+    color: #dc2626;
+    background: #fff5f5;
+}
+
+.progress-quote-btn-secondary:hover {
+    background: #ffe8e8;
+}
+
+.progress-quote-btn-muted {
+    border-color: #d1d8e3;
+    color: #64748b;
+    background: #f8fafc;
+}
+
+.progress-quote-btn-muted:hover {
+    background: #edf2f7;
+}
+
+.progress-quote-card.is-editing .progress-quote-display {
+    text-align: center;
+    font-size: 0.9rem;
+    font-weight: 500;
+    padding: 0.55rem 0.7rem;
+    border-radius: 10px;
+    background: #f8fafc;
+    border: 1px solid #dce4f0;
 }
 
 .week-chart {
@@ -1176,20 +1433,30 @@ body.is-progress-open .github-footer-link {
 
 .week-bar {
     width: 100%;
-    border: 1px solid #d9dee8;
+    border: 1px solid color-mix(in srgb, var(--bar-color, #64748b) 38%, white);
     border-radius: 6px 6px 3px 3px;
     min-height: 12px;
-    background: #eef2f7;
+    background: color-mix(in srgb, var(--bar-color, #64748b) 16%, #eef2f7);
 }
 
 .week-bar.is-active {
-    border-color: #fca5a5;
-    background: linear-gradient(180deg, #ef4444 0%, #b91c1c 100%);
+    border-color: var(--bar-color, #64748b);
+    background: linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--bar-color, #64748b) 82%, white) 0%,
+        var(--bar-color, #64748b) 100%
+    );
 }
 
 .week-bar-label {
     font-size: 0.72rem;
     color: #6b7280;
+}
+
+.week-item.is-current .week-bar-label,
+.week-item.is-current .week-bar-count {
+    color: #ef4444;
+    font-weight: 700;
 }
 
 .month-chart {
@@ -1218,21 +1485,31 @@ body.is-progress-open .github-footer-link {
 
 .month-bar {
     width: 100%;
-    border: 1px solid #d9dee8;
-    background: #eef2f7;
+    border: 1px solid color-mix(in srgb, var(--bar-color, #64748b) 38%, white);
+    background: color-mix(in srgb, var(--bar-color, #64748b) 16%, #eef2f7);
     border-radius: 6px 6px 3px 3px;
     min-height: 12px;
 }
 
 .month-bar.is-active {
-    border-color: #fca5a5;
-    background: linear-gradient(180deg, #ef4444 0%, #b91c1c 100%);
+    border-color: var(--bar-color, #64748b);
+    background: linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--bar-color, #64748b) 82%, white) 0%,
+        var(--bar-color, #64748b) 100%
+    );
 }
 
 .month-bar-label {
     line-height: 1;
     font-size: 0.62rem;
     color: #6b7280;
+}
+
+.month-item.is-current .month-bar-label,
+.month-item.is-current .month-bar-count {
+    color: #ef4444;
+    font-weight: 700;
 }
 
 .meter-label {
@@ -1742,6 +2019,10 @@ body.is-dark .modal-card p {
     color: #94a3b8;
 }
 
+body.is-dark .app-subtitle {
+    color: #94a3b8;
+}
+
 body.is-dark .back-projects-btn,
 body.is-dark .theme-toggle-btn,
 body.is-dark .clear-all-btn,
@@ -2009,11 +2290,15 @@ body.is-dark .task-goal-badge {
 }
 
 body.is-dark .reward-progress-track,
-body.is-dark .week-bar,
-body.is-dark .month-bar,
 body.is-dark .goal-progress-track {
     border-color: #334155;
     background: #111827;
+}
+
+body.is-dark .week-bar,
+body.is-dark .month-bar {
+    border-color: color-mix(in srgb, var(--bar-color, #60a5fa) 44%, #0f172a);
+    background: color-mix(in srgb, var(--bar-color, #60a5fa) 24%, #0f172a);
 }
 
 body.is-dark .schedule-goal-badge {
@@ -2051,8 +2336,121 @@ body.is-dark .schedule-submit-btn:hover {
 
 body.is-dark .week-bar.is-active,
 body.is-dark .month-bar.is-active {
-    border-color: #fca5a5;
-    background: linear-gradient(180deg, #ef4444 0%, #b91c1c 100%);
+    border-color: color-mix(in srgb, var(--bar-color, #60a5fa) 60%, #0f172a);
+    background: linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--bar-color, #60a5fa) 82%, #ffffff) 0%,
+        color-mix(in srgb, var(--bar-color, #60a5fa) 75%, #0b1220) 100%
+    );
+}
+
+body.is-dark .progress-stat-card {
+    border-color: #334155;
+    background-color: #0b1220;
+}
+
+body.is-dark .progress-stat-label {
+    color: #9ca3af;
+}
+
+body.is-dark .progress-stat-value {
+    color: #e2e8f0;
+}
+
+body.is-dark .progress-stat-unit {
+    color: #64748b;
+}
+
+body.is-dark .progress-best-badge {
+    background: color-mix(in srgb, #ef4444 20%, #0b1220);
+    border-color: color-mix(in srgb, #ef4444 50%, #0b1220);
+    color: color-mix(in srgb, #ef4444 85%, #ffffff);
+}
+
+body.is-dark .progress-quote-card {
+    border-color: #2f3b50;
+    background-color: #0f172a;
+}
+
+body.is-dark .progress-quote-card h3 {
+    color: #e2e8f0;
+}
+
+body.is-dark .progress-quote-edit-icon {
+    border-color: #334155;
+    background: #111b2f;
+    color: #94a3b8;
+}
+
+body.is-dark .progress-quote-edit-icon:hover {
+    background: #17243b;
+    color: #cbd5e1;
+}
+
+body.is-dark .progress-quote-display {
+    color: #dbe7fb;
+    background: #111b2f;
+    border-color: #334155;
+}
+
+body.is-dark .progress-quote-label {
+    color: #a9b8cc;
+}
+
+body.is-dark .progress-quote-input {
+    border-color: #334155;
+    background: #0b1220;
+    color: #e2e8f0;
+}
+
+body.is-dark .progress-quote-input:focus {
+    border-color: #64748b;
+    box-shadow: 0 0 0 3px color-mix(in srgb, #94a3b8 20%, transparent);
+}
+
+body.is-dark .progress-quote-btn {
+    border-color: #334155;
+    background: #111b2f;
+    color: #cbd5e1;
+}
+
+body.is-dark .progress-quote-btn:hover {
+    background: #17243b;
+}
+
+body.is-dark .progress-quote-btn-secondary {
+    border-color: color-mix(in srgb, #ef4444 40%, #334155);
+    color: #fca5a5;
+    background: color-mix(in srgb, #ef4444 14%, #0f172a);
+}
+
+body.is-dark .progress-quote-btn-secondary:hover {
+    background: color-mix(in srgb, #ef4444 22%, #0f172a);
+}
+
+body.is-dark .progress-quote-btn-muted {
+    border-color: #334155;
+    color: #94a3b8;
+    background: #111827;
+}
+
+body.is-dark .progress-quote-btn-muted:hover {
+    background: #1f2937;
+}
+
+body.is-dark .progress-quote-card.is-editing .progress-quote-display {
+    background: #0f172a;
+    border-color: #334155;
+    color: #cbd5e1;
+}
+
+body.is-dark .chart-card {
+    border-color: #334155;
+    background-color: #0b1220;
+}
+
+body.is-dark .chart-card h3 {
+    color: #cbd5e1;
 }
 
 body.is-dark .todo-item:hover {
@@ -2132,6 +2530,18 @@ body.is-dark .todo-item:hover {
     .confirm-task {
         width: 52px;
         padding: .8em;
+    }
+
+    .progress-streak-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .progress-stat-card {
+        padding: 0.6rem;
+    }
+
+    .progress-stat-value {
+        font-size: 1.5rem;
     }
 }
 
@@ -2285,10 +2695,6 @@ body.is-dark .todo-item:hover {
     #progress-modal .progress-modal-card > :not(.schedule-modal-head) {
         margin-left: 1rem;
         margin-right: 1rem;
-    }
-
-    #progress-modal .chart-card:first-of-type {
-        margin-top: 0.65rem;
     }
 
     #progress-modal.is-open .progress-modal-card {

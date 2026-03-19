@@ -8,6 +8,7 @@ const installAppButton = document.getElementById('install-app-btn');
 const backProjectsButton = document.querySelector('.back-projects-btn');
 const themeToggleButton = document.getElementById('theme-toggle-btn');
 const congratsMessage = document.getElementById('todo-congrats');
+const appSubtitle = document.getElementById('app-subtitle');
 
 const scheduleForm = document.getElementById('schedule-form');
 const scheduleInput = document.getElementById('schedule-input');
@@ -33,6 +34,14 @@ const weekChart = document.getElementById('week-chart');
 const monthChart = document.getElementById('month-chart');
 const yearChartLabel = document.getElementById('year-chart-label');
 const goalProgressList = document.getElementById('goal-progress-list');
+const progressQuoteCard = document.querySelector('.progress-quote-card');
+const progressQuoteDisplay = document.getElementById('progress-quote-display');
+const progressQuoteEditor = document.getElementById('progress-quote-editor');
+const progressQuoteInput = document.getElementById('progress-quote-input');
+const editProgressQuoteButton = document.getElementById('edit-progress-quote-btn');
+const saveProgressQuoteButton = document.getElementById('save-progress-quote-btn');
+const clearProgressQuoteButton = document.getElementById('clear-progress-quote-btn');
+const cancelProgressQuoteButton = document.getElementById('cancel-progress-quote-btn');
 
 const currentStreakElement = document.getElementById('current-streak');
 const bestStreakElement = document.getElementById('best-streak');
@@ -60,6 +69,7 @@ const GOALS_STORAGE_KEY = 'todo-goals-v1';
 const LAST_SYNC_DATE_STORAGE_KEY = 'todo-last-sync-date-v1';
 const STATS_STORAGE_KEY = 'todo-stats-v1';
 const THEME_STORAGE_KEY = 'todo-theme-v1';
+const CUSTOM_QUOTE_STORAGE_KEY = 'todo-custom-quote-v1';
 
 const monthNames = [
 	'Jan',
@@ -76,6 +86,46 @@ const monthNames = [
 	'Dec',
 ];
 
+const WEEKDAY_CHART_COLORS = [
+	'#fb923c', // Sun
+	'#3b82f6', // Mon
+	'#06b6d4', // Tue
+	'#10b981', // Wed
+	'#8b5cf6', // Thu
+	'#f59e0b', // Fri
+	'#6366f1', // Sat
+];
+
+const MONTH_CHART_COLORS = [
+	'#3b82f6',
+	'#0ea5e9',
+	'#14b8a6',
+	'#22c55e',
+	'#84cc16',
+	'#eab308',
+	'#f59e0b',
+	'#f97316',
+	'#ec4899',
+	'#8b5cf6',
+	'#6366f1',
+	'#06b6d4',
+];
+
+const CURRENT_PERIOD_CHART_COLOR = '#ef4444';
+
+const DAILY_MOTIVATION_QUOTES = [
+	'Progress, not perfection.',
+	'Show up today, even if it is small.',
+	'Consistency beats intensity.',
+	'One task at a time, one day at a time.',
+	'Discipline is a gift to your future self.',
+	'Start before you feel ready.',
+	'Momentum is built in ordinary days.',
+	'You do not need to be extreme, just consistent.',
+	'Protect your streak with one meaningful action.',
+	'Your habits are writing your story.',
+];
+
 const baseGoals = [3, 7, 14, 30, 60, 90];
 
 const state = {
@@ -83,6 +133,7 @@ const state = {
 	schedules: [],
 	goals: [],
 	lastSyncDate: null,
+	customQuote: '',
 	stats: {
 		dailyCompletions: {},
 		goalDailyCompletions: {},
@@ -94,6 +145,7 @@ let pendingDeleteScheduleId = null;
 let pendingRemoveGoalId = null;
 let toastTimer = null;
 let deferredInstallPrompt = null;
+let isProgressQuoteEditing = false;
 
 const getStoredTheme = () => {
 	const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
@@ -632,9 +684,73 @@ const renderStreakDashboard = () => {
 		});
 };
 
+const getDailyMotivationQuote = (dateStamp) => {
+	if (!Array.isArray(DAILY_MOTIVATION_QUOTES) || DAILY_MOTIVATION_QUOTES.length === 0) {
+		return 'Keep going. Your future self will thank you.';
+	}
+
+	const [year, month, day] = dateStamp.split('-').map(Number);
+	const quoteSeed = ((year * 372) + (month * 31) + day) % DAILY_MOTIVATION_QUOTES.length;
+	return DAILY_MOTIVATION_QUOTES[quoteSeed];
+};
+
+const getResolvedProgressQuote = (dateStamp = getCurrentDateStamp()) => {
+	if (state.customQuote) {
+		return state.customQuote;
+	}
+
+	return getDailyMotivationQuote(dateStamp);
+};
+
+const setProgressQuoteEditing = (isEditing) => {
+	isProgressQuoteEditing = Boolean(isEditing);
+
+	if (progressQuoteCard) {
+		progressQuoteCard.classList.toggle('is-editing', isProgressQuoteEditing);
+	}
+
+	if (progressQuoteEditor) {
+		progressQuoteEditor.hidden = !isProgressQuoteEditing;
+	}
+
+	if (editProgressQuoteButton) {
+		editProgressQuoteButton.hidden = isProgressQuoteEditing;
+	}
+
+	if (progressQuoteInput && isProgressQuoteEditing) {
+		progressQuoteInput.value = state.customQuote;
+		progressQuoteInput.focus();
+		progressQuoteInput.setSelectionRange(progressQuoteInput.value.length, progressQuoteInput.value.length);
+	}
+};
+
+const renderProgressQuote = (dateStamp = getCurrentDateStamp()) => {
+	if (progressQuoteDisplay) {
+		progressQuoteDisplay.textContent = `"${getResolvedProgressQuote(dateStamp)}"`;
+	}
+
+	syncDailyQuoteSurface(dateStamp);
+
+	if (progressQuoteInput && isProgressQuoteEditing) {
+		progressQuoteInput.value = state.customQuote;
+	}
+};
+
+const syncDailyQuoteSurface = (dateStamp = getCurrentDateStamp()) => {
+	const quote = getResolvedProgressQuote(dateStamp);
+
+	if (appSubtitle) {
+		appSubtitle.textContent = quote;
+	}
+
+	return quote;
+};
+
 const renderProgressCharts = () => {
 	const today = new Date();
 	const currentYear = today.getFullYear();
+	const todayDateStamp = getCurrentDateStamp();
+	const currentMonthIndex = today.getMonth();
 
 	const weekItems = [];
 	for (let i = 6; i >= 0; i -= 1) {
@@ -643,21 +759,27 @@ const renderProgressCharts = () => {
 		const label = day.toLocaleDateString('en-US', { weekday: 'short' });
 		const key = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
 		const count = getDailyCompletionCount(key);
-		weekItems.push({ label, key, count });
+		const weekdayIndex = day.getDay();
+		const isCurrentDay = key === todayDateStamp;
+		const chartColor = isCurrentDay
+			? CURRENT_PERIOD_CHART_COLOR
+			: WEEKDAY_CHART_COLORS[weekdayIndex] || '#3b82f6';
+		weekItems.push({ label, key, count, chartColor, isCurrentDay });
 	}
 
 	const maxWeekCount = Math.max(...weekItems.map((item) => item.count), 1);
 	weekChart.innerHTML = '';
 	weekItems.forEach((item) => {
 		const weekItem = document.createElement('div');
-		weekItem.className = 'week-item';
+		weekItem.className = `week-item${item.isCurrentDay ? ' is-current' : ''}`;
 
 		const countLabel = document.createElement('span');
 		countLabel.className = 'week-bar-count';
 		countLabel.textContent = String(item.count);
 
 		const bar = document.createElement('div');
-		bar.className = `week-bar${item.count > 0 ? ' is-active' : ''}`;
+		bar.className = `week-bar${item.count > 0 ? ' is-active' : ''}${item.isCurrentDay ? ' is-current' : ''}`;
+		bar.style.setProperty('--bar-color', item.chartColor);
 		bar.style.height = `${Math.max((item.count / maxWeekCount) * 100, 8)}%`;
 		bar.title = `${item.key}: ${item.count} completed task${item.count === 1 ? '' : 's'}`;
 
@@ -687,14 +809,19 @@ const renderProgressCharts = () => {
 	monthChart.innerHTML = '';
 	monthActiveDays.forEach((count, index) => {
 		const monthItem = document.createElement('div');
-		monthItem.className = 'month-item';
+		const isCurrentMonth = index === currentMonthIndex;
+		const chartColor = isCurrentMonth
+			? CURRENT_PERIOD_CHART_COLOR
+			: MONTH_CHART_COLORS[index] || '#3b82f6';
+		monthItem.className = `month-item${isCurrentMonth ? ' is-current' : ''}`;
 
 		const countLabel = document.createElement('span');
 		countLabel.className = 'month-bar-count';
 		countLabel.textContent = String(count);
 
 		const bar = document.createElement('div');
-		bar.className = `month-bar${count > 0 ? ' is-active' : ''}`;
+		bar.className = `month-bar${count > 0 ? ' is-active' : ''}${isCurrentMonth ? ' is-current' : ''}`;
+		bar.style.setProperty('--bar-color', chartColor);
 		bar.style.height = `${Math.max((count / maxMonthCount) * 100, 8)}%`;
 		bar.title = `${monthNames[index]}: ${count} active day${count === 1 ? '' : 's'}`;
 
@@ -716,6 +843,46 @@ const renderProgressCharts = () => {
 	const elapsedDays = Math.floor((todayUtc - yearStartUtc) / (1000 * 60 * 60 * 24)) + 1;
 	const consistencyPercent = elapsedDays > 0 ? Math.round((activeDays / elapsedDays) * 100) : 0;
 	yearChartLabel.textContent = `${activeDays}/${totalDaysInYear} active days in ${currentYear} (${consistencyPercent}% consistency)`;
+
+	const progressCurrentStreakElement = document.getElementById('progress-current-streak');
+	const progressBestStreakElement = document.getElementById('progress-best-streak');
+	const progressCurrentUnitElement = document.getElementById('progress-current-unit');
+	const progressBestUnitElement = document.getElementById('progress-best-unit');
+	const progressBestBadge = document.getElementById('progress-best-badge');
+	const progressStreakStatsContainer = document.getElementById('progress-streak-stats');
+	const progressCurrentCard = document.getElementById('progress-current-card');
+	const progressBestCard = document.getElementById('progress-best-card');
+	
+	const currentStreak = getCurrentStreak();
+	const bestStreak = getBestStreak();
+	const isBestStreak = currentStreak > 0 && currentStreak === bestStreak;
+	
+	if (progressCurrentStreakElement) {
+		progressCurrentStreakElement.textContent = String(currentStreak);
+	}
+	if (progressBestStreakElement) {
+		progressBestStreakElement.textContent = String(bestStreak);
+	}
+	if (progressCurrentUnitElement) {
+		progressCurrentUnitElement.textContent = currentStreak === 1 ? 'day' : 'days';
+	}
+	if (progressBestUnitElement) {
+		progressBestUnitElement.textContent = bestStreak === 1 ? 'day' : 'days';
+	}
+	if (progressBestBadge) {
+		progressBestBadge.hidden = !isBestStreak;
+	}
+	if (progressStreakStatsContainer) {
+		progressStreakStatsContainer.classList.toggle('is-best-streak', isBestStreak);
+	}
+	if (isBestStreak && progressBestCard) {
+		progressBestCard.hidden = true;
+	} else if (progressBestCard) {
+		progressBestCard.hidden = false;
+	}
+
+	renderProgressQuote(todayDateStamp);
+
 	renderGoalProgress();
 };
 
@@ -1389,6 +1556,11 @@ const saveStateToStorage = () => {
 	localStorage.setItem(GOALS_STORAGE_KEY, JSON.stringify(state.goals));
 	localStorage.setItem(LAST_SYNC_DATE_STORAGE_KEY, state.lastSyncDate || '');
 	localStorage.setItem(STATS_STORAGE_KEY, JSON.stringify(state.stats));
+	if (state.customQuote) {
+		localStorage.setItem(CUSTOM_QUOTE_STORAGE_KEY, state.customQuote);
+	} else {
+		localStorage.removeItem(CUSTOM_QUOTE_STORAGE_KEY);
+	}
 	updateTaskSummary();
 	renderStreakDashboard();
 };
@@ -1549,6 +1721,15 @@ const loadStoredStats = () => {
 	} catch {
 		return { dailyCompletions: {}, goalDailyCompletions: {} };
 	}
+};
+
+const loadStoredCustomQuote = () => {
+	const rawQuote = localStorage.getItem(CUSTOM_QUOTE_STORAGE_KEY);
+	if (!rawQuote || typeof rawQuote !== 'string') {
+		return '';
+	}
+
+	return rawQuote.trim().slice(0, 180);
 };
 
 const syncScheduledTasksForToday = () => {
@@ -1761,6 +1942,7 @@ const initializeState = () => {
 			: null,
 	}));
 	state.stats = loadStoredStats();
+	state.customQuote = loadStoredCustomQuote();
 	state.lastSyncDate = localStorage.getItem(LAST_SYNC_DATE_STORAGE_KEY) || null;
 
 	syncScheduledTasksForToday();
@@ -1835,6 +2017,7 @@ const hideScheduleModal = () => {
 
 const showProgressModal = () => {
 	renderProgressCharts();
+	setProgressQuoteEditing(false);
 	progressModal.classList.add('is-open');
 	progressModal.setAttribute('aria-hidden', 'false');
 	document.body.classList.add('is-progress-open');
@@ -1964,6 +2147,43 @@ openScheduleButton.addEventListener('click', showScheduleModal);
 closeScheduleButton.addEventListener('click', hideScheduleModal);
 openProgressButton.addEventListener('click', showProgressModal);
 closeProgressButton.addEventListener('click', hideProgressModal);
+
+if (saveProgressQuoteButton) {
+	saveProgressQuoteButton.addEventListener('click', () => {
+		if (!progressQuoteInput) {
+			return;
+		}
+
+		state.customQuote = progressQuoteInput.value.trim().slice(0, 180);
+		renderProgressQuote();
+		setProgressQuoteEditing(false);
+		saveStateToStorage();
+		showSuccessToast(state.customQuote ? 'Custom quote saved.' : 'Using daily quote.');
+	});
+}
+
+if (clearProgressQuoteButton) {
+	clearProgressQuoteButton.addEventListener('click', () => {
+		state.customQuote = '';
+		renderProgressQuote();
+		setProgressQuoteEditing(false);
+		saveStateToStorage();
+		showSuccessToast('Daily quote enabled.');
+	});
+}
+
+if (editProgressQuoteButton) {
+	editProgressQuoteButton.addEventListener('click', () => {
+		setProgressQuoteEditing(true);
+	});
+}
+
+if (cancelProgressQuoteButton) {
+	cancelProgressQuoteButton.addEventListener('click', () => {
+		setProgressQuoteEditing(false);
+		renderProgressQuote();
+	});
+}
 
 if (themeToggleButton) {
 	themeToggleButton.addEventListener('click', toggleTheme);
@@ -2922,6 +3142,7 @@ if (goalColorInput) {
 	goalColorInput.value = getNextAvailableGoalColor();
 }
 applyTheme(getStoredTheme());
+syncDailyQuoteSurface();
 
 window.addEventListener('beforeinstallprompt', (event) => {
 	event.preventDefault();
