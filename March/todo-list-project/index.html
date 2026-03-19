@@ -111,14 +111,20 @@
             View progress
           </button>
         </div>
-        <p class="streak-stats">
-          Current streak: <strong id="current-streak">0</strong>
-          <span class="counter-divider">|</span>
-          Best streak: <strong id="best-streak">0</strong>
-        </p>
-        <p class="streak-message" id="streak-message">
-          Finish at least one task today to keep your streak alive.
-        </p>
+        <div class="streak-main-display">
+          <span class="streak-main-label">CURRENT STREAK</span>
+          <div class="streak-value-row">
+            <strong class="streak-main-value" id="current-streak">0</strong>
+            <span class="streak-goal-fraction" id="streak-goal-fraction"
+              >/3</span
+            >
+          </div>
+          <span class="streak-main-unit" id="streak-main-unit">day</span>
+          <span class="streak-best-badge" id="streak-best-badge" hidden
+            >BEST STREAK</span
+          >
+        </div>
+        <strong id="best-streak" hidden>0</strong>
         <div
           class="reward-progress-track"
           role="progressbar"
@@ -126,7 +132,6 @@
         >
           <div class="reward-progress-bar" id="reward-progress-bar"></div>
         </div>
-        <p class="reward-next" id="reward-next">Next goal: 3 days</p>
         <div class="badge-list" id="badge-list"></div>
       </section>
 

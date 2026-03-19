@@ -657,21 +657,15 @@ const renderStreakDashboard = () => {
 	currentStreakElement.textContent = String(streak);
 	bestStreakElement.textContent = String(bestStreak);
 	rewardProgressBarElement.style.width = `${Math.max(tierProgress, 0)}%`;
-	rewardNextElement.textContent = `Next goal: ${nextGoal} days`;
 
-	if (streak >= 60) {
-		streakMessageElement.textContent = 'This is long-term discipline. Keep the chain alive one day at a time.';
-	} else if (streak >= 30) {
-		streakMessageElement.textContent = 'One full month. You are building identity, not just a habit.';
-	} else if (streak >= 14) {
-		streakMessageElement.textContent = 'You are building a real habit now. Keep protecting this streak.';
-	} else if (streak >= 7) {
-		streakMessageElement.textContent = 'Strong momentum. You are proving consistency is possible.';
-	} else if (streak >= 3) {
-		streakMessageElement.textContent = 'Nice run. You are close to your first weekly reward.';
-	} else {
-		streakMessageElement.textContent = 'Finish at least one task today to keep your streak alive.';
-	}
+	const streakFractionEl = document.getElementById('streak-goal-fraction');
+	if (streakFractionEl) streakFractionEl.textContent = `/${nextGoal}`;
+
+	const streakUnitEl = document.getElementById('streak-main-unit');
+	if (streakUnitEl) streakUnitEl.textContent = streak === 1 ? 'day' : 'days';
+
+	const streakBestBadge = document.getElementById('streak-best-badge');
+	if (streakBestBadge) streakBestBadge.hidden = streak === 0 || streak < bestStreak;
 
 	badgeListElement.innerHTML = '';
 	baseGoals

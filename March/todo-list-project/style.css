@@ -405,32 +405,77 @@ h1 {
     background: #f4f6f9;
 }
 
-.streak-stats {
-    font-size: 0.93rem;
-    color: #374151;
-    margin-bottom: 0.35em;
+.streak-main-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.15rem;
+    padding: 0.45rem 0 0.55rem;
 }
 
-.streak-message {
-    color: #374151;
-    font-size: 0.9rem;
-    margin-bottom: 0.45rem;
+.streak-main-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #6b7280;
+}
+
+.streak-value-row {
+    display: flex;
+    align-items: baseline;
+    gap: 0.05rem;
+}
+
+.streak-main-value {
+    font-size: 2.6rem;
+    font-weight: 700;
+    line-height: 1;
+    color: #2f3a4d;
+}
+
+.streak-goal-fraction {
+    font-size: 1.35rem;
+    font-weight: 600;
+    color: #9ca3af;
+    line-height: 1;
+}
+
+.streak-main-unit {
+    font-size: 0.78rem;
+    color: #9ca3af;
+    font-weight: 500;
+}
+
+.streak-best-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #ef4444;
+    margin-top: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    background: color-mix(in srgb, #ef4444 12%, white);
+    border-radius: 6px;
+    border: 1px solid color-mix(in srgb, #ef4444 35%, white);
 }
 
 .reward-progress-track {
     width: 100%;
-    height: 10px;
+    height: 14px;
     border-radius: 999px;
     background: #edf1f7;
     overflow: hidden;
     border: 1px solid #d9dee8;
+    margin-top: 0.1rem;
 }
 
 .reward-progress-bar {
     height: 100%;
     width: 0%;
     background: linear-gradient(90deg, #ef4444 0%, #b91c1c 100%);
-    transition: width 0.3s ease;
+    border-radius: 999px;
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .reward-next {
@@ -2009,8 +2054,9 @@ body.is-dark .schedule-subtitle,
 body.is-dark .goal-item-text span,
 body.is-dark .goal-progress-meta,
 body.is-dark .goal-progress-empty,
-body.is-dark .streak-message,
-body.is-dark .streak-stats,
+body.is-dark .streak-main-label,
+body.is-dark .streak-main-unit,
+body.is-dark .streak-goal-fraction,
 body.is-dark .week-bar-label,
 body.is-dark .month-bar-label,
 body.is-dark .week-bar-count,
@@ -2361,10 +2407,15 @@ body.is-dark .progress-stat-unit {
     color: #64748b;
 }
 
-body.is-dark .progress-best-badge {
+body.is-dark .progress-best-badge,
+body.is-dark .streak-best-badge {
     background: color-mix(in srgb, #ef4444 20%, #0b1220);
     border-color: color-mix(in srgb, #ef4444 50%, #0b1220);
     color: color-mix(in srgb, #ef4444 85%, #ffffff);
+}
+
+body.is-dark .streak-main-value {
+    color: #e2e8f0;
 }
 
 body.is-dark .progress-quote-card {
