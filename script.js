@@ -3,10 +3,6 @@ const calendarTitle = document.getElementById('calendar-title');
 const calendarCard = document.querySelector('.calendar-card');
 const prevMonthButton = document.getElementById('prev-month-btn');
 const nextMonthButton = document.getElementById('next-month-btn');
-const totalProjectsElement = document.getElementById('total-projects');
-const monthProjectsElement = document.getElementById('month-projects');
-const dailyStreakElement = document.getElementById('daily-streak');
-const bestStreakElement = document.getElementById('best-streak');
 const motivationMessageElement = document.getElementById('motivation-message');
 const rewardProgressBarElement = document.getElementById('reward-progress-bar');
 const rewardNextElement = document.getElementById('reward-next');
@@ -273,27 +269,19 @@ const renderRewards = (streak, monthProjects, daysInCurrentMonth) => {
 	const progressPercentage = Math.min((progressInCurrentTier / tierLength) * 100, 100);
 
 	rewardProgressBarElement.style.width = `${progressPercentage}%`;
-	rewardNextElement.textContent = `Next streak reward: ${nextStreakGoal}-day streak`;
 
-	if (streak >= 60) {
-		motivationMessageElement.textContent =
-			'This is long-term discipline. Keep the chain alive one day at a time.';
-	} else if (streak >= 30) {
-		motivationMessageElement.textContent =
-			'One full month. You are building identity, not just a habit.';
-	} else if (streak >= 14) {
-		motivationMessageElement.textContent =
-			'You are building a real habit now. Keep protecting this streak.';
-	} else if (streak >= 7) {
-		motivationMessageElement.textContent =
-			'Strong momentum. You are proving consistency is possible.';
-	} else if (streak >= 3) {
-		motivationMessageElement.textContent =
-			'Nice run. You are close to your first weekly reward.';
-	} else {
-		motivationMessageElement.textContent =
-			'You started. Show up again tomorrow and lock your momentum.';
-	}
+	const streakMainValueEl = document.getElementById('streak-main-value');
+	if (streakMainValueEl) streakMainValueEl.textContent = String(streak);
+
+	const streakFractionEl = document.getElementById('streak-goal-fraction');
+	if (streakFractionEl) streakFractionEl.textContent = `/${nextStreakGoal}`;
+
+	const streakUnitEl = document.getElementById('streak-main-unit');
+	if (streakUnitEl) streakUnitEl.textContent = streak === 1 ? 'day' : 'days';
+
+	const bestStreak = getBestStreak();
+	const streakBestBadge = document.getElementById('streak-best-badge');
+	if (streakBestBadge) streakBestBadge.hidden = streak === 0 || streak < bestStreak;
 
 	const consistency = daysInCurrentMonth > 0 ? Math.round((monthProjects / daysInCurrentMonth) * 100) : 0;
 	const visibleWeeklyGoals = getVisibleInfiniteGoals(streak);
@@ -327,9 +315,6 @@ const renderRewards = (streak, monthProjects, daysInCurrentMonth) => {
 const renderCalendar = () => {
 	calendarGrid.innerHTML = '';
 	calendarTitle.textContent = `${monthNames[currentMonth]} ${currentYear}`;
-	totalProjectsElement.textContent = String(getTotalProjectsCount());
-	dailyStreakElement.textContent = String(getDailyStreak());
-	bestStreakElement.textContent = String(getBestStreak());
 
 	const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
 	const daysInCurrentMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
@@ -375,7 +360,6 @@ const renderCalendar = () => {
 		calendarGrid.appendChild(dayCell);
 	}
 
-	monthProjectsElement.textContent = String(currentMonthProjects);
 	renderRewards(getDailyStreak(), currentMonthProjects, daysInCurrentMonth);
 	renderProgressCharts();
 	const isCompleteMonth = projectDaysInMonth === daysInCurrentMonth;

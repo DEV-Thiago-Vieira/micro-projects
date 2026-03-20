@@ -30,19 +30,6 @@
         </a>
       </header>
 
-      <section class="calendar-summary" aria-live="polite">
-        <p>
-          Total: <strong id="total-projects">0</strong>
-          <span class="summary-divider">|</span>
-          This month: <strong id="month-projects">0</strong>
-          <span class="summary-divider">|</span>
-          <span class="streak-label">Daily streak:</span>
-          <strong id="daily-streak" class="streak-value">0</strong>
-          <span class="summary-divider">|</span>
-          Best streak: <strong id="best-streak">0</strong>
-        </p>
-      </section>
-
       <section class="motivation-card" aria-live="polite">
         <div class="motivation-head">
           <h2 class="motivation-title">Consistency Rewards</h2>
@@ -50,9 +37,19 @@
             View progress
           </button>
         </div>
-        <p class="motivation-message" id="motivation-message">
-          Every day counts. Keep going.
-        </p>
+        <div class="streak-main-display">
+          <span class="streak-main-label">CURRENT STREAK</span>
+          <div class="streak-value-row">
+            <strong class="streak-main-value" id="streak-main-value">0</strong>
+            <span class="streak-goal-fraction" id="streak-goal-fraction"
+              >/7</span
+            >
+          </div>
+          <span class="streak-main-unit" id="streak-main-unit">days</span>
+          <span class="streak-best-badge" id="streak-best-badge" hidden
+            >BEST STREAK</span
+          >
+        </div>
         <div
           class="reward-progress-track"
           role="progressbar"
@@ -60,7 +57,6 @@
         >
           <div class="reward-progress-bar" id="reward-progress-bar"></div>
         </div>
-        <p class="reward-next" id="reward-next">Next reward: 7-day streak</p>
         <div class="badge-list" id="badge-list"></div>
       </section>
 
