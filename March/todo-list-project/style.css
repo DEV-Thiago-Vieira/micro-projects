@@ -270,36 +270,38 @@ h1 {
 
 .todo-list {
     --visible-tasks: 3;
-    --peek-task: 0.18;
-    --task-row-height: 68px;
-    --task-gap: 0.22em;
+    --peek-task: 0.15;
+    --task-row-height: 76px;
+    --task-gap: 0.45em;
     display: flex;
     flex-direction: column;
     gap: var(--task-gap);
-    margin: 0.35em 0;
+    margin: 0.25em 0;
     width: 80%;
-    max-height: calc((var(--visible-tasks) * var(--task-row-height)) + ((var(--visible-tasks) - 1) * var(--task-gap)) + (var(--peek-task) * var(--task-row-height)) + 0.5rem);
+    max-height: calc((var(--visible-tasks) * var(--task-row-height)) + (var(--visible-tasks) * var(--task-gap)) + (var(--peek-task) * var(--task-row-height)) + 2rem);
     overflow-y: auto;
     overflow-x: hidden;
     overscroll-behavior: contain;
     scrollbar-gutter: stable;
-    scroll-padding-block: 0.25rem;
-    padding: 0.25rem 6px;
+    scroll-padding-block: 0.12rem;
+    padding: 0.12rem 6px;
 }
 
 .todo-item-label {
     display: flex;
-    padding: 1em;
+    padding: 0.7em 1em;
     padding-right: 130px;
     gap: 10px;
     cursor: pointer;
-    min-height: 60px;
+    height: 100%;
     width: 100%;
     min-width: 0;
     align-items: center;
     border-radius: 10px;
     border: 2px solid #cfd4dc;
     background-color: #ffffff;
+    overflow: hidden;
+    box-sizing: border-box;
     transition: all 0.2s ease;
 }
 
@@ -1903,7 +1905,8 @@ body.is-progress-open .github-footer-link {
 .todo-item {
     position: relative;
     min-height: var(--task-row-height);
-    flex: 0 0 auto;
+    max-height: var(--task-row-height);
+    flex: 0 0 var(--task-row-height);
     border-radius: 10px;
     overflow: hidden;
     transform-origin: top center;
@@ -1990,14 +1993,17 @@ body.is-progress-open .github-footer-link {
 .todo-item-label-content {
     display: flex;
     flex-direction: column;
+    justify-content: center;
     flex: 1;
     min-width: 0;
-    gap: 0.2em;
+    gap: 0.15em;
+    overflow: hidden;
 }
 
 .task-goal-badge {
     display: inline-block;
     align-self: flex-start;
+    flex-shrink: 0;
     font-size: 0.69rem;
     font-weight: 700;
     color: var(--task-goal-color, #3b82f6);
