@@ -9,7 +9,7 @@
     <meta name="theme-color" content="#22c55e" />
     <meta
       name="description"
-      content="Installable to-do list with recurring schedules and streak tracking."
+      content="Installable to-do list with flexible recurring schedules, goal planning, and streak tracking."
     />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -52,7 +52,7 @@
             Install app
           </button>
           <button type="button" class="clear-all-btn" id="open-schedule-btn">
-            Daily schedules
+            Recurring schedules
           </button>
           <button type="button" class="clear-all-btn" id="clear-all-btn">
             Clear all tasks
@@ -222,51 +222,99 @@
           aria-labelledby="schedule-modal-title"
         >
           <div class="schedule-modal-head">
-            <h2 id="schedule-modal-title">Daily Schedules</h2>
-            <button
-              type="button"
-              class="schedule-close-btn"
-              id="close-schedule-btn"
-              aria-label="Close daily schedules"
-            >
-              <i class="fa-solid fa-xmark" aria-hidden="true"></i>
-            </button>
+            <h2 id="schedule-modal-title">Recurring Schedules</h2>
+            <div class="schedule-head-actions">
+              <button
+                type="button"
+                class="schedule-visibility-btn"
+                id="toggle-finished-tasks-btn"
+                aria-label="Hide finished tasks"
+                aria-pressed="false"
+                title="Hide finished tasks"
+              >
+                <i class="fa-solid fa-eye" aria-hidden="true"></i>
+              </button>
+              <button
+                type="button"
+                class="schedule-close-btn"
+                id="close-schedule-btn"
+                aria-label="Close recurring schedules"
+              >
+                <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+              </button>
+            </div>
           </div>
           <p class="schedule-subtitle">
-            Scheduled tasks are added every day and can only be removed by
-            deleting the schedule.
+            Create schedules that start later, repeat every X days, and stay
+            linked to goals.
           </p>
 
           <div class="goal-section">
             <h3 class="goal-section-title">Goals</h3>
             <form class="goal-form" id="goal-form">
-              <input
-                type="text"
-                id="goal-title-input"
-                class="schedule-input"
-                placeholder="Goal name (e.g. Learn Spanish)..."
-                required
-              />
-              <select id="goal-type-select" class="goal-select">
-                <option value="habit">Habit (indefinite)</option>
-                <option value="period">Period goal</option>
-              </select>
-              <input
-                type="number"
-                id="goal-duration-input"
-                class="goal-duration-input"
-                min="1"
-                placeholder="Days"
-                disabled
-              />
-              <input
-                type="color"
-                id="goal-color-input"
-                class="goal-color-input"
-                value="#3b82f6"
-                aria-label="Choose goal color"
-                title="Goal color"
-              />
+              <div class="form-field" id="goal-title-field">
+                <label for="goal-title-input">Goal Name</label>
+                <input
+                  type="text"
+                  id="goal-title-input"
+                  class="schedule-input"
+                  placeholder="Goal name (e.g. Learn Spanish)..."
+                  required
+                />
+              </div>
+              <div class="form-field" id="goal-type-field">
+                <label for="goal-type-select">Goal Type</label>
+                <select id="goal-type-select" class="goal-select">
+                  <option value="habit">Habit (indefinite)</option>
+                  <option value="period">Period goal</option>
+                </select>
+              </div>
+              <div class="form-field" id="goal-duration-field">
+                <label for="goal-duration-input">Duration (Days)</label>
+                <input
+                  type="number"
+                  id="goal-duration-input"
+                  class="goal-duration-input"
+                  min="1"
+                  placeholder="Duration (days)"
+                  disabled
+                />
+              </div>
+              <div class="form-field" id="goal-interval-field">
+                <label for="goal-interval-input">Every X Days</label>
+                <input
+                  type="number"
+                  id="goal-interval-input"
+                  class="goal-duration-input"
+                  min="1"
+                  placeholder="Every X days (default: 1)"
+                  value="1"
+                  aria-label="Every X days"
+                  title="Every X days (default 1)"
+                />
+              </div>
+              <div class="form-field" id="goal-start-date-field">
+                <label for="goal-start-date-input">Start From</label>
+                <input
+                  type="date"
+                  id="goal-start-date-input"
+                  class="goal-duration-input"
+                  placeholder="Start from (default: today)"
+                  aria-label="Start from"
+                  title="Start from (default today)"
+                />
+              </div>
+              <div class="form-field" id="goal-color-field">
+                <label for="goal-color-input">Color</label>
+                <input
+                  type="color"
+                  id="goal-color-input"
+                  class="goal-color-input"
+                  value="#3b82f6"
+                  aria-label="Choose goal color"
+                  title="Goal color"
+                />
+              </div>
               <button type="submit" class="schedule-submit-btn">
                 Create goal
               </button>
@@ -290,16 +338,46 @@
           </div>
 
           <form class="schedule-form" id="schedule-form">
-            <input
-              type="text"
-              id="schedule-input"
-              class="schedule-input"
-              placeholder="Schedule a daily task..."
-              required
-            />
-            <select id="schedule-goal-select" class="goal-select">
-              <option value="">No goal</option>
-            </select>
+            <div class="form-field" id="schedule-task-field">
+              <label for="schedule-input">Task Name</label>
+              <input
+                type="text"
+                id="schedule-input"
+                class="schedule-input"
+                placeholder="Create a recurring task..."
+                required
+              />
+            </div>
+            <div class="form-field" id="schedule-goal-field">
+              <label for="schedule-goal-select">Goal</label>
+              <select id="schedule-goal-select" class="goal-select">
+                <option value="">No goal</option>
+              </select>
+            </div>
+            <div class="form-field" id="schedule-interval-field">
+              <label for="schedule-interval-input">Every X Days</label>
+              <input
+                type="number"
+                id="schedule-interval-input"
+                class="goal-duration-input"
+                min="1"
+                placeholder="Every X days (default: 1)"
+                value="1"
+                aria-label="Every X days"
+                title="Every X days (default 1)"
+              />
+            </div>
+            <div class="form-field" id="schedule-start-field">
+              <label for="schedule-start-date-input">Start From</label>
+              <input
+                type="date"
+                id="schedule-start-date-input"
+                class="goal-duration-input"
+                placeholder="Start from (default: today)"
+                aria-label="Start from"
+                title="Start from (default today)"
+              />
+            </div>
             <button type="submit" class="schedule-submit-btn">Schedule</button>
           </form>
           <ul class="schedule-list" id="schedule-list"></ul>

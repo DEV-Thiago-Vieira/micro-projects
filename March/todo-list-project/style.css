@@ -525,31 +525,71 @@ h1 {
 
 .goal-form {
     display: grid;
-    grid-template-columns: minmax(170px, 1fr) 130px 64px auto;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     grid-template-areas:
         'title title title title'
-        'type days color submit';
-    gap: 0.45em;
+        'type days interval start'
+        'color submit submit submit';
+    align-items: end;
+    gap: 0.8em;
 }
 
-#goal-title-input {
+#goal-title-field {
     grid-area: title;
 }
 
-#goal-type-select {
+#goal-type-field {
     grid-area: type;
 }
 
-#goal-duration-input {
+#goal-duration-field {
     grid-area: days;
 }
 
-#goal-color-input {
+#goal-interval-field {
+    grid-area: interval;
+}
+
+#goal-start-date-field {
+    grid-area: start;
+}
+
+#goal-color-field {
     grid-area: color;
 }
 
 #goal-form .schedule-submit-btn {
     grid-area: submit;
+    width: 100%;
+    min-height: 42px;
+    padding: 0.78em 1.05em;
+    border-radius: 12px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    align-self: end;
+}
+
+.form-field {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.32em;
+}
+
+.form-field label {
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: #5f6674;
+    letter-spacing: 0.01em;
+}
+
+.form-field > input,
+.form-field > select {
+    width: 100%;
+}
+
+#goal-color-field {
+    max-width: 140px;
 }
 
 .goal-select,
@@ -628,6 +668,19 @@ h1 {
     border-radius: 10px;
     background: #f8fbff;
     padding: 0.6em;
+    overflow: hidden;
+    opacity: 0;
+    max-height: 0;
+    transform: translateY(-6px);
+    pointer-events: none;
+    transition: max-height 0.22s ease, opacity 0.18s ease, transform 0.22s ease;
+}
+
+.finished-goals-panel.is-open {
+    opacity: 1;
+    max-height: 520px;
+    transform: translateY(0);
+    pointer-events: auto;
 }
 
 .finished-goals-list {
@@ -850,7 +903,7 @@ h1 {
 
 .goal-edit-form {
     display: none;
-    grid-template-columns: minmax(0, 1fr) minmax(140px, 1fr) 90px 56px auto auto;
+    grid-template-columns: minmax(0, 1fr) minmax(140px, 1fr) 90px 120px 150px 56px auto auto;
     gap: 0.4em;
 }
 
@@ -865,6 +918,8 @@ h1 {
 .goal-edit-title-input,
 .goal-edit-type-select,
 .goal-edit-duration-input,
+.goal-edit-interval-input,
+.goal-edit-start-date-input,
 .goal-edit-color-input {
     width: 100%;
     min-width: 0;
@@ -886,8 +941,31 @@ h1 {
 
 .schedule-form {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(150px, 220px) auto;
-    gap: 0.45em;
+    grid-template-columns: 1fr;
+    grid-template-areas: none;
+    align-items: stretch;
+    gap: 0.65em;
+}
+
+#schedule-task-field {
+    grid-area: auto;
+}
+
+#schedule-goal-field {
+    grid-area: auto;
+}
+
+#schedule-interval-field {
+    grid-area: auto;
+}
+
+#schedule-start-field {
+    grid-area: auto;
+}
+
+#schedule-form .schedule-submit-btn {
+    grid-area: auto;
+    width: 100%;
 }
 
 .schedule-input {
@@ -958,7 +1036,7 @@ body.is-progress-open .github-footer-link {
 }
 
 .schedule-list:empty::before {
-    content: 'No daily schedules yet.';
+    content: 'No recurring schedules yet.';
     color: #7a808d;
     font-size: 0.84rem;
 }
@@ -998,9 +1076,16 @@ body.is-progress-open .github-footer-link {
     gap: 0.35em;
 }
 
-.schedule-item span {
-    display: block;
+.schedule-item-text {
+    display: flex;
     flex: 1;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.18em;
+}
+
+.schedule-item-text strong {
+    display: block;
     min-width: 0;
     font-size: 0.94rem;
     font-weight: 600;
@@ -1010,7 +1095,21 @@ body.is-progress-open .github-footer-link {
     white-space: nowrap;
 }
 
+.schedule-item-text > small {
+    display: block;
+    min-width: 0;
+    font-size: 0.74rem;
+    color: #667085;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .schedule-goal-badge {
+    display: inline-flex;
+    align-items: center;
+    width: auto;
+    max-width: fit-content;
     margin-left: 0.35em;
     padding: 0.13em 0.38em;
     border-radius: 999px;
@@ -1112,11 +1211,17 @@ body.is-progress-open .github-footer-link {
 
 .schedule-edit-form {
     display: none;
-    grid-template-columns: minmax(0, 1fr) minmax(130px, 200px) auto auto;
-    gap: 0.4em;
-    margin-top: 0;
-    padding-top: 0;
-    border-top: none;
+    grid-template-columns: minmax(0, 1.5fr) minmax(88px, 0.7fr) minmax(140px, 1fr) auto auto;
+    grid-template-areas:
+        'task task task task task'
+        'goal interval start save cancel';
+    align-items: end;
+    gap: 0.6em;
+    margin-top: 0.35rem;
+    padding: 0.7rem;
+    border: 1px solid #d8e1ee;
+    border-radius: 12px;
+    background-color: #fbfdff;
 }
 
 .schedule-item.is-editing .schedule-item-view {
@@ -1127,8 +1232,50 @@ body.is-progress-open .github-footer-link {
     display: grid;
 }
 
-.schedule-edit-input,
+.schedule-edit-input {
+    grid-area: task;
+}
+
 .schedule-edit-goal-select {
+    grid-area: goal;
+}
+
+.schedule-edit-interval-input {
+    grid-area: interval;
+}
+
+.schedule-edit-start-date-input {
+    grid-area: start;
+}
+
+.schedule-save-btn,
+.schedule-cancel-btn {
+    min-height: 40px;
+}
+
+.schedule-edit-form .schedule-save-btn,
+.schedule-edit-form .schedule-cancel-btn {
+    width: 100%;
+}
+
+.schedule-edit-form .schedule-cancel-btn {
+    margin-left: 0;
+}
+
+.schedule-item.is-editing .schedule-edit-form > .schedule-save-btn {
+    grid-area: save;
+    align-self: stretch;
+}
+
+.schedule-item.is-editing .schedule-edit-form > .schedule-cancel-btn {
+    grid-area: cancel;
+    align-self: stretch;
+}
+
+.schedule-edit-input,
+.schedule-edit-goal-select,
+.schedule-edit-interval-input,
+.schedule-edit-start-date-input {
     width: 100%;
     min-width: 0;
     padding: 0.62em 0.72em;
@@ -1139,7 +1286,9 @@ body.is-progress-open .github-footer-link {
 }
 
 .schedule-edit-input:focus,
-.schedule-edit-goal-select:focus {
+.schedule-edit-goal-select:focus,
+.schedule-edit-interval-input:focus,
+.schedule-edit-start-date-input:focus {
     outline: none;
     border-color: #9aa3b2;
 }
@@ -1160,18 +1309,7 @@ body.is-progress-open .github-footer-link {
 }
 
 #schedule-modal.is-open .schedule-modal-card {
-    animation: schedule-modal-enter 0.28s ease;
-}
-
-@keyframes schedule-modal-enter {
-    from {
-        opacity: 0;
-        transform: translateY(14px) scale(0.985);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
+    animation: none;
 }
 
 .schedule-modal-head {
@@ -1182,6 +1320,13 @@ body.is-progress-open .github-footer-link {
     margin-bottom: 0.3em;
 }
 
+.schedule-head-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35em;
+}
+
+.schedule-visibility-btn,
 .schedule-close-btn {
     border: 1px solid #cfd4dc;
     background: #fff;
@@ -1190,6 +1335,10 @@ body.is-progress-open .github-footer-link {
     width: 34px;
     height: 34px;
     cursor: pointer;
+}
+
+.schedule-visibility-btn[aria-pressed='true'] {
+    background-color: #eef2f7;
 }
 
 .modal-card.progress-modal-card {
@@ -1208,18 +1357,7 @@ body.is-progress-open .github-footer-link {
 }
 
 #progress-modal.is-open .progress-modal-card {
-    animation: progress-modal-enter 0.28s ease;
-}
-
-@keyframes progress-modal-enter {
-    from {
-        opacity: 0;
-        transform: translateY(18px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    animation: none;
 }
 
 .chart-card {
@@ -1639,14 +1777,23 @@ body.is-progress-open .github-footer-link {
 
 .goal-progress-finished-list {
     list-style: none;
-    display: none;
+    display: flex;
     flex-direction: column;
     gap: 0.5rem;
     margin-top: 0.5rem;
+    overflow: hidden;
+    opacity: 0;
+    max-height: 0;
+    transform: translateY(-6px);
+    pointer-events: none;
+    transition: max-height 0.22s ease, opacity 0.18s ease, transform 0.22s ease;
 }
 
 .goal-progress-finished-list.is-open {
-    display: flex;
+    opacity: 1;
+    max-height: 640px;
+    transform: translateY(0);
+    pointer-events: auto;
 }
 
 .goal-progress-item--finished {
@@ -1753,6 +1900,16 @@ body.is-progress-open .github-footer-link {
 .todo-item {
     position: relative;
     border-radius: 10px;
+    overflow: hidden;
+    transform-origin: top center;
+    transition: opacity 0.22s ease, transform 0.22s ease, height 0.22s ease;
+}
+
+.todo-item.is-hiding {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.985);
+    height: 0 !important;
+    pointer-events: none;
 }
 
 .todo-item-actions {
@@ -1959,12 +2116,16 @@ body.is-progress-open .github-footer-link {
 .modal-overlay {
     position: fixed;
     inset: 0;
-    display: none;
+    display: flex;
     align-items: center;
     justify-content: center;
     background-color: rgba(0, 0, 0, 0.22);
     padding: 1em;
     z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.24s ease, visibility 0s linear 0.24s;
 }
 
 #schedule-modal,
@@ -1978,8 +2139,15 @@ body.is-progress-open .github-footer-link {
     z-index: 1100;
 }
 
+.modal-overlay.is-open,
+.modal-overlay.is-closing {
+    visibility: visible;
+}
+
 .modal-overlay.is-open {
-    display: flex;
+    opacity: 1;
+    pointer-events: auto;
+    transition: opacity 0.24s ease, visibility 0s linear 0s;
 }
 
 .modal-card {
@@ -1989,6 +2157,14 @@ body.is-progress-open .github-footer-link {
     padding: 1.25em;
     width: min(100%, 360px);
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    opacity: 0.96;
+    transform: translateY(14px) scale(0.985);
+    transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.22s ease;
+}
+
+.modal-overlay.is-open .modal-card {
+    opacity: 1;
+    transform: translateY(0) scale(1);
 }
 
 .modal-card h2 {
@@ -2085,6 +2261,7 @@ body.is-dark .goal-save-btn,
 body.is-dark .goal-cancel-btn,
 body.is-dark .goal-remove-btn,
 body.is-dark .finished-goals-toggle-btn,
+body.is-dark .schedule-visibility-btn,
 body.is-dark .schedule-close-btn,
 body.is-dark .github-footer-link,
 body.is-dark .modal-btn {
@@ -2188,9 +2365,13 @@ body.is-dark .new-task-input,
 body.is-dark .schedule-input,
 body.is-dark .schedule-edit-input,
 body.is-dark .schedule-edit-goal-select,
+body.is-dark .schedule-edit-interval-input,
+body.is-dark .schedule-edit-start-date-input,
 body.is-dark .goal-edit-title-input,
 body.is-dark .goal-edit-type-select,
 body.is-dark .goal-edit-duration-input,
+body.is-dark .goal-edit-interval-input,
+body.is-dark .goal-edit-start-date-input,
 body.is-dark .goal-select,
 body.is-dark .goal-duration-input {
     border-color: #334155;
@@ -2203,8 +2384,16 @@ body.is-dark .schedule-input:focus {
     border-color: #64748b;
 }
 
+body.is-dark .schedule-input[type='date']::-webkit-calendar-picker-indicator,
+body.is-dark .schedule-edit-start-date-input::-webkit-calendar-picker-indicator,
+body.is-dark .goal-duration-input[type='date']::-webkit-calendar-picker-indicator,
+body.is-dark .goal-edit-start-date-input::-webkit-calendar-picker-indicator {
+    filter: invert(1) brightness(1.8);
+    opacity: 1;
+}
+
 body.is-dark .todo-item-text,
-body.is-dark .schedule-item span,
+body.is-dark .schedule-item-text strong,
 body.is-dark .goal-item-text strong,
 body.is-dark .finished-goal-head strong,
 body.is-dark .goal-progress-head strong,
@@ -2217,8 +2406,13 @@ body.is-dark .modal-card h2 {
 }
 
 body.is-dark .finished-goal-head span,
+body.is-dark .schedule-item-text > small,
 body.is-dark .finished-goal-task-list {
     color: #94a3b8;
+}
+
+body.is-dark .form-field label {
+    color: #9aa7ba;
 }
 
 body.is-dark .finished-goal-empty {
@@ -2243,12 +2437,13 @@ body.is-dark .schedule-item:hover {
     box-shadow: 0 10px 18px rgba(2, 6, 23, 0.55);
 }
 
-body.is-dark .schedule-item span {
+body.is-dark .schedule-item-text strong {
     color: #e2e8f0;
 }
 
 body.is-dark .schedule-edit-form {
-    border-top: none;
+    border-color: #253246;
+    background-color: #0f1726;
 }
 
 body.is-dark .schedule-edit-btn {
@@ -2605,17 +2800,29 @@ body.is-dark .todo-item:hover {
     .goal-form {
         grid-template-columns: 1fr;
         grid-template-areas: none;
+        gap: 0.55em;
     }
 
-    #goal-title-input,
-    #goal-type-select,
-    #goal-duration-input,
-    #goal-color-input,
+    #goal-title-field,
+    #goal-type-field,
+    #goal-duration-field,
+    #goal-interval-field,
+    #goal-start-date-field,
+    #goal-color-field,
+    #schedule-task-field,
+    #schedule-goal-field,
+    #schedule-interval-field,
+    #schedule-start-field,
     #goal-form .schedule-submit-btn {
         grid-area: auto;
     }
 
     .schedule-submit-btn {
+        width: 100%;
+    }
+
+    #goal-color-field {
+        max-width: none;
         width: 100%;
     }
 }
@@ -2625,12 +2832,19 @@ body.is-dark .todo-item:hover {
     .goal-form {
         grid-template-columns: 1fr;
         grid-template-areas: none;
+        gap: 0.55em;
     }
 
-    #goal-title-input,
-    #goal-type-select,
-    #goal-duration-input,
-    #goal-color-input,
+    #goal-title-field,
+    #goal-type-field,
+    #goal-duration-field,
+    #goal-interval-field,
+    #goal-start-date-field,
+    #goal-color-field,
+    #schedule-task-field,
+    #schedule-goal-field,
+    #schedule-interval-field,
+    #schedule-start-field,
     #goal-form .schedule-submit-btn {
         grid-area: auto;
     }
@@ -2640,8 +2854,9 @@ body.is-dark .todo-item:hover {
         width: 100%;
     }
 
-    .schedule-edit-form {
-        grid-template-columns: 1fr;
+    #goal-color-field {
+        max-width: none;
+        width: 100%;
     }
 
     .goal-edit-form {
@@ -2659,11 +2874,17 @@ body.is-dark .todo-item:hover {
         gap: 0.5em;
     }
 
-    .schedule-item span {
+    .schedule-item-text,
+    .schedule-item-text strong,
+    .schedule-item-text > small {
         width: 100%;
         white-space: normal;
         overflow: visible;
         text-overflow: clip;
+    }
+
+    .schedule-goal-badge {
+        max-width: 100%;
     }
 
     .schedule-item-actions {
@@ -2672,6 +2893,27 @@ body.is-dark .todo-item:hover {
 }
 
 @media (max-width: 768px) {
+    .schedule-edit-form {
+        grid-template-columns: 1fr;
+        grid-template-areas: none;
+        gap: 0.55em;
+        padding: 0.6rem;
+    }
+
+    .schedule-edit-input,
+    .schedule-edit-goal-select,
+    .schedule-edit-interval-input,
+    .schedule-edit-start-date-input,
+    .schedule-item.is-editing .schedule-edit-form > .schedule-save-btn,
+    .schedule-item.is-editing .schedule-edit-form > .schedule-cancel-btn {
+        grid-area: auto;
+    }
+
+    .schedule-item.is-editing .schedule-edit-form > .schedule-save-btn,
+    .schedule-item.is-editing .schedule-edit-form > .schedule-cancel-btn {
+        width: 100%;
+    }
+
     #schedule-modal {
         padding: 0;
         align-items: stretch;
