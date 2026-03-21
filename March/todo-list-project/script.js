@@ -77,20 +77,346 @@ const THEME_STORAGE_KEY = 'todo-theme-v1';
 const CUSTOM_QUOTE_STORAGE_KEY = 'todo-custom-quote-v1';
 const SHOW_FINISHED_TASKS_STORAGE_KEY = 'todo-show-finished-tasks-v1';
 
-const monthNames = [
-	'Jan',
-	'Feb',
-	'Mar',
-	'Apr',
-	'May',
-	'Jun',
-	'Jul',
-	'Aug',
-	'Sep',
-	'Oct',
-	'Nov',
-	'Dec',
-];
+const resolveAppLanguage = (rawLanguage = '') =>
+	typeof rawLanguage === 'string' && rawLanguage.toLowerCase().startsWith('pt')
+		? 'pt-BR'
+		: 'en';
+
+const appLanguage = resolveAppLanguage(navigator.language || 'en');
+document.documentElement.lang = appLanguage;
+
+const I18N = {
+	en: {
+		appTitle: 'To Do List',
+		metaDescription: 'Installable to-do list with flexible recurring schedules, goal planning, and streak tracking.',
+		allProjects: 'All Projects',
+		checkedLabel: 'Checked:',
+		uncheckedLabel: 'Unchecked:',
+		installApp: 'Install app',
+		recurringSchedules: 'Recurring schedules',
+		clearAllTasks: 'Clear all tasks',
+		allTasksCompleted: 'Great job! You completed all your tasks.',
+		writeTaskPlaceholder: 'Write your task...',
+		consistencyRewards: 'Consistency Rewards',
+		viewProgress: 'View progress',
+		currentStreak: 'CURRENT STREAK',
+		bestStreak: 'BEST STREAK',
+		day: 'day',
+		days: 'days',
+		unlockedBadge: '{count}d unlocked',
+		defaultQuote: 'Keep going. Your future self will thank you.',
+		dailyQuotes: [
+			'Progress, not perfection.',
+			'Show up today, even if it is small.',
+			'Consistency beats intensity.',
+			'One task at a time, one day at a time.',
+			'Discipline is a gift to your future self.',
+			'Start before you feel ready.',
+			'Momentum is built in ordinary days.',
+			'You do not need to be extreme, just consistent.',
+			'Protect your streak with one meaningful action.',
+			'Your habits are writing your story.',
+		],
+		themeLight: '☀️ Light',
+		themeDark: '🌙 Dark',
+		switchToLightMode: 'Switch to light mode',
+		switchToDarkMode: 'Switch to dark mode',
+		hideFinishedTasks: 'Hide finished tasks',
+		showFinishedTasks: 'Show finished tasks',
+		closeRecurringSchedules: 'Close recurring schedules',
+		scheduleSubtitle: 'Create schedules that start later, repeat every X days, and stay linked to goals.',
+		goals: 'Goals',
+		goalName: 'Goal Name',
+		goalType: 'Goal Type',
+		habitIndefinite: 'Habit (indefinite)',
+		periodGoal: 'Period goal',
+		durationDays: 'Duration (Days)',
+		everyXDays: 'Every X Days',
+		everyXDaysPlaceholder: 'Every X days (default: 1)',
+		everyXDaysTitle: 'Every X days (default 1)',
+		startFrom: 'Start From',
+		startFromTitle: 'Start from (default today)',
+		color: 'Color',
+		goalColor: 'Goal color',
+		chooseGoalColor: 'Choose goal color',
+		createGoal: 'Create goal',
+		seeFinishedGoals: 'See finished goals ({count})',
+		hideFinishedGoals: 'Hide finished goals ({count})',
+		noFinishedGoalsYet: 'No finished goals yet.',
+		reactivate: 'Reactivate',
+		taskName: 'Task Name',
+		goal: 'Goal',
+		noGoal: 'No goal',
+		createRecurringTask: 'Create a recurring task...',
+		schedule: 'Schedule',
+		edit: 'Edit',
+		finish: 'Finish',
+		removeGoal: 'Remove goal',
+		save: 'Save',
+		cancel: 'Cancel',
+		moveUp: 'Move up',
+		moveDown: 'Move down',
+		daysPlaceholderShort: 'Days',
+		progressDashboard: 'Progress Dashboard',
+		closeProgressDashboard: 'Close progress dashboard',
+		currentStreakLabel: 'Current Streak',
+		bestStreakLabel: 'Best Streak',
+		motivationQuote: 'Motivation Quote',
+		editMotivationQuote: 'Edit motivation quote',
+		editQuote: 'Edit quote',
+		customQuoteOptional: 'Custom quote (optional)',
+		writeOwnQuote: 'Write your own motivation quote...',
+		saveQuote: 'Save quote',
+		useDailyQuote: 'Use daily quote',
+		completedTasksLast7Days: 'Completed Tasks (Last 7 Days)',
+		consistencyByMonth: 'Consistency by Month (Year View)',
+		goalProgress: 'Goal Progress',
+		progressPeriod: 'Period: {label}',
+		progressHabit: 'Habit: {label}',
+		completedChecksSummary: '{completed}/{expected} completed checks • {count} attached {taskWord}',
+		showFinishedGoalsProgress: 'Show finished goals ({count})',
+		hideFinishedGoalsProgress: 'Hide finished goals ({count})',
+		noGoalsYet: 'No goals yet.',
+		activeDaysInYear: '{activeDays}/{totalDays} active {dayWord} in {year} ({percent}% consistency)',
+		completedTasksTitle: '{date}: {count} completed {taskWord}',
+		activeDaysTitle: '{month}: {count} active {dayWord}',
+		everyDay: 'Every day',
+		everyNDays: 'Every {count} days',
+		startsOn: 'Starts on {date}',
+		fromDate: '{label} from {date}',
+		dateRange: '{start} to {end}',
+		cycleLabel: '{duration}-day cycle every {cycle} days from {start}',
+		endedOn: 'Ended on {date}',
+		removeGoalQuestion: 'Remove goal?',
+		removeGoalMessage: 'This will detach the goal from related schedules and stop tracking it.',
+		deleteTaskQuestion: 'Delete task?',
+		actionCannotBeUndone: 'This action cannot be undone.',
+		delete: 'Delete',
+		clearAllTasksQuestion: 'Clear all tasks?',
+		clearAllTasksMessage: 'This will remove all current tasks.',
+		clearAll: 'Clear all',
+		removeGoalTaskQuestion: 'Remove goal task?',
+		removeGoalTaskMessage: 'This task is linked to a goal. This action cannot be undone.',
+		taskCompleteToast: 'Task complete! Keep it up!',
+		finishedTasksVisible: 'Finished tasks are now visible.',
+		finishedTasksHidden: 'Finished tasks are now hidden.',
+		customQuoteSaved: 'Custom quote saved.',
+		usingDailyQuote: 'Using daily quote.',
+		dailyQuoteEnabled: 'Daily quote enabled.',
+		installHelp: 'Use browser menu and choose Install app or Add to Home Screen.',
+		installCanceled: 'Install canceled. You can try again anytime.',
+		appInstalled: 'App installed successfully.',
+		duplicateTask: 'This task already exists.',
+		duplicateSchedule: 'This recurring schedule already exists.',
+		recurringScheduleCreated: 'Recurring schedule created successfully.',
+		duplicateGoal: 'This goal already exists.',
+		invalidGoalColor: 'Choose a valid goal color.',
+		goalColorInUse: 'This color is already used by another goal.',
+		invalidPeriodDays: 'Choose a valid number of days for a period goal.',
+		cycleEveryXDaysOptional: 'Cycle every X days (optional)',
+		scheduleIntervalLocked: 'This task period is fixed to 1 because the selected habit already controls cadence.',
+		invalidHabitFrequency: 'Choose how often this habit should appear.',
+		goalCreated: 'Goal created successfully.',
+		goalFinished: 'Goal marked as finished.',
+		goalNameEmpty: 'Goal name cannot be empty.',
+		goalUpdated: 'Goal updated successfully.',
+		goalReactivated: 'Goal reactivated.',
+		scheduleTextEmpty: 'Schedule text cannot be empty.',
+		recurringScheduleUpdated: 'Recurring schedule updated successfully.',
+		onlyTaskInGoal: 'This is the only task in the goal. Add another task before removing it.',
+		goalRemoved: 'Goal removed successfully.',
+		recurringScheduleRemoved: 'Recurring schedule removed successfully.',
+		removeFromRecurringSchedules: 'Remove this from Recurring Schedules to delete it',
+		startDateLocked: 'Start From is locked because this recurring task has already started and has completed entries.',
+		taskSingular: 'task',
+		taskPlural: 'tasks',
+		dayLowerSingular: 'day',
+		dayLowerPlural: 'days',
+	},
+	'pt-BR': {
+		appTitle: 'Lista de tarefas',
+		metaDescription: 'Lista de tarefas instalável com rotinas recorrentes flexíveis, planejamento de metas e acompanhamento de sequência.',
+		allProjects: 'Todos os projetos',
+		checkedLabel: 'Concluídas:',
+		uncheckedLabel: 'Pendentes:',
+		installApp: 'Instalar app',
+		recurringSchedules: 'Tarefas recorrentes',
+		clearAllTasks: 'Limpar tarefas',
+		allTasksCompleted: 'Ótimo trabalho! Você concluiu todas as tarefas.',
+		writeTaskPlaceholder: 'Escreva sua tarefa...',
+		consistencyRewards: 'Recompensas de consistência',
+		viewProgress: 'Ver progresso',
+		currentStreak: 'SEQUÊNCIA ATUAL',
+		bestStreak: 'MELHOR SEQUÊNCIA',
+		day: 'dia',
+		days: 'dias',
+		unlockedBadge: '{count}d liberados',
+		defaultQuote: 'Continue. Seu eu do futuro vai agradecer.',
+		dailyQuotes: [
+			'Progresso, não perfeição.',
+			'Apareça hoje, mesmo que seja pouco.',
+			'Consistência vence intensidade.',
+			'Uma tarefa por vez, um dia por vez.',
+			'Disciplina é um presente para o seu eu do futuro.',
+			'Comece antes de se sentir pronto.',
+			'Momento é construído nos dias comuns.',
+			'Você não precisa ser extremo, só consistente.',
+			'Proteja sua sequência com uma ação significativa.',
+			'Seus hábitos estão escrevendo sua história.',
+		],
+		themeLight: '☀️ Claro',
+		themeDark: '🌙 Escuro',
+		switchToLightMode: 'Mudar para o tema claro',
+		switchToDarkMode: 'Mudar para o tema escuro',
+		hideFinishedTasks: 'Ocultar tarefas concluídas',
+		showFinishedTasks: 'Mostrar tarefas concluídas',
+		closeRecurringSchedules: 'Fechar tarefas recorrentes',
+		scheduleSubtitle: 'Crie tarefas que começam depois, se repetem a cada X dias e permanecem vinculadas a metas.',
+		goals: 'Metas',
+		goalName: 'Nome da meta',
+		goalType: 'Tipo de meta',
+		habitIndefinite: 'Hábito (indefinido)',
+		periodGoal: 'Meta por período',
+		durationDays: 'Duração (dias)',
+		everyXDays: 'A cada X dias',
+		everyXDaysPlaceholder: 'A cada X dias (padrão: 1)',
+		everyXDaysTitle: 'A cada X dias (padrão 1)',
+		startFrom: 'Começar em',
+		startFromTitle: 'Começar em (padrão hoje)',
+		color: 'Cor',
+		goalColor: 'Cor da meta',
+		chooseGoalColor: 'Escolher cor da meta',
+		createGoal: 'Criar meta',
+		seeFinishedGoals: 'Ver metas concluídas ({count})',
+		hideFinishedGoals: 'Ocultar metas concluídas ({count})',
+		noFinishedGoalsYet: 'Nenhuma meta concluída ainda.',
+		reactivate: 'Reativar',
+		taskName: 'Nome da tarefa',
+		goal: 'Meta',
+		noGoal: 'Sem meta',
+		createRecurringTask: 'Crie uma tarefa recorrente...',
+		schedule: 'Agendar',
+		edit: 'Editar',
+		finish: 'Concluir',
+		removeGoal: 'Remover meta',
+		save: 'Salvar',
+		cancel: 'Cancelar',
+		moveUp: 'Mover para cima',
+		moveDown: 'Mover para baixo',
+		daysPlaceholderShort: 'Dias',
+		progressDashboard: 'Painel de progresso',
+		closeProgressDashboard: 'Fechar painel de progresso',
+		currentStreakLabel: 'Sequência atual',
+		bestStreakLabel: 'Melhor sequência',
+		motivationQuote: 'Frase motivacional',
+		editMotivationQuote: 'Editar frase motivacional',
+		editQuote: 'Editar frase',
+		customQuoteOptional: 'Frase personalizada (opcional)',
+		writeOwnQuote: 'Escreva sua própria frase motivacional...',
+		saveQuote: 'Salvar frase',
+		useDailyQuote: 'Usar frase diária',
+		completedTasksLast7Days: 'Tarefas concluídas (últimos 7 dias)',
+		consistencyByMonth: 'Consistência por mês (visão anual)',
+		goalProgress: 'Progresso das metas',
+		progressPeriod: 'Período: {label}',
+		progressHabit: 'Hábito: {label}',
+		completedChecksSummary: '{completed}/{expected} marcações concluídas • {count} {taskWord} vinculadas',
+		showFinishedGoalsProgress: 'Mostrar metas concluídas ({count})',
+		hideFinishedGoalsProgress: 'Ocultar metas concluídas ({count})',
+		noGoalsYet: 'Nenhuma meta ainda.',
+		activeDaysInYear: '{activeDays}/{totalDays} {dayWord} ativos em {year} ({percent}% de consistência)',
+		completedTasksTitle: '{date}: {count} {taskWord} concluídas',
+		activeDaysTitle: '{month}: {count} {dayWord} ativos',
+		everyDay: 'Todos os dias',
+		everyNDays: 'A cada {count} dias',
+		startsOn: 'Começa em {date}',
+		fromDate: '{label} desde {date}',
+		dateRange: '{start} até {end}',
+		cycleLabel: 'ciclo de {duration} dias a cada {cycle} dias desde {start}',
+		endedOn: 'Encerrada em {date}',
+		removeGoalQuestion: 'Remover meta?',
+		removeGoalMessage: 'Isso vai desvincular a meta das tarefas relacionadas e parar o acompanhamento.',
+		deleteTaskQuestion: 'Excluir tarefa?',
+		actionCannotBeUndone: 'Esta ação não pode ser desfeita.',
+		delete: 'Excluir',
+		clearAllTasksQuestion: 'Limpar todas as tarefas?',
+		clearAllTasksMessage: 'Isso removerá todas as tarefas atuais.',
+		clearAll: 'Limpar tudo',
+		removeGoalTaskQuestion: 'Remover tarefa da meta?',
+		removeGoalTaskMessage: 'Esta tarefa está vinculada a uma meta. Esta ação não pode ser desfeita.',
+		taskCompleteToast: 'Tarefa concluída! Continue assim!',
+		finishedTasksVisible: 'As tarefas concluídas agora estão visíveis.',
+		finishedTasksHidden: 'As tarefas concluídas agora estão ocultas.',
+		customQuoteSaved: 'Frase personalizada salva.',
+		usingDailyQuote: 'Usando frase diária.',
+		dailyQuoteEnabled: 'Frase diária ativada.',
+		installHelp: 'Use o menu do navegador e escolha Instalar app ou Adicionar à tela inicial.',
+		installCanceled: 'Instalação cancelada. Você pode tentar novamente a qualquer momento.',
+		appInstalled: 'App instalado com sucesso.',
+		duplicateTask: 'Esta tarefa já existe.',
+		duplicateSchedule: 'Esta tarefa recorrente já existe.',
+		recurringScheduleCreated: 'Tarefa recorrente criada com sucesso.',
+		duplicateGoal: 'Esta meta já existe.',
+		invalidGoalColor: 'Escolha uma cor de meta válida.',
+		goalColorInUse: 'Esta cor já está sendo usada por outra meta.',
+		invalidPeriodDays: 'Escolha um número válido de dias para a meta por período.',
+		cycleEveryXDaysOptional: 'Ciclo a cada X dias (opcional)',
+		scheduleIntervalLocked: 'O período desta tarefa foi fixado em 1 porque o hábito selecionado já controla a cadência.',
+		invalidHabitFrequency: 'Escolha com que frequência este hábito deve aparecer.',
+		goalCreated: 'Meta criada com sucesso.',
+		goalFinished: 'Meta marcada como concluída.',
+		goalNameEmpty: 'O nome da meta não pode ficar vazio.',
+		goalUpdated: 'Meta atualizada com sucesso.',
+		goalReactivated: 'Meta reativada.',
+		scheduleTextEmpty: 'O texto da tarefa recorrente não pode ficar vazio.',
+		recurringScheduleUpdated: 'Tarefa recorrente atualizada com sucesso.',
+		onlyTaskInGoal: 'Esta é a única tarefa da meta. Adicione outra tarefa antes de remover.',
+		goalRemoved: 'Meta removida com sucesso.',
+		recurringScheduleRemoved: 'Tarefa recorrente removida com sucesso.',
+		removeFromRecurringSchedules: 'Remova isso de Tarefas recorrentes para excluir',
+		startDateLocked: 'Começar em está bloqueado porque esta tarefa recorrente já começou e possui registros concluídos.',
+		taskSingular: 'tarefa',
+		taskPlural: 'tarefas',
+		dayLowerSingular: 'dia',
+		dayLowerPlural: 'dias',
+	},
+};
+
+const t = (key, params = {}) => {
+	const dictionary = I18N[appLanguage] || I18N.en;
+	const fallbackValue = I18N.en[key];
+	const value = dictionary[key] ?? fallbackValue ?? key;
+	if (typeof value !== 'string') {
+		return value;
+	}
+
+	return value.replace(/\{(\w+)\}/g, (_, token) => String(params[token] ?? ''));
+};
+
+const getLocalizedList = (key) => {
+	const dictionary = I18N[appLanguage] || I18N.en;
+	return dictionary[key] || I18N.en[key] || [];
+};
+
+const formatDisplayDate = (dateStamp) => {
+	if (typeof dateStamp !== 'string' || !dateStamp) {
+		return '';
+	}
+
+	const [year, month, day] = dateStamp.split('-').map(Number);
+	if (!year || !month || !day) {
+		return dateStamp;
+	}
+
+	return new Intl.DateTimeFormat(appLanguage, {
+		year: 'numeric',
+		month: '2-digit',
+		day: '2-digit',
+	}).format(new Date(Date.UTC(year, month - 1, day)));
+};
+
+const getTaskWord = (count) => (count === 1 ? t('taskSingular') : t('taskPlural'));
+const getDayWord = (count) => (count === 1 ? t('dayLowerSingular') : t('dayLowerPlural'));
 
 const WEEKDAY_CHART_COLORS = [
 	'#fb923c', // Sun
@@ -165,11 +491,11 @@ const getStoredTheme = () => {
 
 const getStoredShowFinishedTasks = () => {
 	const savedValue = localStorage.getItem(SHOW_FINISHED_TASKS_STORAGE_KEY);
-	if (savedValue === '0') {
-		return false;
+	if (savedValue === '1') {
+		return true;
 	}
 
-	return true;
+	return false;
 };
 
 const syncFinishedTasksToggleButton = () => {
@@ -181,11 +507,11 @@ const syncFinishedTasksToggleButton = () => {
 	toggleFinishedTasksButton.setAttribute('aria-pressed', String(!isVisible));
 	toggleFinishedTasksButton.setAttribute(
 		'aria-label',
-		isVisible ? 'Hide finished tasks' : 'Show finished tasks',
+		isVisible ? t('hideFinishedTasks') : t('showFinishedTasks'),
 	);
 	toggleFinishedTasksButton.setAttribute(
 		'title',
-		isVisible ? 'Hide finished tasks' : 'Show finished tasks',
+		isVisible ? t('hideFinishedTasks') : t('showFinishedTasks'),
 	);
 	toggleFinishedTasksButton.innerHTML = isVisible
 		? '<i class="fa-solid fa-eye" aria-hidden="true"></i>'
@@ -197,10 +523,10 @@ const applyTheme = (theme) => {
 	document.body.classList.toggle('is-dark', isDarkTheme);
 
 	if (themeToggleButton) {
-		themeToggleButton.textContent = isDarkTheme ? '☀️ Light' : '🌙 Dark';
+		themeToggleButton.textContent = isDarkTheme ? t('themeLight') : t('themeDark');
 		themeToggleButton.setAttribute(
 			'aria-label',
-			isDarkTheme ? 'Switch to light mode' : 'Switch to dark mode',
+			isDarkTheme ? t('switchToLightMode') : t('switchToDarkMode'),
 		);
 	}
 
@@ -208,6 +534,262 @@ const applyTheme = (theme) => {
 	if (themeColorMeta) {
 		themeColorMeta.setAttribute('content', isDarkTheme ? '#0f172a' : '#22c55e');
 	}
+};
+
+const applyStaticTranslations = () => {
+	document.title = t('appTitle');
+	const metaDescription = document.querySelector('meta[name="description"]');
+	if (metaDescription) {
+		metaDescription.setAttribute('content', t('metaDescription'));
+	}
+
+	const checkedLabelElement = document.getElementById('checked-label');
+	if (checkedLabelElement) {
+		checkedLabelElement.textContent = t('checkedLabel');
+	}
+	const uncheckedLabelElement = document.getElementById('unchecked-label');
+	if (uncheckedLabelElement) {
+		uncheckedLabelElement.textContent = t('uncheckedLabel');
+	}
+
+	const pageTitle = document.querySelector('main > h1');
+	if (pageTitle) {
+		pageTitle.textContent = t('appTitle');
+	}
+	if (backProjectsButton?.querySelector('span')) {
+		backProjectsButton.querySelector('span').textContent = t('allProjects');
+	}
+	if (installAppButton) {
+		installAppButton.textContent = t('installApp');
+	}
+	if (openScheduleButton) {
+		openScheduleButton.textContent = t('recurringSchedules');
+	}
+	if (clearAllButton) {
+		clearAllButton.textContent = t('clearAllTasks');
+	}
+	if (congratsMessage) {
+		congratsMessage.textContent = t('allTasksCompleted');
+	}
+	if (taskInput) {
+		taskInput.placeholder = t('writeTaskPlaceholder');
+	}
+
+	const streakTitle = document.querySelector('.streak-head h2');
+	if (streakTitle) {
+		streakTitle.textContent = t('consistencyRewards');
+	}
+	if (openProgressButton) {
+		openProgressButton.textContent = t('viewProgress');
+	}
+	const streakMainLabel = document.querySelector('.streak-main-label');
+	if (streakMainLabel) {
+		streakMainLabel.textContent = t('currentStreak');
+	}
+	const streakBestBadge = document.getElementById('streak-best-badge');
+	if (streakBestBadge) {
+		streakBestBadge.textContent = t('bestStreak');
+	}
+
+	if (deleteModalTitle) {
+		deleteModalTitle.textContent = t('deleteTaskQuestion');
+	}
+	if (deleteModalMessage) {
+		deleteModalMessage.textContent = t('actionCannotBeUndone');
+	}
+	if (cancelDeleteButton) {
+		cancelDeleteButton.textContent = t('cancel');
+	}
+	if (confirmDeleteButton) {
+		confirmDeleteButton.textContent = t('delete');
+	}
+
+	const clearAllTitle = document.getElementById('clear-all-modal-title');
+	if (clearAllTitle) {
+		clearAllTitle.textContent = t('clearAllTasksQuestion');
+	}
+	const clearAllMessage = clearAllModal?.querySelector('p');
+	if (clearAllMessage) {
+		clearAllMessage.textContent = t('clearAllTasksMessage');
+	}
+	if (cancelClearAllButton) {
+		cancelClearAllButton.textContent = t('cancel');
+	}
+	if (confirmClearAllButton) {
+		confirmClearAllButton.textContent = t('clearAll');
+	}
+
+	const scheduleModalTitle = document.getElementById('schedule-modal-title');
+	if (scheduleModalTitle) {
+		scheduleModalTitle.textContent = t('recurringSchedules');
+	}
+	const scheduleSubtitle = document.querySelector('.schedule-subtitle');
+	if (scheduleSubtitle) {
+		scheduleSubtitle.textContent = t('scheduleSubtitle');
+	}
+	if (closeScheduleButton) {
+		closeScheduleButton.setAttribute('aria-label', t('closeRecurringSchedules'));
+	}
+	const goalSectionTitle = document.querySelector('.goal-section-title');
+	if (goalSectionTitle) {
+		goalSectionTitle.textContent = t('goals');
+	}
+	const goalTitleLabel = document.querySelector('label[for="goal-title-input"]');
+	if (goalTitleLabel) {
+		goalTitleLabel.textContent = t('goalName');
+	}
+	if (goalTitleInput) {
+		goalTitleInput.placeholder = `${t('goalName')}...`;
+	}
+	const goalTypeLabel = document.querySelector('label[for="goal-type-select"]');
+	if (goalTypeLabel) {
+		goalTypeLabel.textContent = t('goalType');
+	}
+	if (goalTypeSelect?.options[0]) {
+		goalTypeSelect.options[0].textContent = t('habitIndefinite');
+	}
+	if (goalTypeSelect?.options[1]) {
+		goalTypeSelect.options[1].textContent = t('periodGoal');
+	}
+	const goalDurationLabel = document.querySelector('label[for="goal-duration-input"]');
+	if (goalDurationLabel) {
+		goalDurationLabel.textContent = t('durationDays');
+	}
+	if (goalDurationInput) {
+		goalDurationInput.placeholder = t('durationDays');
+	}
+	const goalIntervalLabel = document.querySelector('label[for="goal-interval-input"]');
+	if (goalIntervalLabel) {
+		goalIntervalLabel.textContent = t('everyXDays');
+	}
+	if (goalIntervalInput) {
+		goalIntervalInput.placeholder = t('everyXDaysPlaceholder');
+		goalIntervalInput.setAttribute('aria-label', t('everyXDays'));
+		goalIntervalInput.setAttribute('title', t('everyXDaysTitle'));
+	}
+	const goalStartLabel = document.querySelector('label[for="goal-start-date-input"]');
+	if (goalStartLabel) {
+		goalStartLabel.textContent = t('startFrom');
+	}
+	if (goalStartDateInput) {
+		goalStartDateInput.setAttribute('aria-label', t('startFrom'));
+		goalStartDateInput.setAttribute('title', t('startFromTitle'));
+	}
+	const goalColorLabel = document.querySelector('label[for="goal-color-input"]');
+	if (goalColorLabel) {
+		goalColorLabel.textContent = t('color');
+	}
+	if (goalColorInput) {
+		goalColorInput.setAttribute('aria-label', t('chooseGoalColor'));
+		goalColorInput.setAttribute('title', t('goalColor'));
+	}
+	const goalSubmitButton = document.querySelector('#goal-form .schedule-submit-btn');
+	if (goalSubmitButton) {
+		goalSubmitButton.textContent = t('createGoal');
+	}
+
+	const scheduleTaskLabel = document.querySelector('label[for="schedule-input"]');
+	if (scheduleTaskLabel) {
+		scheduleTaskLabel.textContent = t('taskName');
+	}
+	if (scheduleInput) {
+		scheduleInput.placeholder = t('createRecurringTask');
+	}
+	const scheduleGoalLabel = document.querySelector('label[for="schedule-goal-select"]');
+	if (scheduleGoalLabel) {
+		scheduleGoalLabel.textContent = t('goal');
+	}
+	if (scheduleGoalSelect?.options[0]) {
+		scheduleGoalSelect.options[0].textContent = t('noGoal');
+	}
+	const scheduleIntervalLabel = document.querySelector('label[for="schedule-interval-input"]');
+	if (scheduleIntervalLabel) {
+		scheduleIntervalLabel.textContent = t('everyXDays');
+	}
+	if (scheduleIntervalInput) {
+		scheduleIntervalInput.placeholder = t('everyXDaysPlaceholder');
+		scheduleIntervalInput.setAttribute('aria-label', t('everyXDays'));
+		scheduleIntervalInput.setAttribute('title', t('everyXDaysTitle'));
+	}
+	const scheduleStartLabel = document.querySelector('label[for="schedule-start-date-input"]');
+	if (scheduleStartLabel) {
+		scheduleStartLabel.textContent = t('startFrom');
+	}
+	if (scheduleStartDateInput) {
+		scheduleStartDateInput.setAttribute('aria-label', t('startFrom'));
+		scheduleStartDateInput.setAttribute('title', t('startFromTitle'));
+	}
+	const scheduleSubmitButton = document.querySelector('#schedule-form .schedule-submit-btn');
+	if (scheduleSubmitButton) {
+		scheduleSubmitButton.textContent = t('schedule');
+	}
+
+	const removeGoalTitle = document.getElementById('remove-goal-modal-title');
+	if (removeGoalTitle) {
+		removeGoalTitle.textContent = t('removeGoalQuestion');
+	}
+	const removeGoalMessage = removeGoalModal?.querySelector('p');
+	if (removeGoalMessage) {
+		removeGoalMessage.textContent = t('removeGoalMessage');
+	}
+	if (cancelRemoveGoalButton) {
+		cancelRemoveGoalButton.textContent = t('cancel');
+	}
+	if (confirmRemoveGoalButton) {
+		confirmRemoveGoalButton.textContent = t('removeGoal');
+	}
+
+	const progressTitle = document.getElementById('progress-modal-title');
+	if (progressTitle) {
+		progressTitle.textContent = t('progressDashboard');
+	}
+	if (closeProgressButton) {
+		closeProgressButton.setAttribute('aria-label', t('closeProgressDashboard'));
+	}
+	const progressCurrentLabel = document.querySelector('#progress-current-card .progress-stat-label');
+	if (progressCurrentLabel) {
+		progressCurrentLabel.textContent = t('currentStreakLabel');
+	}
+	const progressBestLabel = document.querySelector('#progress-best-card .progress-stat-label');
+	if (progressBestLabel) {
+		progressBestLabel.textContent = t('bestStreakLabel');
+	}
+	const progressQuoteTitle = document.getElementById('progress-quote-title');
+	if (progressQuoteTitle) {
+		progressQuoteTitle.textContent = t('motivationQuote');
+	}
+	if (editProgressQuoteButton) {
+		editProgressQuoteButton.setAttribute('aria-label', t('editMotivationQuote'));
+		editProgressQuoteButton.setAttribute('title', t('editQuote'));
+	}
+	const progressQuoteLabel = document.querySelector('label[for="progress-quote-input"]');
+	if (progressQuoteLabel) {
+		progressQuoteLabel.textContent = t('customQuoteOptional');
+	}
+	if (progressQuoteInput) {
+		progressQuoteInput.placeholder = t('writeOwnQuote');
+	}
+	if (saveProgressQuoteButton) {
+		saveProgressQuoteButton.textContent = t('saveQuote');
+	}
+	if (clearProgressQuoteButton) {
+		clearProgressQuoteButton.textContent = t('useDailyQuote');
+	}
+	if (cancelProgressQuoteButton) {
+		cancelProgressQuoteButton.textContent = t('cancel');
+	}
+	const chartTitles = document.querySelectorAll('.chart-card h3');
+	if (chartTitles[0]) {
+		chartTitles[0].textContent = t('completedTasksLast7Days');
+	}
+	if (chartTitles[1]) {
+		chartTitles[1].textContent = t('consistencyByMonth');
+	}
+	if (chartTitles[2]) {
+		chartTitles[2].textContent = t('goalProgress');
+	}
+
+	syncFinishedTasksToggleButton();
 };
 
 const openModalOverlay = (overlay, bodyClass = '') => {
@@ -627,7 +1209,9 @@ const isRecurringScheduleActiveOnDate = (schedule, dateStamp) => {
 
 const formatEveryXDays = (intervalDays) => {
 	const normalizedInterval = normalizePositiveInteger(intervalDays, 1);
-	return normalizedInterval === 1 ? 'Every day' : `Every ${normalizedInterval} days`;
+	return normalizedInterval === 1
+		? t('everyDay')
+		: t('everyNDays', { count: normalizedInterval });
 };
 
 const getGoalScheduleLabel = (goal) => {
@@ -637,14 +1221,26 @@ const getGoalScheduleLabel = (goal) => {
 
 	if (goal.type === 'period') {
 		if (goal.cycleDays) {
-			return `${goal.durationDays}-day cycle every ${goal.cycleDays} days from ${goal.startDate}`;
+			return t('cycleLabel', {
+				duration: goal.durationDays,
+				cycle: goal.cycleDays,
+				start: formatDisplayDate(goal.startDate),
+			});
 		}
 
 		const endDate = getGoalPeriodEndDate(goal);
-		return endDate ? `${goal.startDate} to ${endDate}` : `Starts on ${goal.startDate}`;
+		return endDate
+			? t('dateRange', {
+				start: formatDisplayDate(goal.startDate),
+				end: formatDisplayDate(endDate),
+			})
+			: t('startsOn', { date: formatDisplayDate(goal.startDate) });
 	}
 
-	return `${formatEveryXDays(goal.intervalDays)} from ${goal.startDate}`;
+	return t('fromDate', {
+		label: formatEveryXDays(goal.intervalDays),
+		date: formatDisplayDate(goal.startDate),
+	});
 };
 
 const getScheduleTimingLabel = (schedule) => {
@@ -652,7 +1248,10 @@ const getScheduleTimingLabel = (schedule) => {
 		return '';
 	}
 
-	return `${formatEveryXDays(schedule.intervalDays)} from ${schedule.startDate}`;
+	return t('fromDate', {
+		label: formatEveryXDays(schedule.intervalDays),
+		date: formatDisplayDate(schedule.startDate),
+	});
 };
 
 const hasScheduleStarted = (schedule) => {
@@ -679,7 +1278,7 @@ const syncGoalFrequencyInputs = ({ type, durationInput, intervalInput, intervalV
 	durationInput.required = isPeriodGoal;
 	intervalInput.disabled = false;
 	intervalInput.required = !isPeriodGoal;
-	intervalInput.placeholder = isPeriodGoal ? 'Cycle every X days (optional)' : 'Every X days';
+	intervalInput.placeholder = isPeriodGoal ? t('cycleEveryXDaysOptional') : t('everyXDays');
 
 	if (isPeriodGoal) {
 		if (intervalValue === '') {
@@ -901,6 +1500,15 @@ const updateTaskSummary = () => {
 	const checkedTasks = state.tasks.filter((task) => task.done).length;
 	const uncheckedTasks = totalTasks - checkedTasks;
 
+	const checkedLabelElement = document.getElementById('checked-label');
+	const uncheckedLabelElement = document.getElementById('unchecked-label');
+	if (checkedLabelElement) {
+		checkedLabelElement.textContent = t('checkedLabel');
+	}
+	if (uncheckedLabelElement) {
+		uncheckedLabelElement.textContent = t('uncheckedLabel');
+	}
+
 	checkedCountElement.textContent = String(checkedTasks);
 	uncheckedCountElement.textContent = String(uncheckedTasks);
 	clearAllButton.disabled = totalTasks === 0;
@@ -926,7 +1534,7 @@ const renderStreakDashboard = () => {
 	if (streakFractionEl) streakFractionEl.textContent = `/${nextGoal}`;
 
 	const streakUnitEl = document.getElementById('streak-main-unit');
-	if (streakUnitEl) streakUnitEl.textContent = streak === 1 ? 'day' : 'days';
+	if (streakUnitEl) streakUnitEl.textContent = streak === 1 ? t('day') : t('days');
 
 	const streakBestBadge = document.getElementById('streak-best-badge');
 	if (streakBestBadge) streakBestBadge.hidden = streak === 0 || streak < bestStreak;
@@ -937,19 +1545,20 @@ const renderStreakDashboard = () => {
 		.forEach((goal) => {
 			const badge = document.createElement('span');
 			badge.className = 'badge-chip';
-			badge.textContent = `${goal}d unlocked`;
+			badge.textContent = t('unlockedBadge', { count: goal });
 			badgeListElement.appendChild(badge);
 		});
 };
 
 const getDailyMotivationQuote = (dateStamp) => {
-	if (!Array.isArray(DAILY_MOTIVATION_QUOTES) || DAILY_MOTIVATION_QUOTES.length === 0) {
-		return 'Keep going. Your future self will thank you.';
+	const localizedQuotes = getLocalizedList('dailyQuotes');
+	if (!Array.isArray(localizedQuotes) || localizedQuotes.length === 0) {
+		return t('defaultQuote');
 	}
 
 	const [year, month, day] = dateStamp.split('-').map(Number);
-	const quoteSeed = ((year * 372) + (month * 31) + day) % DAILY_MOTIVATION_QUOTES.length;
-	return DAILY_MOTIVATION_QUOTES[quoteSeed];
+	const quoteSeed = ((year * 372) + (month * 31) + day) % localizedQuotes.length;
+	return localizedQuotes[quoteSeed];
 };
 
 const getResolvedProgressQuote = (dateStamp = getCurrentDateStamp()) => {
@@ -1014,7 +1623,7 @@ const renderProgressCharts = () => {
 	for (let i = 6; i >= 0; i -= 1) {
 		const day = new Date(today);
 		day.setDate(today.getDate() - i);
-		const label = day.toLocaleDateString('en-US', { weekday: 'short' });
+		const label = new Intl.DateTimeFormat(appLanguage, { weekday: 'short' }).format(day);
 		const key = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
 		const count = getDailyCompletionCount(key);
 		const weekdayIndex = day.getDay();
@@ -1039,7 +1648,11 @@ const renderProgressCharts = () => {
 		bar.className = `week-bar${item.count > 0 ? ' is-active' : ''}${item.isCurrentDay ? ' is-current' : ''}`;
 		bar.style.setProperty('--bar-color', item.chartColor);
 		bar.style.height = `${Math.max((item.count / maxWeekCount) * 100, 8)}%`;
-		bar.title = `${item.key}: ${item.count} completed task${item.count === 1 ? '' : 's'}`;
+		bar.title = t('completedTasksTitle', {
+			date: formatDisplayDate(item.key),
+			count: item.count,
+			taskWord: getTaskWord(item.count),
+		});
 
 		const label = document.createElement('span');
 		label.className = 'week-bar-label';
@@ -1081,11 +1694,18 @@ const renderProgressCharts = () => {
 		bar.className = `month-bar${count > 0 ? ' is-active' : ''}${isCurrentMonth ? ' is-current' : ''}`;
 		bar.style.setProperty('--bar-color', chartColor);
 		bar.style.height = `${Math.max((count / maxMonthCount) * 100, 8)}%`;
-		bar.title = `${monthNames[index]}: ${count} active day${count === 1 ? '' : 's'}`;
+		const monthLabelText = new Intl.DateTimeFormat(appLanguage, { month: 'short' }).format(
+			new Date(Date.UTC(currentYear, index, 1)),
+		);
+		bar.title = t('activeDaysTitle', {
+			month: monthLabelText,
+			count,
+			dayWord: getDayWord(count),
+		});
 
 		const label = document.createElement('span');
 		label.className = 'month-bar-label';
-		label.textContent = monthNames[index];
+		label.textContent = monthLabelText;
 
 		monthItem.appendChild(countLabel);
 		monthItem.appendChild(bar);
@@ -1100,7 +1720,13 @@ const renderProgressCharts = () => {
 	const todayUtc = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
 	const elapsedDays = Math.floor((todayUtc - yearStartUtc) / (1000 * 60 * 60 * 24)) + 1;
 	const consistencyPercent = elapsedDays > 0 ? Math.round((activeDays / elapsedDays) * 100) : 0;
-	yearChartLabel.textContent = `${activeDays}/${totalDaysInYear} active days in ${currentYear} (${consistencyPercent}% consistency)`;
+	yearChartLabel.textContent = t('activeDaysInYear', {
+		activeDays,
+		totalDays: totalDaysInYear,
+		dayWord: getDayWord(activeDays),
+		year: currentYear,
+		percent: consistencyPercent,
+	});
 
 	const progressCurrentStreakElement = document.getElementById('progress-current-streak');
 	const progressBestStreakElement = document.getElementById('progress-best-streak');
@@ -1122,10 +1748,10 @@ const renderProgressCharts = () => {
 		progressBestStreakElement.textContent = String(bestStreak);
 	}
 	if (progressCurrentUnitElement) {
-		progressCurrentUnitElement.textContent = currentStreak === 1 ? 'day' : 'days';
+		progressCurrentUnitElement.textContent = currentStreak === 1 ? t('day') : t('days');
 	}
 	if (progressBestUnitElement) {
-		progressBestUnitElement.textContent = bestStreak === 1 ? 'day' : 'days';
+		progressBestUnitElement.textContent = bestStreak === 1 ? t('day') : t('days');
 	}
 	if (progressBestBadge) {
 		progressBestBadge.hidden = !isBestStreak;
@@ -1180,7 +1806,7 @@ const renderGoalOptions = () => {
 	}
 
 	const previousValue = scheduleGoalSelect.value;
-	scheduleGoalSelect.innerHTML = '<option value="">No goal</option>';
+	scheduleGoalSelect.innerHTML = `<option value="">${t('noGoal')}</option>`;
 
 	getActiveGoals().forEach((goal) => {
 		const option = document.createElement('option');
@@ -1197,7 +1823,7 @@ const renderGoalOptions = () => {
 };
 
 const buildGoalOptionsMarkup = (selectedGoalId = '') => {
-	const options = ['<option value="">No goal</option>'];
+	const options = [`<option value="">${t('noGoal')}</option>`];
 	getActiveGoals().forEach((goal) => {
 		const selected = goal.id === selectedGoalId ? ' selected' : '';
 		options.push(`<option value="${goal.id}"${selected}>${goal.title}</option>`);
@@ -1230,8 +1856,8 @@ const syncScheduleIntervalLock = (goalId, intervalInput) => {
 
 	intervalInput.disabled = shouldLock;
 	intervalInput.title = shouldLock
-		? 'This task period is fixed to 1 because the selected habit already controls cadence.'
-		: 'Every X days (default 1)';
+		? t('scheduleIntervalLocked')
+		: t('everyXDaysTitle');
 };
 
 const getGoalDurationDays = (goal) => {
@@ -1307,29 +1933,29 @@ const renderGoals = () => {
 			<div class="goal-item-view">
 				<div class="goal-item-text">
 					<strong>${goal.title}</strong>
-					<span>${goalTypeLabel} | ${scheduleCount} task${scheduleCount === 1 ? '' : 's'}</span>
+					<span>${goalTypeLabel} | ${scheduleCount} ${getTaskWord(scheduleCount)}</span>
 				</div>
 				<div class="goal-item-actions">
 					<span class="goal-color-dot" aria-hidden="true"></span>
-					<button type="button" class="goal-move-btn goal-move-up-btn" ${canMoveUp ? '' : 'disabled'} aria-label="Move goal up" title="Move up">↑</button>
-					<button type="button" class="goal-move-btn goal-move-down-btn" ${canMoveDown ? '' : 'disabled'} aria-label="Move goal down" title="Move down">↓</button>
-					<button type="button" class="goal-edit-btn">Edit</button>
-					<button type="button" class="goal-finish-btn">Finish</button>
-					<button type="button" class="goal-remove-btn">Remove goal</button>
+					<button type="button" class="goal-move-btn goal-move-up-btn" ${canMoveUp ? '' : 'disabled'} aria-label="${t('moveUp')}" title="${t('moveUp')}">↑</button>
+					<button type="button" class="goal-move-btn goal-move-down-btn" ${canMoveDown ? '' : 'disabled'} aria-label="${t('moveDown')}" title="${t('moveDown')}">↓</button>
+					<button type="button" class="goal-edit-btn">${t('edit')}</button>
+					<button type="button" class="goal-finish-btn">${t('finish')}</button>
+					<button type="button" class="goal-remove-btn">${t('removeGoal')}</button>
 				</div>
 			</div>
 			<form class="goal-edit-form">
 				<input type="text" class="goal-edit-title-input" required />
 				<select class="goal-edit-type-select">
-					<option value="habit">Habit (indefinite)</option>
-					<option value="period">Period goal</option>
+					<option value="habit">${t('habitIndefinite')}</option>
+					<option value="period">${t('periodGoal')}</option>
 				</select>
-				<input type="number" class="goal-edit-duration-input" min="1" placeholder="Days" />
-				<input type="number" class="goal-edit-interval-input" min="1" placeholder="Every X days" />
-				<input type="date" class="goal-edit-start-date-input" />
-				<input type="color" class="goal-edit-color-input" aria-label="Goal color" title="Goal color" />
-				<button type="button" class="goal-save-btn">Save</button>
-				<button type="button" class="goal-cancel-btn">Cancel</button>
+				<input type="number" class="goal-edit-duration-input" min="1" placeholder="${t('daysPlaceholderShort')}" />
+				<input type="number" class="goal-edit-interval-input" min="1" placeholder="${t('everyXDays')}" />
+				<input type="date" class="goal-edit-start-date-input" aria-label="${t('startFrom')}" title="${t('startFromTitle')}" />
+				<input type="color" class="goal-edit-color-input" aria-label="${t('goalColor')}" title="${t('goalColor')}" />
+				<button type="button" class="goal-save-btn">${t('save')}</button>
+				<button type="button" class="goal-cancel-btn">${t('cancel')}</button>
 			</form>
 		`;
 
@@ -1386,14 +2012,16 @@ const renderFinishedGoals = () => {
 	const finishedGoals = getFinishedGoals();
 	toggleFinishedGoalsButton.hidden = false;
 	const isExpanded = finishedGoalsPanel.classList.contains('is-open');
-	toggleFinishedGoalsButton.textContent = `${isExpanded ? 'Hide' : 'See'} finished goals (${finishedGoals.length})`;
+	toggleFinishedGoalsButton.textContent = isExpanded
+		? t('hideFinishedGoals', { count: finishedGoals.length })
+		: t('seeFinishedGoals', { count: finishedGoals.length });
 	toggleFinishedGoalsButton.setAttribute('aria-expanded', String(isExpanded));
 
 	finishedGoalsList.innerHTML = '';
 	if (finishedGoals.length === 0) {
 		const emptyItem = document.createElement('li');
 		emptyItem.className = 'finished-goal-empty';
-		emptyItem.textContent = 'No finished goals yet.';
+		emptyItem.textContent = t('noFinishedGoalsYet');
 		finishedGoalsList.appendChild(emptyItem);
 		return;
 	}
@@ -1410,11 +2038,13 @@ const renderFinishedGoals = () => {
 		const title = document.createElement('strong');
 		title.textContent = goal.title;
 		const meta = document.createElement('span');
-		meta.textContent = `Ended on ${goal.finishedAt || getGoalPeriodEndDate(goal) || goal.startDate}`;
+		meta.textContent = t('endedOn', {
+			date: formatDisplayDate(goal.finishedAt || getGoalPeriodEndDate(goal) || goal.startDate),
+		});
 		const unfinishBtn = document.createElement('button');
 		unfinishBtn.type = 'button';
 		unfinishBtn.className = 'goal-unfinish-btn';
-		unfinishBtn.textContent = 'Reactivate';
+		unfinishBtn.textContent = t('reactivate');
 		head.appendChild(title);
 		head.appendChild(meta);
 		head.appendChild(unfinishBtn);
@@ -1466,10 +2096,15 @@ const buildGoalProgressItem = (goal, today, extraClass = '') => {
 			<span>${progressPercent}%</span>
 		</div>
 		<p class="goal-progress-meta">
-			${goal.type === 'period' ? `Period: ${getGoalScheduleLabel(goal)}` : `Habit: ${getGoalScheduleLabel(goal)}`}
+			${goal.type === 'period' ? t('progressPeriod', { label: getGoalScheduleLabel(goal) }) : t('progressHabit', { label: getGoalScheduleLabel(goal) })}
 		</p>
 		<p class="goal-progress-meta">
-			${completedCompletions}/${expectedCompletions} completed checks • ${attachedSchedules.length} attached task${attachedSchedules.length === 1 ? '' : 's'}
+			${t('completedChecksSummary', {
+				completed: completedCompletions,
+				expected: expectedCompletions,
+				count: attachedSchedules.length,
+				taskWord: getTaskWord(attachedSchedules.length),
+			})}
 		</p>
 		<div class="goal-progress-track">
 			<div class="goal-progress-fill" style="width: ${progressPercent}%"></div>
@@ -1491,7 +2126,7 @@ const renderGoalProgress = () => {
 	if (activeGoals.length === 0 && finishedGoals.length === 0) {
 		const emptyItem = document.createElement('li');
 		emptyItem.className = 'goal-progress-item goal-progress-empty';
-		emptyItem.textContent = 'No goals yet.';
+		emptyItem.textContent = t('noGoalsYet');
 		goalProgressList.appendChild(emptyItem);
 		return;
 	}
@@ -1507,7 +2142,7 @@ const renderGoalProgress = () => {
 		const toggleBtn = document.createElement('button');
 		toggleBtn.type = 'button';
 		toggleBtn.className = 'goal-progress-finished-toggle';
-		toggleBtn.textContent = `Show finished goals (${finishedGoals.length})`;
+		toggleBtn.textContent = t('showFinishedGoalsProgress', { count: finishedGoals.length });
 		toggleBtn.setAttribute('aria-expanded', 'false');
 
 		const panel = document.createElement('ul');
@@ -1527,7 +2162,9 @@ const renderGoalProgress = () => {
 				closeCollapsiblePanel(panel);
 			}
 			toggleBtn.setAttribute('aria-expanded', String(isOpen));
-			toggleBtn.textContent = `${isOpen ? 'Hide' : 'Show'} finished goals (${finishedGoals.length})`;
+			toggleBtn.textContent = isOpen
+				? t('hideFinishedGoalsProgress', { count: finishedGoals.length })
+				: t('showFinishedGoalsProgress', { count: finishedGoals.length });
 		});
 
 		wrapItem.appendChild(toggleBtn);
@@ -1564,7 +2201,7 @@ const showToast = (message, icon = '🎉', variant = 'success') => {
 };
 
 const showCompletionToast = () => {
-	showToast('Task complete! Keep it up!', '🎉', 'success');
+	showToast(t('taskCompleteToast'), '🎉', 'success');
 };
 
 const showDuplicateWarning = (message) => {
@@ -1719,14 +2356,14 @@ const createTaskElement = (task) => {
 			</div>
 		</div>
 		<div class="todo-item-actions">
-			<button type="button" class="todo-action-btn todo-edit-btn" aria-label="Edit task">
-				<i title="Edit" class="fa-solid fa-pen"></i>
+			<button type="button" class="todo-action-btn todo-edit-btn" aria-label="${t('edit')}">
+				<i title="${t('edit')}" class="fa-solid fa-pen"></i>
 			</button>
-			<button type="button" class="todo-action-btn todo-save-btn" aria-label="Save task">
-				<i title="Save" class="fa-solid fa-floppy-disk"></i>
+			<button type="button" class="todo-action-btn todo-save-btn" aria-label="${t('save')}">
+				<i title="${t('save')}" class="fa-solid fa-floppy-disk"></i>
 			</button>
-			<button type="button" class="todo-action-btn todo-delete-btn" aria-label="Delete task">
-				<i title="Delete" class="fa-solid fa-trash"></i>
+			<button type="button" class="todo-action-btn todo-delete-btn" aria-label="${t('delete')}">
+				<i title="${t('delete')}" class="fa-solid fa-trash"></i>
 			</button>
 		</div>
 	`;
@@ -1742,7 +2379,7 @@ const createTaskElement = (task) => {
 
 	if (task.isScheduled) {
 		deleteButton.setAttribute('aria-disabled', 'true');
-		deleteButton.setAttribute('title', 'Remove this from Recurring Schedules to delete it');
+		deleteButton.setAttribute('title', t('removeFromRecurringSchedules'));
 
 		if (task.scheduleId) {
 			const schedule = state.schedules.find((s) => s.id === task.scheduleId);
@@ -2269,7 +2906,7 @@ const renderSchedules = () => {
 			currentGroupKey = groupKey;
 			const groupTitle = document.createElement('li');
 			groupTitle.className = 'schedule-group-title';
-			groupTitle.textContent = groupedGoal ? groupedGoal.title : 'No goal';
+			groupTitle.textContent = groupedGoal ? groupedGoal.title : t('noGoal');
 			scheduleList.appendChild(groupTitle);
 		}
 
@@ -2289,19 +2926,19 @@ const renderSchedules = () => {
 					<small>${timingLabel} ${goalLabel}</small>
 				</div>
 				<div class="schedule-item-actions">
-					<button type="button" class="schedule-move-btn schedule-move-up-btn" ${canMoveUp ? '' : 'disabled'} aria-label="Move schedule up" title="Move up">↑</button>
-					<button type="button" class="schedule-move-btn schedule-move-down-btn" ${canMoveDown ? '' : 'disabled'} aria-label="Move schedule down" title="Move down">↓</button>
-					<button type="button" class="schedule-edit-btn">Edit</button>
-					<button type="button" class="schedule-remove-btn">Remove</button>
+					<button type="button" class="schedule-move-btn schedule-move-up-btn" ${canMoveUp ? '' : 'disabled'} aria-label="${t('moveUp')}" title="${t('moveUp')}">↑</button>
+					<button type="button" class="schedule-move-btn schedule-move-down-btn" ${canMoveDown ? '' : 'disabled'} aria-label="${t('moveDown')}" title="${t('moveDown')}">↓</button>
+					<button type="button" class="schedule-edit-btn">${t('edit')}</button>
+					<button type="button" class="schedule-remove-btn">${t('delete')}</button>
 				</div>
 			</div>
 			<form class="schedule-edit-form">
 				<input type="text" class="schedule-edit-input" required />
 				<select class="schedule-edit-goal-select">${buildGoalOptionsMarkup(schedule.goalId || '')}</select>
-				<input type="number" class="schedule-edit-interval-input" min="1" placeholder="Every X days" />
-				<input type="date" class="schedule-edit-start-date-input" />
-				<button type="button" class="schedule-save-btn">Save</button>
-				<button type="button" class="schedule-cancel-btn">Cancel</button>
+				<input type="number" class="schedule-edit-interval-input" min="1" placeholder="${t('everyXDays')}" />
+				<input type="date" class="schedule-edit-start-date-input" aria-label="${t('startFrom')}" title="${t('startFromTitle')}" />
+				<button type="button" class="schedule-save-btn">${t('save')}</button>
+				<button type="button" class="schedule-cancel-btn">${t('cancel')}</button>
 			</form>
 		`;
 
@@ -2318,8 +2955,8 @@ const renderSchedules = () => {
 			startDateInput.value = schedule.startDate;
 			startDateInput.disabled = shouldLockScheduleStartDate(schedule);
 			startDateInput.title = startDateInput.disabled
-				? 'Start From is locked because this recurring task has already started and has completed entries.'
-				: 'Start from';
+				? t('startDateLocked')
+				: t('startFromTitle');
 		}
 		scheduleList.appendChild(scheduleItem);
 	});
@@ -2399,8 +3036,8 @@ const initializeState = () => {
 const showDeleteModal = ({
 	taskId = null,
 	scheduleId = null,
-	title = 'Delete task?',
-	message = 'This action cannot be undone.',
+	title = t('deleteTaskQuestion'),
+	message = t('actionCannotBeUndone'),
 } = {}) => {
 	pendingDeleteTaskId = taskId;
 	pendingDeleteScheduleId = scheduleId;
@@ -2417,10 +3054,10 @@ const hideDeleteModal = () => {
 	pendingDeleteTaskId = null;
 	pendingDeleteScheduleId = null;
 	if (deleteModalTitle) {
-		deleteModalTitle.textContent = 'Delete task?';
+		deleteModalTitle.textContent = t('deleteTaskQuestion');
 	}
 	if (deleteModalMessage) {
-		deleteModalMessage.textContent = 'This action cannot be undone.';
+		deleteModalMessage.textContent = t('actionCannotBeUndone');
 	}
 	closeModalOverlay(deleteModal);
 };
@@ -2487,7 +3124,7 @@ const removeGoalById = (goalId) => {
 	renderSchedules();
 	renderProgressCharts();
 	renderTasks();
-	showSuccessToast('Goal removed successfully.');
+	showSuccessToast(t('goalRemoved'));
 	saveStateToStorage();
 };
 
@@ -2500,7 +3137,7 @@ const removeScheduleById = (scheduleId) => {
 	renderFinishedGoals();
 	renderProgressCharts();
 	renderTasks();
-	showSuccessToast('Recurring schedule removed successfully.');
+	showSuccessToast(t('recurringScheduleRemoved'));
 	saveStateToStorage();
 };
 
@@ -2587,8 +3224,8 @@ if (toggleFinishedTasksButton) {
 		renderTasks();
 		showSuccessToast(
 			state.showFinishedTasks
-				? 'Finished tasks are now visible.'
-				: 'Finished tasks are now hidden.',
+				? t('finishedTasksVisible')
+				: t('finishedTasksHidden'),
 		);
 		saveStateToStorage();
 	});
@@ -2604,7 +3241,7 @@ if (saveProgressQuoteButton) {
 		renderProgressQuote();
 		setProgressQuoteEditing(false);
 		saveStateToStorage();
-		showSuccessToast(state.customQuote ? 'Custom quote saved.' : 'Using daily quote.');
+		showSuccessToast(state.customQuote ? t('customQuoteSaved') : t('usingDailyQuote'));
 	});
 }
 
@@ -2614,7 +3251,7 @@ if (clearProgressQuoteButton) {
 		renderProgressQuote();
 		setProgressQuoteEditing(false);
 		saveStateToStorage();
-		showSuccessToast('Daily quote enabled.');
+		showSuccessToast(t('dailyQuoteEnabled'));
 	});
 }
 
@@ -2649,14 +3286,14 @@ if (goalTypeSelect && goalDurationInput) {
 if (installAppButton) {
 	installAppButton.addEventListener('click', async () => {
 		if (!deferredInstallPrompt) {
-			showToast('Use browser menu and choose Install app or Add to Home Screen.', '📲', 'warning');
+			showToast(t('installHelp'), '📲', 'warning');
 			return;
 		}
 
 		deferredInstallPrompt.prompt();
 		const { outcome } = await deferredInstallPrompt.userChoice;
 		if (outcome !== 'accepted') {
-			showToast('Install canceled. You can try again anytime.', '📲', 'warning');
+			showToast(t('installCanceled'), '📲', 'warning');
 		}
 		deferredInstallPrompt = null;
 		updateInstallButtonState();
@@ -2683,7 +3320,7 @@ taskForm.addEventListener('submit', (event) => {
 	}
 
 	if (isDuplicateTaskText(text)) {
-		showDuplicateWarning('This task already exists.');
+		showDuplicateWarning(t('duplicateTask'));
 		taskInput.focus();
 		taskInput.select();
 		return;
@@ -2718,7 +3355,7 @@ scheduleForm.addEventListener('submit', (event) => {
 
 	const hasSameSchedule = isDuplicateScheduleText(text);
 	if (hasSameSchedule) {
-		showDuplicateWarning('This recurring schedule already exists.');
+		showDuplicateWarning(t('duplicateSchedule'));
 		scheduleInput.focus();
 		scheduleInput.select();
 		return;
@@ -2751,7 +3388,7 @@ scheduleForm.addEventListener('submit', (event) => {
 		scheduleGoalSelect.value = '';
 	}
 	scheduleInput.focus();
-	showSuccessToast('Recurring schedule created successfully.');
+	showSuccessToast(t('recurringScheduleCreated'));
 	saveStateToStorage();
 });
 
@@ -2769,7 +3406,7 @@ goalForm.addEventListener('submit', (event) => {
 	}
 
 	if (isDuplicateGoalTitle(title)) {
-		showDuplicateWarning('This goal already exists.');
+		showDuplicateWarning(t('duplicateGoal'));
 		goalTitleInput.focus();
 		goalTitleInput.select();
 		return;
@@ -2784,20 +3421,20 @@ goalForm.addEventListener('submit', (event) => {
 	let endDate = null;
 
 	if (!selectedColor) {
-		showDuplicateWarning('Choose a valid goal color.');
+		showDuplicateWarning(t('invalidGoalColor'));
 		goalColorInput?.focus();
 		return;
 	}
 
 	if (isGoalColorInUse(selectedColor)) {
-		showDuplicateWarning('This color is already used by another goal.');
+		showDuplicateWarning(t('goalColorInUse'));
 		goalColorInput?.focus();
 		return;
 	}
 
 	if (isPeriodGoal) {
 		if (!Number.isFinite(durationDays) || durationDays < 1) {
-			showDuplicateWarning('Choose a valid number of days for a period goal.');
+			showDuplicateWarning(t('invalidPeriodDays'));
 			goalDurationInput.focus();
 			return;
 		}
@@ -2805,7 +3442,7 @@ goalForm.addEventListener('submit', (event) => {
 			endDate = addDaysToDateStamp(startDate, durationDays - 1);
 		}
 	} else if (!goalIntervalInput?.value || intervalDays < 1) {
-		showDuplicateWarning('Choose how often this habit should appear.');
+		showDuplicateWarning(t('invalidHabitFrequency'));
 		goalIntervalInput?.focus();
 		return;
 	}
@@ -2846,7 +3483,7 @@ goalForm.addEventListener('submit', (event) => {
 		goalColorInput.value = getNextAvailableGoalColor();
 	}
 	goalTitleInput.focus();
-	showSuccessToast('Goal created successfully.');
+	showSuccessToast(t('goalCreated'));
 	saveStateToStorage();
 });
 
@@ -2922,7 +3559,7 @@ goalList.addEventListener('click', (event) => {
 		renderSchedules();
 		renderProgressCharts();
 		renderTasks();
-		showSuccessToast('Goal marked as finished.');
+		showSuccessToast(t('goalFinished'));
 		saveStateToStorage();
 		return;
 	}
@@ -2952,13 +3589,13 @@ goalList.addEventListener('click', (event) => {
 		const nextStartDate = normalizeDateStamp(startDateInput?.value);
 
 		if (!nextTitle) {
-			showDuplicateWarning('Goal name cannot be empty.');
+			showDuplicateWarning(t('goalNameEmpty'));
 			titleInput?.focus();
 			return;
 		}
 
 		if (isDuplicateGoalTitle(nextTitle, goalId)) {
-			showDuplicateWarning('This goal already exists.');
+			showDuplicateWarning(t('duplicateGoal'));
 			titleInput?.focus();
 			titleInput?.select();
 			return;
@@ -2971,7 +3608,7 @@ goalList.addEventListener('click', (event) => {
 		if (nextType === 'period') {
 			const durationDays = Number(durationInput?.value || 0);
 			if (!Number.isFinite(durationDays) || durationDays < 1) {
-				showDuplicateWarning('Choose a valid number of days for a period goal.');
+				showDuplicateWarning(t('invalidPeriodDays'));
 				durationInput?.focus();
 				return;
 			}
@@ -2981,7 +3618,7 @@ goalList.addEventListener('click', (event) => {
 		} else {
 			nextIntervalDays = normalizePositiveInteger(intervalInput?.value, 1);
 			if (!intervalInput?.value || nextIntervalDays < 1) {
-				showDuplicateWarning('Choose how often this habit should appear.');
+				showDuplicateWarning(t('invalidHabitFrequency'));
 				intervalInput?.focus();
 				return;
 			}
@@ -2989,13 +3626,13 @@ goalList.addEventListener('click', (event) => {
 
 		const nextColor = normalizeGoalColor(colorInput?.value);
 		if (!nextColor) {
-			showDuplicateWarning('Choose a valid goal color.');
+			showDuplicateWarning(t('invalidGoalColor'));
 			colorInput?.focus();
 			return;
 		}
 
 		if (isGoalColorInUse(nextColor, goalId)) {
-			showDuplicateWarning('This color is already used by another goal.');
+			showDuplicateWarning(t('goalColorInUse'));
 			colorInput?.focus();
 			return;
 		}
@@ -3016,7 +3653,7 @@ goalList.addEventListener('click', (event) => {
 		renderSchedules();
 		renderProgressCharts();
 		renderTasks();
-		showSuccessToast('Goal updated successfully.');
+		showSuccessToast(t('goalUpdated'));
 		saveStateToStorage();
 		return;
 	}
@@ -3070,7 +3707,7 @@ if (finishedGoalsList) {
 		renderSchedules();
 		renderProgressCharts();
 		renderTasks();
-		showSuccessToast('Goal reactivated.');
+		showSuccessToast(t('goalReactivated'));
 		saveStateToStorage();
 	});
 }
@@ -3210,13 +3847,13 @@ scheduleList.addEventListener('click', (event) => {
 			: normalizeDateStamp(startDateInput?.value);
 
 		if (!nextText) {
-			showDuplicateWarning('Schedule text cannot be empty.');
+			showDuplicateWarning(t('scheduleTextEmpty'));
 			editInput?.focus();
 			return;
 		}
 
 		if (isDuplicateScheduleText(nextText, scheduleId)) {
-			showDuplicateWarning('This recurring schedule already exists.');
+			showDuplicateWarning(t('duplicateSchedule'));
 			editInput?.focus();
 			editInput?.select();
 			return;
@@ -3240,7 +3877,7 @@ scheduleList.addEventListener('click', (event) => {
 		renderFinishedGoals();
 		renderProgressCharts();
 		renderTasks();
-		showSuccessToast('Recurring schedule updated successfully.');
+		showSuccessToast(t('recurringScheduleUpdated'));
 		saveStateToStorage();
 		return;
 	}
@@ -3264,14 +3901,14 @@ scheduleList.addEventListener('click', (event) => {
 	if (schedule.goalId) {
 		const linkedTaskCount = state.schedules.filter((item) => item.goalId === schedule.goalId).length;
 		if (linkedTaskCount <= 1) {
-			showDuplicateWarning('This is the only task in the goal. Add another task before removing it.');
+			showDuplicateWarning(t('onlyTaskInGoal'));
 			return;
 		}
 
 		showDeleteModal({
 			scheduleId,
-			title: 'Remove goal task?',
-			message: 'This task is linked to a goal. This action cannot be undone.',
+			title: t('removeGoalTaskQuestion'),
+			message: t('removeGoalTaskMessage'),
 		});
 		return;
 	}
@@ -3656,6 +4293,7 @@ removeGoalModal.addEventListener('click', (event) => {
 	}
 });
 
+applyStaticTranslations();
 initializeState();
 if (goalColorInput) {
 	goalColorInput.value = getNextAvailableGoalColor();
@@ -3684,7 +4322,7 @@ window.addEventListener('beforeinstallprompt', (event) => {
 window.addEventListener('appinstalled', () => {
 	deferredInstallPrompt = null;
 	updateInstallButtonState();
-	showSuccessToast('App installed successfully.');
+	showSuccessToast(t('appInstalled'));
 });
 
 window.addEventListener('resize', updateInstallButtonState);

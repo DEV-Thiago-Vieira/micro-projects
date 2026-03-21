@@ -270,18 +270,21 @@ h1 {
 
 .todo-list {
     --visible-tasks: 3;
-    --peek-task: 0.5;
-    --task-row-height: 60px;
-    --task-gap: .5em;
+    --peek-task: 0.18;
+    --task-row-height: 68px;
+    --task-gap: 0.22em;
     display: flex;
     flex-direction: column;
-    gap: .5em;
-    margin: .5em 0;
+    gap: var(--task-gap);
+    margin: 0.35em 0;
     width: 80%;
-    max-height: calc((var(--visible-tasks) * var(--task-row-height)) + (var(--visible-tasks) * var(--task-gap)) + (var(--peek-task) * var(--task-row-height)));
+    max-height: calc((var(--visible-tasks) * var(--task-row-height)) + ((var(--visible-tasks) - 1) * var(--task-gap)) + (var(--peek-task) * var(--task-row-height)) + 0.5rem);
     overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
     scrollbar-gutter: stable;
-    padding-right: 6px;
+    scroll-padding-block: 0.25rem;
+    padding: 0.25rem 6px;
 }
 
 .todo-item-label {
@@ -1899,6 +1902,8 @@ body.is-progress-open .github-footer-link {
 
 .todo-item {
     position: relative;
+    min-height: var(--task-row-height);
+    flex: 0 0 auto;
     border-radius: 10px;
     overflow: hidden;
     transform-origin: top center;
@@ -1908,6 +1913,7 @@ body.is-progress-open .github-footer-link {
 .todo-item.is-hiding {
     opacity: 0;
     transform: translateY(-8px) scale(0.985);
+    min-height: 0;
     height: 0 !important;
     pointer-events: none;
 }
