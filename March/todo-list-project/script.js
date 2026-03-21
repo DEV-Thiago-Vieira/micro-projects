@@ -14,10 +14,14 @@ const scheduleForm = document.getElementById('schedule-form');
 const scheduleInput = document.getElementById('schedule-input');
 const scheduleList = document.getElementById('schedule-list');
 const scheduleGoalSelect = document.getElementById('schedule-goal-select');
+const scheduleIntervalInput = document.getElementById('schedule-interval-input');
+const scheduleStartDateInput = document.getElementById('schedule-start-date-input');
 const goalForm = document.getElementById('goal-form');
 const goalTitleInput = document.getElementById('goal-title-input');
 const goalTypeSelect = document.getElementById('goal-type-select');
 const goalDurationInput = document.getElementById('goal-duration-input');
+const goalIntervalInput = document.getElementById('goal-interval-input');
+const goalStartDateInput = document.getElementById('goal-start-date-input');
 const goalColorInput = document.getElementById('goal-color-input');
 const goalList = document.getElementById('goal-list');
 const toggleFinishedGoalsButton = document.getElementById('toggle-finished-goals-btn');
@@ -26,6 +30,7 @@ const finishedGoalsList = document.getElementById('finished-goals-list');
 const openScheduleButton = document.getElementById('open-schedule-btn');
 const scheduleModal = document.getElementById('schedule-modal');
 const closeScheduleButton = document.getElementById('close-schedule-btn');
+const toggleFinishedTasksButton = document.getElementById('toggle-finished-tasks-btn');
 
 const openProgressButton = document.getElementById('open-progress-btn');
 const closeProgressButton = document.getElementById('close-progress-btn');
@@ -70,6 +75,7 @@ const LAST_SYNC_DATE_STORAGE_KEY = 'todo-last-sync-date-v1';
 const STATS_STORAGE_KEY = 'todo-stats-v1';
 const THEME_STORAGE_KEY = 'todo-theme-v1';
 const CUSTOM_QUOTE_STORAGE_KEY = 'todo-custom-quote-v1';
+const SHOW_FINISHED_TASKS_STORAGE_KEY = 'todo-show-finished-tasks-v1';
 
 const monthNames = [
 	'Jan',
@@ -127,6 +133,7 @@ const DAILY_MOTIVATION_QUOTES = [
 ];
 
 const baseGoals = [3, 7, 14, 30, 60, 90];
+const DAY_IN_MS = 1000 * 60 * 60 * 24;
 
 const state = {
 	tasks: [],
@@ -134,6 +141,7 @@ const state = {
 	goals: [],
 	lastSyncDate: null,
 	customQuote: '',
+	showFinishedTasks: true,
 	stats: {
 		dailyCompletions: {},
 		goalDailyCompletions: {},
@@ -147,9 +155,41 @@ let toastTimer = null;
 let deferredInstallPrompt = null;
 let isProgressQuoteEditing = false;
 
+const MODAL_TRANSITION_MS = 240;
+const PANEL_TRANSITION_MS = 220;
+
 const getStoredTheme = () => {
 	const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
 	return savedTheme === 'dark' ? 'dark' : 'light';
+};
+
+const getStoredShowFinishedTasks = () => {
+	const savedValue = localStorage.getItem(SHOW_FINISHED_TASKS_STORAGE_KEY);
+	if (savedValue === '0') {
+		return false;
+	}
+
+	return true;
+};
+
+const syncFinishedTasksToggleButton = () => {
+	if (!toggleFinishedTasksButton) {
+		return;
+	}
+
+	const isVisible = state.showFinishedTasks;
+	toggleFinishedTasksButton.setAttribute('aria-pressed', String(!isVisible));
+	toggleFinishedTasksButton.setAttribute(
+		'aria-label',
+		isVisible ? 'Hide finished tasks' : 'Show finished tasks',
+	);
+	toggleFinishedTasksButton.setAttribute(
+		'title',
+		isVisible ? 'Hide finished tasks' : 'Show finished tasks',
+	);
+	toggleFinishedTasksButton.innerHTML = isVisible
+		? '<i class="fa-solid fa-eye" aria-hidden="true"></i>'
+		: '<i class="fa-solid fa-eye-slash" aria-hidden="true"></i>';
 };
 
 const applyTheme = (theme) => {
@@ -168,6 +208,82 @@ const applyTheme = (theme) => {
 	if (themeColorMeta) {
 		themeColorMeta.setAttribute('content', isDarkTheme ? '#0f172a' : '#22c55e');
 	}
+};
+
+const openModalOverlay = (overlay, bodyClass = '') => {
+	if (!overlay) {
+		return;
+	}
+
+	if (overlay._closeTimer) {
+		clearTimeout(overlay._closeTimer);
+		overlay._closeTimer = null;
+	}
+
+	overlay.classList.remove('is-closing');
+	overlay.classList.add('is-open');
+	overlay.setAttribute('aria-hidden', 'false');
+	if (bodyClass) {
+		document.body.classList.add(bodyClass);
+	}
+};
+
+const closeModalOverlay = (overlay, bodyClass = '') => {
+	if (!overlay) {
+		return;
+	}
+
+	overlay.setAttribute('aria-hidden', 'true');
+	overlay.classList.remove('is-open');
+	overlay.classList.add('is-closing');
+	if (bodyClass) {
+		document.body.classList.remove(bodyClass);
+	}
+
+	if (overlay._closeTimer) {
+		clearTimeout(overlay._closeTimer);
+	}
+
+	overlay._closeTimer = setTimeout(() => {
+		overlay.classList.remove('is-closing');
+		overlay._closeTimer = null;
+	}, MODAL_TRANSITION_MS);
+};
+
+const openCollapsiblePanel = (panel) => {
+	if (!panel) {
+		return;
+	}
+
+	if (panel._collapseTimer) {
+		clearTimeout(panel._collapseTimer);
+		panel._collapseTimer = null;
+	}
+
+	panel.hidden = false;
+	requestAnimationFrame(() => {
+		panel.classList.remove('is-closing');
+		panel.classList.add('is-open');
+	});
+};
+
+const closeCollapsiblePanel = (panel) => {
+	if (!panel) {
+		return;
+	}
+
+	panel.classList.remove('is-open');
+	panel.classList.add('is-closing');
+
+	if (panel._collapseTimer) {
+		clearTimeout(panel._collapseTimer);
+	}
+
+	panel._collapseTimer = setTimeout(() => {
+		panel.hidden = true;
+		panel.classList.remove('is-closing');
+		panel._collapseTimer = null;
+	}, PANEL_TRANSITION_MS);
 };
 
 const toggleTheme = () => {
@@ -439,10 +555,145 @@ const parseDateStampUtc = (dateStamp) => {
 	return Date.UTC(year, month - 1, day);
 };
 
+const isValidDateStamp = (value) => /^\d{4}-\d{2}-\d{2}$/.test(value);
+
+const normalizeDateStamp = (value, fallback = getCurrentDateStamp()) =>
+	isValidDateStamp(value) ? value : fallback;
+
+const addDaysToDateStamp = (dateStamp, daysToAdd) => {
+	const utc = parseDateStampUtc(dateStamp) + (Math.floor(daysToAdd) * DAY_IN_MS);
+	const date = new Date(utc);
+	return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
+};
+
+const normalizePositiveInteger = (value, fallback = 1) => {
+	const parsed = Number(value);
+	if (!Number.isFinite(parsed) || parsed < 1) {
+		return Math.max(1, Math.floor(fallback));
+	}
+
+	return Math.floor(parsed);
+};
+
+const normalizeOptionalPositiveInteger = (value) => {
+	if (value === '' || value === null || typeof value === 'undefined') {
+		return null;
+	}
+
+	const parsed = Number(value);
+	if (!Number.isFinite(parsed) || parsed < 1) {
+		return null;
+	}
+
+	return Math.floor(parsed);
+};
+
 const daysBetweenDateStamps = (fromDateStamp, toDateStamp) => {
 	const fromUtc = parseDateStampUtc(fromDateStamp);
 	const toUtc = parseDateStampUtc(toDateStamp);
-	return Math.floor((toUtc - fromUtc) / (1000 * 60 * 60 * 24));
+	return Math.floor((toUtc - fromUtc) / DAY_IN_MS);
+};
+
+const getGoalPeriodEndDate = (goal) => {
+	if (!goal || goal.type !== 'period') {
+		return null;
+	}
+
+	if (typeof goal.endDate === 'string' && goal.endDate) {
+		return goal.endDate;
+	}
+
+	if (!goal.durationDays) {
+		return null;
+	}
+
+	return addDaysToDateStamp(goal.startDate, goal.durationDays - 1);
+};
+
+const isRecurringScheduleActiveOnDate = (schedule, dateStamp) => {
+	if (!schedule || !dateStamp) {
+		return false;
+	}
+
+	const startDate = normalizeDateStamp(schedule.startDate);
+	const diff = daysBetweenDateStamps(startDate, dateStamp);
+	if (diff < 0) {
+		return false;
+	}
+
+	const intervalDays = normalizePositiveInteger(schedule.intervalDays, 1);
+	return diff % intervalDays === 0;
+};
+
+const formatEveryXDays = (intervalDays) => {
+	const normalizedInterval = normalizePositiveInteger(intervalDays, 1);
+	return normalizedInterval === 1 ? 'Every day' : `Every ${normalizedInterval} days`;
+};
+
+const getGoalScheduleLabel = (goal) => {
+	if (!goal) {
+		return '';
+	}
+
+	if (goal.type === 'period') {
+		if (goal.cycleDays) {
+			return `${goal.durationDays}-day cycle every ${goal.cycleDays} days from ${goal.startDate}`;
+		}
+
+		const endDate = getGoalPeriodEndDate(goal);
+		return endDate ? `${goal.startDate} to ${endDate}` : `Starts on ${goal.startDate}`;
+	}
+
+	return `${formatEveryXDays(goal.intervalDays)} from ${goal.startDate}`;
+};
+
+const getScheduleTimingLabel = (schedule) => {
+	if (!schedule) {
+		return '';
+	}
+
+	return `${formatEveryXDays(schedule.intervalDays)} from ${schedule.startDate}`;
+};
+
+const hasScheduleStarted = (schedule) => {
+	if (!schedule) {
+		return false;
+	}
+
+	return daysBetweenDateStamps(schedule.startDate, getCurrentDateStamp()) >= 0;
+};
+
+const scheduleHasCompletedTaskHistory = (scheduleId) =>
+	state.tasks.some((task) => task.isScheduled && task.scheduleId === scheduleId && task.done);
+
+const shouldLockScheduleStartDate = (schedule) =>
+	Boolean(schedule) && hasScheduleStarted(schedule) && scheduleHasCompletedTaskHistory(schedule.id);
+
+const syncGoalFrequencyInputs = ({ type, durationInput, intervalInput, intervalValue = '' }) => {
+	if (!durationInput || !intervalInput) {
+		return;
+	}
+
+	const isPeriodGoal = type === 'period';
+	durationInput.disabled = !isPeriodGoal;
+	durationInput.required = isPeriodGoal;
+	intervalInput.disabled = false;
+	intervalInput.required = !isPeriodGoal;
+	intervalInput.placeholder = isPeriodGoal ? 'Cycle every X days (optional)' : 'Every X days';
+
+	if (isPeriodGoal) {
+		if (intervalValue === '') {
+			intervalInput.value = '';
+		}
+		return;
+	}
+
+	if (!intervalInput.value) {
+		intervalInput.value = intervalValue || '1';
+	}
+	if (durationInput.value) {
+		durationInput.value = '';
+	}
 };
 
 const isGoalActiveOnDate = (goal, dateStamp) => {
@@ -450,15 +701,23 @@ const isGoalActiveOnDate = (goal, dateStamp) => {
 		return false;
 	}
 
-	if (daysBetweenDateStamps(goal.startDate, dateStamp) < 0) {
+	const diff = daysBetweenDateStamps(goal.startDate, dateStamp);
+	if (diff < 0) {
 		return false;
 	}
 
-	if (goal.type === 'period' && goal.endDate) {
-		return daysBetweenDateStamps(dateStamp, goal.endDate) >= 0;
+	if (goal.type === 'period') {
+		const durationDays = normalizePositiveInteger(goal.durationDays || getGoalDurationDays(goal) || 1, 1);
+		if (goal.cycleDays) {
+			const cycleDays = normalizePositiveInteger(goal.cycleDays, durationDays);
+			return diff % cycleDays < durationDays;
+		}
+
+		return diff < durationDays;
 	}
 
-	return true;
+	const intervalDays = normalizePositiveInteger(goal.intervalDays, 1);
+	return diff % intervalDays === 0;
 };
 
 const isGoalFinished = (goal, dateStamp = getCurrentDateStamp()) => {
@@ -470,11 +729,16 @@ const isGoalFinished = (goal, dateStamp = getCurrentDateStamp()) => {
 		return true;
 	}
 
-	if (goal.type !== 'period' || !goal.endDate) {
+	if (goal.type !== 'period' || goal.cycleDays) {
 		return false;
 	}
 
-	return daysBetweenDateStamps(goal.endDate, dateStamp) > 0;
+	const endDate = getGoalPeriodEndDate(goal);
+	if (!endDate) {
+		return false;
+	}
+
+	return daysBetweenDateStamps(endDate, dateStamp) > 0;
 };
 
 const isScheduleFinished = (schedule, dateStamp = getCurrentDateStamp()) => {
@@ -881,8 +1145,11 @@ const renderProgressCharts = () => {
 };
 
 const getGoalTrackingEndDate = (goal, todayDateStamp) => {
-	if (goal.type === 'period' && goal.endDate) {
-		return daysBetweenDateStamps(goal.endDate, todayDateStamp) < 0 ? goal.endDate : todayDateStamp;
+	if (goal.type === 'period' && !goal.cycleDays) {
+		const endDate = getGoalPeriodEndDate(goal);
+		if (endDate) {
+			return daysBetweenDateStamps(endDate, todayDateStamp) < 0 ? endDate : todayDateStamp;
+		}
 	}
 
 	return todayDateStamp;
@@ -925,6 +1192,8 @@ const renderGoalOptions = () => {
 	if (previousValue && state.goals.some((goal) => goal.id === previousValue)) {
 		scheduleGoalSelect.value = previousValue;
 	}
+
+	syncScheduleIntervalLock(scheduleGoalSelect.value || null, scheduleIntervalInput);
 };
 
 const buildGoalOptionsMarkup = (selectedGoalId = '') => {
@@ -936,12 +1205,50 @@ const buildGoalOptionsMarkup = (selectedGoalId = '') => {
 	return options.join('');
 };
 
+const shouldLockScheduleIntervalToGoal = (goalId) => {
+	if (!goalId) {
+		return false;
+	}
+
+	const goal = state.goals.find((item) => item.id === goalId);
+	if (!goal || goal.type !== 'habit') {
+		return false;
+	}
+
+	return normalizePositiveInteger(goal.intervalDays, 1) > 1;
+};
+
+const syncScheduleIntervalLock = (goalId, intervalInput) => {
+	if (!intervalInput) {
+		return;
+	}
+
+	const shouldLock = shouldLockScheduleIntervalToGoal(goalId);
+	if (shouldLock) {
+		intervalInput.value = '1';
+	}
+
+	intervalInput.disabled = shouldLock;
+	intervalInput.title = shouldLock
+		? 'This task period is fixed to 1 because the selected habit already controls cadence.'
+		: 'Every X days (default 1)';
+};
+
 const getGoalDurationDays = (goal) => {
-	if (!goal || goal.type !== 'period' || !goal.endDate) {
+	if (!goal || goal.type !== 'period') {
 		return '';
 	}
 
-	return String(Math.max(1, daysBetweenDateStamps(goal.startDate, goal.endDate) + 1));
+	if (goal.durationDays) {
+		return String(normalizePositiveInteger(goal.durationDays, 1));
+	}
+
+	const endDate = getGoalPeriodEndDate(goal);
+	if (!endDate) {
+		return '';
+	}
+
+	return String(Math.max(1, daysBetweenDateStamps(goal.startDate, endDate) + 1));
 };
 
 const moveGoalInActiveOrder = (goalId, direction) => {
@@ -994,9 +1301,7 @@ const renderGoals = () => {
 		goalItem.dataset.goalId = goal.id;
 		goalItem.style.setProperty('--goal-color', goalColor);
 
-		const goalTypeLabel = goal.type === 'period' && goal.endDate
-			? `${goal.startDate} to ${goal.endDate}`
-			: 'Habit (indefinite)';
+		const goalTypeLabel = getGoalScheduleLabel(goal);
 
 		goalItem.innerHTML = `
 			<div class="goal-item-view">
@@ -1020,6 +1325,8 @@ const renderGoals = () => {
 					<option value="period">Period goal</option>
 				</select>
 				<input type="number" class="goal-edit-duration-input" min="1" placeholder="Days" />
+				<input type="number" class="goal-edit-interval-input" min="1" placeholder="Every X days" />
+				<input type="date" class="goal-edit-start-date-input" />
 				<input type="color" class="goal-edit-color-input" aria-label="Goal color" title="Goal color" />
 				<button type="button" class="goal-save-btn">Save</button>
 				<button type="button" class="goal-cancel-btn">Cancel</button>
@@ -1033,13 +1340,31 @@ const renderGoals = () => {
 
 		const typeSelect = goalItem.querySelector('.goal-edit-type-select');
 		const durationInput = goalItem.querySelector('.goal-edit-duration-input');
+		const intervalInput = goalItem.querySelector('.goal-edit-interval-input');
+		const startDateInput = goalItem.querySelector('.goal-edit-start-date-input');
 		if (typeSelect) {
 			typeSelect.value = goal.type;
 		}
 		if (durationInput) {
 			durationInput.value = getGoalDurationDays(goal);
-			durationInput.disabled = goal.type !== 'period';
-			durationInput.required = goal.type === 'period';
+		}
+		if (intervalInput) {
+			intervalInput.value = goal.type === 'period'
+				? String(goal.cycleDays || '')
+				: String(normalizePositiveInteger(goal.intervalDays, 1));
+		}
+		if (startDateInput) {
+			startDateInput.value = goal.startDate;
+		}
+		if (durationInput && intervalInput) {
+			syncGoalFrequencyInputs({
+				type: goal.type,
+				durationInput,
+				intervalInput,
+				intervalValue: goal.type === 'period'
+					? String(goal.cycleDays || '')
+					: String(normalizePositiveInteger(goal.intervalDays, 1)),
+			});
 		}
 
 		const colorInput = goalItem.querySelector('.goal-edit-color-input');
@@ -1060,7 +1385,7 @@ const renderFinishedGoals = () => {
 
 	const finishedGoals = getFinishedGoals();
 	toggleFinishedGoalsButton.hidden = false;
-	const isExpanded = !finishedGoalsPanel.hidden;
+	const isExpanded = finishedGoalsPanel.classList.contains('is-open');
 	toggleFinishedGoalsButton.textContent = `${isExpanded ? 'Hide' : 'See'} finished goals (${finishedGoals.length})`;
 	toggleFinishedGoalsButton.setAttribute('aria-expanded', String(isExpanded));
 
@@ -1085,7 +1410,7 @@ const renderFinishedGoals = () => {
 		const title = document.createElement('strong');
 		title.textContent = goal.title;
 		const meta = document.createElement('span');
-		meta.textContent = `Ended on ${goal.finishedAt || goal.endDate}`;
+		meta.textContent = `Ended on ${goal.finishedAt || getGoalPeriodEndDate(goal) || goal.startDate}`;
 		const unfinishBtn = document.createElement('button');
 		unfinishBtn.type = 'button';
 		unfinishBtn.className = 'goal-unfinish-btn';
@@ -1141,7 +1466,7 @@ const buildGoalProgressItem = (goal, today, extraClass = '') => {
 			<span>${progressPercent}%</span>
 		</div>
 		<p class="goal-progress-meta">
-			${goal.type === 'period' && goal.endDate ? `Period: ${goal.startDate} to ${goal.endDate}` : `Habit since ${goal.startDate}`}
+			${goal.type === 'period' ? `Period: ${getGoalScheduleLabel(goal)}` : `Habit: ${getGoalScheduleLabel(goal)}`}
 		</p>
 		<p class="goal-progress-meta">
 			${completedCompletions}/${expectedCompletions} completed checks • ${attachedSchedules.length} attached task${attachedSchedules.length === 1 ? '' : 's'}
@@ -1195,8 +1520,12 @@ const renderGoalProgress = () => {
 		});
 
 		toggleBtn.addEventListener('click', () => {
-			const isOpen = panel.classList.toggle('is-open');
-			panel.hidden = !isOpen;
+			const isOpen = !panel.classList.contains('is-open');
+			if (isOpen) {
+				openCollapsiblePanel(panel);
+			} else {
+				closeCollapsiblePanel(panel);
+			}
 			toggleBtn.setAttribute('aria-expanded', String(isOpen));
 			toggleBtn.textContent = `${isOpen ? 'Hide' : 'Show'} finished goals (${finishedGoals.length})`;
 		});
@@ -1245,6 +1574,7 @@ const showDuplicateWarning = (message) => {
 const showSuccessToast = (message) => {
 	showToast(message, '✅', 'success');
 };
+const TASK_HIDE_ANIMATION_MS = 220;
 
 const sortTasks = () => {
 	const taskItems = Array.from(todoList.querySelectorAll('.todo-item'));
@@ -1412,7 +1742,7 @@ const createTaskElement = (task) => {
 
 	if (task.isScheduled) {
 		deleteButton.setAttribute('aria-disabled', 'true');
-		deleteButton.setAttribute('title', 'Remove this from Daily Schedules to delete it');
+		deleteButton.setAttribute('title', 'Remove this from Recurring Schedules to delete it');
 
 		if (task.scheduleId) {
 			const schedule = state.schedules.find((s) => s.id === task.scheduleId);
@@ -1555,6 +1885,7 @@ const saveStateToStorage = () => {
 	} else {
 		localStorage.removeItem(CUSTOM_QUOTE_STORAGE_KEY);
 	}
+	localStorage.setItem(SHOW_FINISHED_TASKS_STORAGE_KEY, state.showFinishedTasks ? '1' : '0');
 	updateTaskSummary();
 	renderStreakDashboard();
 };
@@ -1625,6 +1956,8 @@ const loadStoredSchedules = () => {
 				id: typeof schedule.id === 'string' ? schedule.id : createId('schedule'),
 				text: schedule.text.trim() || 'Untitled scheduled task',
 				goalId: typeof schedule.goalId === 'string' ? schedule.goalId : null,
+				startDate: normalizeDateStamp(schedule.startDate),
+				intervalDays: normalizePositiveInteger(schedule.intervalDays, 1),
 				createdAt: typeof schedule.createdAt === 'number' ? schedule.createdAt : Date.now(),
 			}));
 	} catch {
@@ -1647,15 +1980,23 @@ const loadStoredGoals = () => {
 		return parsed
 			.filter((goal) => goal && typeof goal.title === 'string')
 			.map((goal) => {
-				const startDate = typeof goal.startDate === 'string' ? goal.startDate : getCurrentDateStamp();
-				const isPeriodGoal = goal.type === 'period' && typeof goal.endDate === 'string';
+				const startDate = normalizeDateStamp(goal.startDate);
+				const isPeriodGoal = goal.type === 'period';
+				const durationDays = goal.durationDays
+					? normalizePositiveInteger(goal.durationDays, 1)
+					: (isPeriodGoal && typeof goal.endDate === 'string'
+						? Math.max(1, daysBetweenDateStamps(startDate, goal.endDate) + 1)
+						: null);
 				return {
 					id: typeof goal.id === 'string' ? goal.id : createId('goal'),
 					title: goal.title.trim() || 'Untitled goal',
 					type: isPeriodGoal ? 'period' : 'habit',
 					color: normalizeGoalColor(goal.color),
 					startDate,
-					endDate: isPeriodGoal ? goal.endDate : null,
+					endDate: isPeriodGoal && !goal.cycleDays ? goal.endDate : null,
+					durationDays,
+					intervalDays: normalizePositiveInteger(goal.intervalDays, 1),
+					cycleDays: normalizeOptionalPositiveInteger(goal.cycleDays),
 					finishedAt: typeof goal.finishedAt === 'string' ? goal.finishedAt : null,
 					createdAt: typeof goal.createdAt === 'number' ? goal.createdAt : Date.now(),
 				};
@@ -1730,6 +2071,10 @@ const syncScheduledTasksForToday = () => {
 	const today = getCurrentDateStamp();
 	const needsNewDaySync = state.lastSyncDate !== today;
 	const isScheduleActiveForDate = (schedule, dateStamp) => {
+		if (!isRecurringScheduleActiveOnDate(schedule, dateStamp)) {
+			return false;
+		}
+
 		if (!schedule?.goalId) {
 			return true;
 		}
@@ -1741,6 +2086,11 @@ const syncScheduledTasksForToday = () => {
 
 		if (isGoalFinished(goal, dateStamp)) {
 			return false;
+		}
+
+		// Habit cadence should not force linked task cadence.
+		if (goal.type === 'habit') {
+			return true;
 		}
 
 		return isGoalActiveOnDate(goal, dateStamp);
@@ -1820,14 +2170,77 @@ const syncScheduledTasksForToday = () => {
 
 	sortScheduledTasksByGoalOrder();
 };
+const animateTaskHide = (taskItem, onComplete) => {
+	if (!taskItem) {
+		onComplete();
+		return;
+	}
+
+	const fallbackTimeout = window.setTimeout(() => {
+		cleanup();
+		onComplete();
+	}, TASK_HIDE_ANIMATION_MS + 80);
+
+	let isFinished = false;
+	const finish = () => {
+		if (isFinished) {
+			return;
+		}
+		isFinished = true;
+		window.clearTimeout(fallbackTimeout);
+		taskItem.removeEventListener('transitionend', handleTransitionEnd);
+		onComplete();
+	};
+
+	const handleTransitionEnd = (event) => {
+		if (event.target !== taskItem) {
+			return;
+		}
+		finish();
+	};
+
+	const cleanup = () => {
+		taskItem.removeEventListener('transitionend', handleTransitionEnd);
+	};
+
+	taskItem.style.height = `${taskItem.offsetHeight}px`;
+	taskItem.addEventListener('transitionend', handleTransitionEnd);
+	requestAnimationFrame(() => {
+		taskItem.classList.add('is-hiding');
+	});
+};
+
+const handleTaskCompletionToggle = (taskItem, task, isDone) => {
+	if (!taskItem || !task) {
+		return;
+	}
+
+	applyTaskDoneState(task, isDone);
+	taskItem.classList.toggle('is-done', isDone);
+
+	if (isDone && !state.showFinishedTasks) {
+		saveStateToStorage();
+		animateTaskHide(taskItem, () => {
+			renderTasks();
+		});
+		return;
+	}
+
+	sortTasks();
+	saveStateToStorage();
+};
 
 const renderTasks = () => {
 	todoList.querySelectorAll('.todo-item').forEach((taskItem) => taskItem.remove());
-	state.tasks.forEach((task) => {
+	const visibleTasks = state.showFinishedTasks
+		? state.tasks
+		: state.tasks.filter((task) => !task.done);
+	visibleTasks.forEach((task) => {
 		todoList.appendChild(createTaskElement(task));
 	});
 	sortTasks();
 	updateTaskSummary();
+	syncFinishedTasksToggleButton();
 };
 
 const renderSchedules = () => {
@@ -1868,9 +2281,13 @@ const renderSchedules = () => {
 		const goalLabel = goal
 			? `<small class="schedule-goal-badge" style="--goal-badge-color: ${goalColor};">${goal.title}</small>`
 			: '';
+		const timingLabel = getScheduleTimingLabel(schedule);
 		scheduleItem.innerHTML = `
 			<div class="schedule-item-view">
-				<span>${schedule.text} ${goalLabel}</span>
+				<div class="schedule-item-text">
+					<strong>${schedule.text}</strong>
+					<small>${timingLabel} ${goalLabel}</small>
+				</div>
 				<div class="schedule-item-actions">
 					<button type="button" class="schedule-move-btn schedule-move-up-btn" ${canMoveUp ? '' : 'disabled'} aria-label="Move schedule up" title="Move up">↑</button>
 					<button type="button" class="schedule-move-btn schedule-move-down-btn" ${canMoveDown ? '' : 'disabled'} aria-label="Move schedule down" title="Move down">↓</button>
@@ -1881,6 +2298,8 @@ const renderSchedules = () => {
 			<form class="schedule-edit-form">
 				<input type="text" class="schedule-edit-input" required />
 				<select class="schedule-edit-goal-select">${buildGoalOptionsMarkup(schedule.goalId || '')}</select>
+				<input type="number" class="schedule-edit-interval-input" min="1" placeholder="Every X days" />
+				<input type="date" class="schedule-edit-start-date-input" />
 				<button type="button" class="schedule-save-btn">Save</button>
 				<button type="button" class="schedule-cancel-btn">Cancel</button>
 			</form>
@@ -1889,6 +2308,18 @@ const renderSchedules = () => {
 		const editInput = scheduleItem.querySelector('.schedule-edit-input');
 		if (editInput) {
 			editInput.value = schedule.text;
+		}
+		const intervalInput = scheduleItem.querySelector('.schedule-edit-interval-input');
+		if (intervalInput) {
+			intervalInput.value = String(normalizePositiveInteger(schedule.intervalDays, 1));
+		}
+		const startDateInput = scheduleItem.querySelector('.schedule-edit-start-date-input');
+		if (startDateInput) {
+			startDateInput.value = schedule.startDate;
+			startDateInput.disabled = shouldLockScheduleStartDate(schedule);
+			startDateInput.title = startDateInput.disabled
+				? 'Start From is locked because this recurring task has already started and has completed entries.'
+				: 'Start from';
 		}
 		scheduleList.appendChild(scheduleItem);
 	});
@@ -1899,17 +2330,22 @@ const updateScheduleItemView = (scheduleItem, schedule) => {
 		return;
 	}
 
-	const labelElement = scheduleItem.querySelector('.schedule-item-view span');
-	if (labelElement) {
-		labelElement.textContent = schedule.text;
+	const titleElement = scheduleItem.querySelector('.schedule-item-text strong');
+	if (titleElement) {
+		titleElement.textContent = schedule.text;
+	}
+
+	const metaElement = scheduleItem.querySelector('.schedule-item-text small');
+	if (metaElement) {
+		metaElement.textContent = getScheduleTimingLabel(schedule);
 		const goal = state.goals.find((item) => item.id === schedule.goalId);
 		if (goal) {
-			labelElement.appendChild(document.createTextNode(' '));
+			metaElement.appendChild(document.createTextNode(' '));
 			const badge = document.createElement('small');
 			badge.className = 'schedule-goal-badge';
 			badge.style.setProperty('--goal-badge-color', getGoalColor(goal));
 			badge.textContent = goal.title;
-			labelElement.appendChild(badge);
+			metaElement.appendChild(badge);
 		}
 	}
 
@@ -1921,6 +2357,16 @@ const updateScheduleItemView = (scheduleItem, schedule) => {
 	const goalSelect = scheduleItem.querySelector('.schedule-edit-goal-select');
 	if (goalSelect) {
 		goalSelect.innerHTML = buildGoalOptionsMarkup(schedule.goalId || '');
+	}
+
+	const intervalInput = scheduleItem.querySelector('.schedule-edit-interval-input');
+	if (intervalInput) {
+		intervalInput.value = String(normalizePositiveInteger(schedule.intervalDays, 1));
+	}
+
+	const startDateInput = scheduleItem.querySelector('.schedule-edit-start-date-input');
+	if (startDateInput) {
+		startDateInput.value = schedule.startDate;
 	}
 };
 
@@ -1937,6 +2383,7 @@ const initializeState = () => {
 	}));
 	state.stats = loadStoredStats();
 	state.customQuote = loadStoredCustomQuote();
+	state.showFinishedTasks = getStoredShowFinishedTasks();
 	state.lastSyncDate = localStorage.getItem(LAST_SYNC_DATE_STORAGE_KEY) || null;
 
 	syncScheduledTasksForToday();
@@ -1963,8 +2410,7 @@ const showDeleteModal = ({
 	if (deleteModalMessage) {
 		deleteModalMessage.textContent = message;
 	}
-	deleteModal.classList.add('is-open');
-	deleteModal.setAttribute('aria-hidden', 'false');
+	openModalOverlay(deleteModal);
 };
 
 const hideDeleteModal = () => {
@@ -1976,18 +2422,15 @@ const hideDeleteModal = () => {
 	if (deleteModalMessage) {
 		deleteModalMessage.textContent = 'This action cannot be undone.';
 	}
-	deleteModal.classList.remove('is-open');
-	deleteModal.setAttribute('aria-hidden', 'true');
+	closeModalOverlay(deleteModal);
 };
 
 const showClearAllModal = () => {
-	clearAllModal.classList.add('is-open');
-	clearAllModal.setAttribute('aria-hidden', 'false');
+	openModalOverlay(clearAllModal);
 };
 
 const hideClearAllModal = () => {
-	clearAllModal.classList.remove('is-open');
-	clearAllModal.setAttribute('aria-hidden', 'true');
+	closeModalOverlay(clearAllModal);
 };
 
 const showScheduleModal = () => {
@@ -1998,41 +2441,37 @@ const showScheduleModal = () => {
 	if (goalColorInput) {
 		goalColorInput.value = getNextAvailableGoalColor();
 	}
-	scheduleModal.classList.add('is-open');
-	scheduleModal.setAttribute('aria-hidden', 'false');
-	document.body.classList.add('is-schedule-open');
+	if (goalStartDateInput && !goalStartDateInput.value) {
+		goalStartDateInput.value = getCurrentDateStamp();
+	}
+	if (scheduleStartDateInput && !scheduleStartDateInput.value) {
+		scheduleStartDateInput.value = getCurrentDateStamp();
+	}
+	openModalOverlay(scheduleModal, 'is-schedule-open');
 };
 
 const hideScheduleModal = () => {
-	scheduleModal.classList.remove('is-open');
-	scheduleModal.setAttribute('aria-hidden', 'true');
-	document.body.classList.remove('is-schedule-open');
+	closeModalOverlay(scheduleModal, 'is-schedule-open');
 };
 
 const showProgressModal = () => {
 	renderProgressCharts();
 	setProgressQuoteEditing(false);
-	progressModal.classList.add('is-open');
-	progressModal.setAttribute('aria-hidden', 'false');
-	document.body.classList.add('is-progress-open');
+	openModalOverlay(progressModal, 'is-progress-open');
 };
 
 const hideProgressModal = () => {
-	progressModal.classList.remove('is-open');
-	progressModal.setAttribute('aria-hidden', 'true');
-	document.body.classList.remove('is-progress-open');
+	closeModalOverlay(progressModal, 'is-progress-open');
 };
 
 const showRemoveGoalModal = (goalId) => {
 	pendingRemoveGoalId = goalId;
-	removeGoalModal.classList.add('is-open');
-	removeGoalModal.setAttribute('aria-hidden', 'false');
+	openModalOverlay(removeGoalModal);
 };
 
 const hideRemoveGoalModal = () => {
 	pendingRemoveGoalId = null;
-	removeGoalModal.classList.remove('is-open');
-	removeGoalModal.setAttribute('aria-hidden', 'true');
+	closeModalOverlay(removeGoalModal);
 };
 
 const removeGoalById = (goalId) => {
@@ -2061,7 +2500,7 @@ const removeScheduleById = (scheduleId) => {
 	renderFinishedGoals();
 	renderProgressCharts();
 	renderTasks();
-	showSuccessToast('Daily schedule removed successfully.');
+	showSuccessToast('Recurring schedule removed successfully.');
 	saveStateToStorage();
 };
 
@@ -2142,6 +2581,19 @@ closeScheduleButton.addEventListener('click', hideScheduleModal);
 openProgressButton.addEventListener('click', showProgressModal);
 closeProgressButton.addEventListener('click', hideProgressModal);
 
+if (toggleFinishedTasksButton) {
+	toggleFinishedTasksButton.addEventListener('click', () => {
+		state.showFinishedTasks = !state.showFinishedTasks;
+		renderTasks();
+		showSuccessToast(
+			state.showFinishedTasks
+				? 'Finished tasks are now visible.'
+				: 'Finished tasks are now hidden.',
+		);
+		saveStateToStorage();
+	});
+}
+
 if (saveProgressQuoteButton) {
 	saveProgressQuoteButton.addEventListener('click', () => {
 		if (!progressQuoteInput) {
@@ -2185,12 +2637,12 @@ if (themeToggleButton) {
 
 if (goalTypeSelect && goalDurationInput) {
 	goalTypeSelect.addEventListener('change', () => {
-		const isPeriodGoal = goalTypeSelect.value === 'period';
-		goalDurationInput.disabled = !isPeriodGoal;
-		goalDurationInput.required = isPeriodGoal;
-		if (!isPeriodGoal) {
-			goalDurationInput.value = '';
-		}
+		syncGoalFrequencyInputs({
+			type: goalTypeSelect.value,
+			durationInput: goalDurationInput,
+			intervalInput: goalIntervalInput,
+			intervalValue: goalTypeSelect.value === 'period' ? '' : '1',
+		});
 	});
 }
 
@@ -2259,10 +2711,14 @@ scheduleForm.addEventListener('submit', (event) => {
 		return;
 	}
 	const selectedGoalId = scheduleGoalSelect?.value || null;
+	const startDate = normalizeDateStamp(scheduleStartDateInput?.value);
+	const intervalDays = shouldLockScheduleIntervalToGoal(selectedGoalId)
+		? 1
+		: normalizePositiveInteger(scheduleIntervalInput?.value, 1);
 
 	const hasSameSchedule = isDuplicateScheduleText(text);
 	if (hasSameSchedule) {
-		showDuplicateWarning('This daily schedule already exists.');
+		showDuplicateWarning('This recurring schedule already exists.');
 		scheduleInput.focus();
 		scheduleInput.select();
 		return;
@@ -2272,31 +2728,38 @@ scheduleForm.addEventListener('submit', (event) => {
 		id: createId('schedule'),
 		text,
 		goalId: selectedGoalId,
+		startDate,
+		intervalDays,
 		createdAt: Date.now(),
 	};
 
 	state.schedules.push(newSchedule);
-	state.tasks.push({
-		id: createId('task'),
-		text,
-		done: false,
-		isScheduled: true,
-		scheduleId: newSchedule.id,
-		createdForDate: getCurrentDateStamp(),
-	});
+	syncScheduledTasksForToday();
 
 	renderSchedules();
 	renderGoals();
 	renderFinishedGoals();
 	renderTasks();
 	scheduleInput.value = '';
+	if (scheduleIntervalInput) {
+		scheduleIntervalInput.value = '1';
+	}
+	if (scheduleStartDateInput) {
+		scheduleStartDateInput.value = getCurrentDateStamp();
+	}
 	if (scheduleGoalSelect) {
 		scheduleGoalSelect.value = '';
 	}
 	scheduleInput.focus();
-	showSuccessToast('Daily schedule created successfully.');
+	showSuccessToast('Recurring schedule created successfully.');
 	saveStateToStorage();
 });
+
+if (scheduleGoalSelect && scheduleIntervalInput) {
+	scheduleGoalSelect.addEventListener('change', () => {
+		syncScheduleIntervalLock(scheduleGoalSelect.value || null, scheduleIntervalInput);
+	});
+}
 
 goalForm.addEventListener('submit', (event) => {
 	event.preventDefault();
@@ -2312,9 +2775,11 @@ goalForm.addEventListener('submit', (event) => {
 		return;
 	}
 
-	const today = getCurrentDateStamp();
+	const startDate = normalizeDateStamp(goalStartDateInput?.value);
 	const isPeriodGoal = goalTypeSelect.value === 'period';
-	const durationDays = Math.max(1, Number(goalDurationInput.value || 0));
+	const durationDays = normalizePositiveInteger(goalDurationInput.value || 0, 1);
+	const intervalDays = normalizePositiveInteger(goalIntervalInput?.value || 1, 1);
+	const cycleDays = normalizeOptionalPositiveInteger(goalIntervalInput?.value);
 	const selectedColor = normalizeGoalColor(goalColorInput?.value);
 	let endDate = null;
 
@@ -2336,9 +2801,13 @@ goalForm.addEventListener('submit', (event) => {
 			goalDurationInput.focus();
 			return;
 		}
-		const endUtc = parseDateStampUtc(today) + ((durationDays - 1) * 24 * 60 * 60 * 1000);
-		const endDateObj = new Date(endUtc);
-		endDate = `${endDateObj.getUTCFullYear()}-${String(endDateObj.getUTCMonth() + 1).padStart(2, '0')}-${String(endDateObj.getUTCDate()).padStart(2, '0')}`;
+		if (!cycleDays) {
+			endDate = addDaysToDateStamp(startDate, durationDays - 1);
+		}
+	} else if (!goalIntervalInput?.value || intervalDays < 1) {
+		showDuplicateWarning('Choose how often this habit should appear.');
+		goalIntervalInput?.focus();
+		return;
 	}
 
 	state.goals.push({
@@ -2346,8 +2815,11 @@ goalForm.addEventListener('submit', (event) => {
 		title,
 		type: isPeriodGoal ? 'period' : 'habit',
 		color: selectedColor,
-		startDate: today,
+		startDate,
 		endDate,
+		durationDays: isPeriodGoal ? durationDays : null,
+		intervalDays: isPeriodGoal ? 1 : intervalDays,
+		cycleDays: isPeriodGoal ? cycleDays : null,
 		finishedAt: null,
 		createdAt: Date.now(),
 	});
@@ -2358,8 +2830,18 @@ goalForm.addEventListener('submit', (event) => {
 	goalTitleInput.value = '';
 	goalTypeSelect.value = 'habit';
 	goalDurationInput.value = '';
-	goalDurationInput.disabled = true;
-	goalDurationInput.required = false;
+	if (goalIntervalInput) {
+		goalIntervalInput.value = '1';
+	}
+	if (goalStartDateInput) {
+		goalStartDateInput.value = getCurrentDateStamp();
+	}
+	syncGoalFrequencyInputs({
+		type: 'habit',
+		durationInput: goalDurationInput,
+		intervalInput: goalIntervalInput,
+		intervalValue: '1',
+	});
 	if (goalColorInput) {
 		goalColorInput.value = getNextAvailableGoalColor();
 	}
@@ -2461,10 +2943,13 @@ goalList.addEventListener('click', (event) => {
 		const titleInput = goalItem.querySelector('.goal-edit-title-input');
 		const typeSelect = goalItem.querySelector('.goal-edit-type-select');
 		const durationInput = goalItem.querySelector('.goal-edit-duration-input');
+		const intervalInput = goalItem.querySelector('.goal-edit-interval-input');
+		const startDateInput = goalItem.querySelector('.goal-edit-start-date-input');
 		const colorInput = goalItem.querySelector('.goal-edit-color-input');
 
 		const nextTitle = titleInput?.value.trim() || '';
 		const nextType = typeSelect?.value === 'period' ? 'period' : 'habit';
+		const nextStartDate = normalizeDateStamp(startDateInput?.value);
 
 		if (!nextTitle) {
 			showDuplicateWarning('Goal name cannot be empty.');
@@ -2480,6 +2965,9 @@ goalList.addEventListener('click', (event) => {
 		}
 
 		let nextEndDate = null;
+		let nextDurationDays = null;
+		let nextIntervalDays = 1;
+		let nextCycleDays = null;
 		if (nextType === 'period') {
 			const durationDays = Number(durationInput?.value || 0);
 			if (!Number.isFinite(durationDays) || durationDays < 1) {
@@ -2487,10 +2975,16 @@ goalList.addEventListener('click', (event) => {
 				durationInput?.focus();
 				return;
 			}
-
-			const endUtc = parseDateStampUtc(goal.startDate) + ((Math.floor(durationDays) - 1) * 24 * 60 * 60 * 1000);
-			const endDateObj = new Date(endUtc);
-			nextEndDate = `${endDateObj.getUTCFullYear()}-${String(endDateObj.getUTCMonth() + 1).padStart(2, '0')}-${String(endDateObj.getUTCDate()).padStart(2, '0')}`;
+			nextDurationDays = Math.floor(durationDays);
+			nextCycleDays = normalizeOptionalPositiveInteger(intervalInput?.value);
+			nextEndDate = nextCycleDays ? null : addDaysToDateStamp(nextStartDate, nextDurationDays - 1);
+		} else {
+			nextIntervalDays = normalizePositiveInteger(intervalInput?.value, 1);
+			if (!intervalInput?.value || nextIntervalDays < 1) {
+				showDuplicateWarning('Choose how often this habit should appear.');
+				intervalInput?.focus();
+				return;
+			}
 		}
 
 		const nextColor = normalizeGoalColor(colorInput?.value);
@@ -2508,7 +3002,11 @@ goalList.addEventListener('click', (event) => {
 
 		goal.title = nextTitle;
 		goal.type = nextType;
+		goal.startDate = nextStartDate;
 		goal.endDate = nextEndDate;
+		goal.durationDays = nextDurationDays;
+		goal.intervalDays = nextIntervalDays;
+		goal.cycleDays = nextCycleDays;
 		goal.color = nextColor;
 
 		goalItem.classList.remove('is-editing');
@@ -2590,7 +3088,12 @@ confirmRemoveGoalButton.addEventListener('click', () => {
 
 if (toggleFinishedGoalsButton && finishedGoalsPanel) {
 	toggleFinishedGoalsButton.addEventListener('click', () => {
-		finishedGoalsPanel.hidden = !finishedGoalsPanel.hidden;
+		const isOpen = !finishedGoalsPanel.classList.contains('is-open');
+		if (isOpen) {
+			openCollapsiblePanel(finishedGoalsPanel);
+		} else {
+			closeCollapsiblePanel(finishedGoalsPanel);
+		}
 		renderFinishedGoals();
 	});
 }
@@ -2607,16 +3110,17 @@ goalList.addEventListener('change', (event) => {
 	}
 
 	const durationInput = goalItem.querySelector('.goal-edit-duration-input');
-	if (!durationInput) {
+	const intervalInput = goalItem.querySelector('.goal-edit-interval-input');
+	if (!durationInput || !intervalInput) {
 		return;
 	}
 
-	const isPeriod = typeSelect.value === 'period';
-	durationInput.disabled = !isPeriod;
-	durationInput.required = isPeriod;
-	if (!isPeriod) {
-		durationInput.value = '';
-	}
+	syncGoalFrequencyInputs({
+		type: typeSelect.value,
+		durationInput,
+		intervalInput,
+		intervalValue: typeSelect.value === 'period' ? '' : '1',
+	});
 });
 
 scheduleList.addEventListener('click', (event) => {
@@ -2656,6 +3160,8 @@ scheduleList.addEventListener('click', (event) => {
 		if (schedule && goalSelect) {
 			goalSelect.innerHTML = buildGoalOptionsMarkup(schedule.goalId || '');
 		}
+		const intervalInput = scheduleItem.querySelector('.schedule-edit-interval-input');
+		syncScheduleIntervalLock(schedule?.goalId || null, intervalInput);
 
 		scheduleItem.classList.add('is-editing');
 		const editInput = scheduleItem.querySelector('.schedule-edit-input');
@@ -2691,8 +3197,17 @@ scheduleList.addEventListener('click', (event) => {
 
 		const editInput = scheduleItem.querySelector('.schedule-edit-input');
 		const goalSelect = scheduleItem.querySelector('.schedule-edit-goal-select');
+		const intervalInput = scheduleItem.querySelector('.schedule-edit-interval-input');
+		const startDateInput = scheduleItem.querySelector('.schedule-edit-start-date-input');
+		const isStartDateLocked = shouldLockScheduleStartDate(schedule);
 		const nextText = editInput?.value.trim() || '';
 		const nextGoalId = goalSelect?.value || null;
+		const nextIntervalDays = shouldLockScheduleIntervalToGoal(nextGoalId)
+			? 1
+			: normalizePositiveInteger(intervalInput?.value, 1);
+		const nextStartDate = isStartDateLocked
+			? schedule.startDate
+			: normalizeDateStamp(startDateInput?.value);
 
 		if (!nextText) {
 			showDuplicateWarning('Schedule text cannot be empty.');
@@ -2701,7 +3216,7 @@ scheduleList.addEventListener('click', (event) => {
 		}
 
 		if (isDuplicateScheduleText(nextText, scheduleId)) {
-			showDuplicateWarning('This daily schedule already exists.');
+			showDuplicateWarning('This recurring schedule already exists.');
 			editInput?.focus();
 			editInput?.select();
 			return;
@@ -2710,19 +3225,22 @@ scheduleList.addEventListener('click', (event) => {
 		const previousGoalId = schedule.goalId || null;
 		schedule.text = nextText;
 		schedule.goalId = nextGoalId;
+		schedule.intervalDays = nextIntervalDays;
+		schedule.startDate = nextStartDate;
 
 		state.tasks = state.tasks.map((task) =>
 			task.scheduleId === scheduleId ? { ...task, text: nextText } : task,
 		);
 		transferCompletedScheduleScoresToGoal(scheduleId, previousGoalId, nextGoalId);
 
+		syncScheduledTasksForToday();
 		updateScheduleItemView(scheduleItem, schedule);
 		scheduleItem.classList.remove('is-editing');
 		renderGoals();
 		renderFinishedGoals();
 		renderProgressCharts();
 		renderTasks();
-		showSuccessToast('Daily schedule updated successfully.');
+		showSuccessToast('Recurring schedule updated successfully.');
 		saveStateToStorage();
 		return;
 	}
@@ -2783,6 +3301,21 @@ scheduleList.addEventListener('keydown', (event) => {
 	}
 });
 
+scheduleList.addEventListener('change', (event) => {
+	const goalSelect = event.target.closest('.schedule-edit-goal-select');
+	if (!goalSelect) {
+		return;
+	}
+
+	const scheduleItem = goalSelect.closest('.schedule-item');
+	if (!scheduleItem) {
+		return;
+	}
+
+	const intervalInput = scheduleItem.querySelector('.schedule-edit-interval-input');
+	syncScheduleIntervalLock(goalSelect.value || null, intervalInput);
+});
+
 todoList.addEventListener('click', (event) => {
 	if (Date.now() < suppressClickUntil) {
 		event.preventDefault();
@@ -2800,12 +3333,7 @@ todoList.addEventListener('click', (event) => {
 			if (checkbox) {
 				checkbox.checked = !checkbox.checked;
 				const task = findTaskById(taskItem.dataset.taskId);
-				if (task) {
-					applyTaskDoneState(task, checkbox.checked);
-				}
-				taskItem.classList.toggle('is-done', checkbox.checked);
-				sortTasks();
-				saveStateToStorage();
+				handleTaskCompletionToggle(taskItem, task, checkbox.checked);
 			}
 		}
 	}
@@ -2895,10 +3423,7 @@ todoList.addEventListener('change', (event) => {
 		return;
 	}
 
-	applyTaskDoneState(task, event.target.checked);
-	taskItem.classList.toggle('is-done', event.target.checked);
-	sortTasks();
-	saveStateToStorage();
+	handleTaskCompletionToggle(taskItem, task, event.target.checked);
 });
 
 todoList.addEventListener('dragstart', (event) => {
@@ -3135,6 +3660,18 @@ initializeState();
 if (goalColorInput) {
 	goalColorInput.value = getNextAvailableGoalColor();
 }
+if (goalStartDateInput && !goalStartDateInput.value) {
+	goalStartDateInput.value = getCurrentDateStamp();
+}
+if (scheduleStartDateInput && !scheduleStartDateInput.value) {
+	scheduleStartDateInput.value = getCurrentDateStamp();
+}
+syncGoalFrequencyInputs({
+	type: goalTypeSelect?.value || 'habit',
+	durationInput: goalDurationInput,
+	intervalInput: goalIntervalInput,
+	intervalValue: '1',
+});
 applyTheme(getStoredTheme());
 syncDailyQuoteSurface();
 

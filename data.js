@@ -35,4 +35,22 @@ const projectsByDate = {
 			link: 'March/todo-list-project/index.html',
 		},
 	],
+	'2026-03-19': [
+		{
+			title: 'To Do List (UI improvements / motivational quotes / streak system)',
+			link: 'March/todo-list-project/index.html',
+		},
+	],
+	'2026-03-20': [
+		{
+			title: 'Novel Day (Project planning / concept)',
+			link: 'March/novel-day/index.html',
+		},
+	],
+	'2026-03-21': [
+		{
+			title: 'To Do List (Periodic habits / erasing finished tasks)',
+			link: 'March/todo-list-project/index.html',
+		},
+	],
 };
