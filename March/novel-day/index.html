@@ -6,40 +6,22 @@
     <title>Novel Day | Tracker, Planner and Writer</title>
     <link rel="icon" type="image/svg+xml" href="./icon.svg" />
     <link rel="apple-touch-icon" href="./icon.svg" />
+    <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <h1>Novel Day</h1>
-    <p>
-      The goal is to practice manual skills without any assistance of AI. The
-      writing process should be customizable and fast. The user should be able
-      to use GPT automatically to check the grammar. You should be able to
-      quickly adjust tests, the back end should store the data and save
-      accounts.
-    </p>
-    <p>
-      This project should be cheap and used mostly for personal use. However it
-      can escalate to a larger project to automatize chapters to other
-      platforms. But in essence is a project to assist the user in his goals,
-      give feedback about the writing, automatic proofreading, and all the
-      conveniences a writer could need.
-    </p>
-    <p>
-      At the same time I plan to develop a method using this site to plan using
-      a simple framework.
-    </p>
-    <h2>What this app does</h2>
-    <ul>
-      <strong>Features:</strong>
-      <li>Track your daily writing progress</li>
-      <li>Plan your writing schedule</li>
-      <li>Write and organize your novel</li>
-    </ul>
-    <h2>Technologies</h2>
-    <ul>
-      <li>HTML</li>
-      <li>CSS</li>
-      <li>JavaScript</li>
-      <li>Node.js</li>
-    </ul>
+    <main class="container">
+      <div class="novel-container">
+        <div class="text-modifiers">
+          <button class="modifier-btn" id="bold-btn"><strong>B</strong></button>
+          <button class="modifier-btn" id="italic-btn"><em>I</em></button>
+          <button class="modifier-btn" id="underline-btn"><u>U</u></button>
+        </div>
+        <textarea
+          name="novel-content"
+          class="novel-content"
+          placeholder="Write your text..."
+        ></textarea>
+      </div>
+    </main>
   </body>
 </html>
