@@ -24,6 +24,7 @@
     background-color: #f0f0f0;
     width: 100%;
     padding: 1em;
+    border: 1px solid #ccc;
 }
 
 .modifier-btn {
@@ -55,4 +56,10 @@
     max-width: 100%;
     width: 100%;
     height: 300px;
+    font-size: 1.2em;
+    border: 1px solid #ccc;
+    border-radius: 0 0 4px 4px;
+    resize: vertical;
+    min-height: 300px;
+    line-height: 1.6;
 }

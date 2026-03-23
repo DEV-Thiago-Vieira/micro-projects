@@ -59,4 +59,10 @@ const projectsByDate = {
 			link: 'March/novel-day/index.html',
 		},
 	],
+	'2026-03-23': [
+		{
+			title: 'Novel Day (Studying other writing apps / UI improvements)',
+			link: 'March/novel-day/index.html',
+		},
+	],
 };
