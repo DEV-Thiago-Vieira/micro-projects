@@ -12,6 +12,12 @@
     <main class="container">
       <div class="novel-container">
         <div class="text-modifiers">
+          <select name="text-type" id="text-type" class="modifier-btn">
+            <option value="paragraph">Paragraph</option>
+            <option value="heading1">Heading 1</option>
+            <option value="heading2">Heading 2</option>
+            <option value="heading3">Heading 3</option>
+          </select>
           <button class="modifier-btn" id="bold-btn"><strong>B</strong></button>
           <button class="modifier-btn" id="italic-btn"><em>I</em></button>
           <button class="modifier-btn" id="underline-btn"><u>U</u></button>
@@ -19,6 +25,7 @@
         </div>
         <textarea
           name="novel-content"
+          id="novel-content"
           class="novel-content"
           placeholder="Write your text..."
         ></textarea>
