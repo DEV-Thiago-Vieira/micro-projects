@@ -7,6 +7,19 @@
     font-family: 'Lato', sans-serif;
 }
 
+[contenteditable=true]:empty:before, [content-editable=true]::after {
+  content: attr(placeholder);
+  pointer-events: none;
+  display: block;
+  color: #9ca3af;
+}
+
+[contenteditable=true] {
+    font-family: 'Lato', sans-serif;
+}
+
+
+
 .container {
     display: flex;
     flex-direction: column;

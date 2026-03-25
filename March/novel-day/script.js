@@ -1,10 +1,17 @@
-function getSel() {
-    const txtarea = document.getElementById("novel-content");
-    const start = txtarea.selectionStart;
-    const finish = txtarea.selectionEnd;
-    const sel = txtarea.value.substring(start, finish);
+const novelContent = document.getElementById("novel-content");
 
-    return { content: sel, initialIndex: start, finalIndex: finish };
+novelContent.addEventListener("input", () => {
+    if(novelContent.innerHTML.trim() === "" || novelContent.innerHTML === "<br>") {
+        novelContent.innerHTML = "";
+    }
+});
+
+function getSel() {
+    const selection = window.getSelection();
+    const range = selection.getRangeAt(0);
+    const sel = range.toString();
+
+    return { content: sel, initialIndex: range.startOffset, finalIndex: range.endOffset };
 }
 
 document.querySelectorAll(".modifier-btn").forEach((btn) => {
