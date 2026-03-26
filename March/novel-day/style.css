@@ -7,18 +7,18 @@
     font-family: 'Lato', sans-serif;
 }
 
-[contenteditable=true]:empty:before, [content-editable=true]::after {
+.text-modifiers,
+.novel-content {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+[contenteditable=true]:empty:before {
   content: attr(placeholder);
   pointer-events: none;
   display: block;
   color: #9ca3af;
 }
-
-[contenteditable=true] {
-    font-family: 'Lato', sans-serif;
-}
-
-
 
 .container {
     display: flex;
@@ -70,7 +70,11 @@
     max-width: 100%;
     width: 100%;
     height: 300px;
+    overflow-y: auto;
     font-size: 1.2em;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
     border: 1px solid #ccc;
     border-radius: 0 0 4px 4px;
     resize: vertical;
