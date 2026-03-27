@@ -21,3 +21,24 @@ document.querySelectorAll(".modifier-btn").forEach((btn) => {
         console.log(content, initialIndex, finalIndex);
     });
 });
+
+function wrapSelection(tagName) {
+    const selection = window.getSelection();
+    if(!selection.rangeCount) return;
+    
+    const range = selection.getRangeAt(0);
+    if(range.collapsed) return;
+
+    const wrapper = document.createElement(tagName);
+
+    try {
+        range.surroundContents(wrapper);
+    } catch (e) {
+        console.error("Failed to wrap selection:", e);
+    }
+}
+
+document.querySelector("#bold-btn").addEventListener("click", () => wrapSelection("strong"));
+document.querySelector("#italic-btn").addEventListener("click", () => wrapSelection("em"));
+document.querySelector("#underline-btn").addEventListener("click", () => wrapSelection("u"));
+document.querySelector("#strike-btn").addEventListener("click", () => wrapSelection("s"));
