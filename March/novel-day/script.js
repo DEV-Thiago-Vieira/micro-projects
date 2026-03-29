@@ -1,78 +1,97 @@
 const novelContent = document.getElementById("novel-content");
 
 novelContent.addEventListener("input", () => {
-    if (
-        novelContent.innerHTML.trim() === "" ||
-        novelContent.innerHTML === "<br>"
-    ) {
-        novelContent.innerHTML = "";
-    }
+  if (
+    novelContent.innerHTML.trim() === "" ||
+    novelContent.innerHTML === "<br>"
+  ) {
+    novelContent.innerHTML = "";
+  }
 });
 
 function toggleWrap(tagName) {
-    const selection = window.getSelection();
-    if (!selection.rangeCount) return;
+  const selection = window.getSelection();
+  if (!selection.rangeCount) return;
 
-    const range = selection.getRangeAt(0);
-    if (range.collapsed) return;
+  const range = selection.getRangeAt(0);
+  if (range.collapsed) return;
 
-    const node = selection.anchorNode;
+  const node = range.commonAncestorContainer;
 
-    const formattedParent = findClosestTag(node, tagName);
+  const formattedParent = findClosestTag(node, tagName);
 
-    if (formattedParent) {
-        unwrap(formattedParent);
-    } else {
-        wrap(range, tagName);
-    }
+  if (formattedParent) {
+    unwrap(formattedParent);
+  } else {
+    wrap(range, tagName);
+  }
 }
 
 function findClosestTag(node, tagName) {
-    while (node && node !== document) {
-        if (
-            node.nodeType === 1 &&
-            node.nodeName.toLowerCase() === tagName
-        ) {
-            return node;
-        }
-        node = node.parentNode;
+  while (node && node !== document) {
+    if (node.nodeType === 1 && node.nodeName.toLowerCase() === tagName) {
+      return node;
     }
-    return null;
+    node = node.parentNode;
+  }
+  return null;
 }
 
 function wrap(range, tagName) {
-    const wrapper = document.createElement(tagName);
-    const content = range.extractContents();
+  const wrapper = document.createElement(tagName);
+  const content = range.extractContents();
 
-    wrapper.appendChild(content);
-    range.insertNode(wrapper);
+  wrapper.appendChild(content);
+  range.insertNode(wrapper);
 
-    const selection = window.getSelection();
-    selection.removeAllRanges();
+  const selection = window.getSelection();
+  selection.removeAllRanges();
 
-    const newRange = document.createRange();
-    newRange.selectNodeContents(wrapper);
-    selection.addRange(newRange);
+  const newRange = document.createRange();
+  newRange.selectNodeContents(wrapper);
+  selection.addRange(newRange);
 }
 
 function unwrap(element) {
-    const parent = element.parentNode;
+  const selection = window.getSelection();
+  if (!selection.rangeCount) return;
 
-    while (element.firstChild) {
-        parent.insertBefore(element.firstChild, element);
-    }
+  const range = selection.getRangeAt(0);
 
-    parent.removeChild(element);
+  const startMarker = document.createTextNode("");
+  const endMarker = document.createTextNode("");
+
+  range.insertNode(startMarker);
+  range.collapse(false);
+  range.insertNode(endMarker);
+
+  const parent = element.parentNode;
+
+  while (element.firstChild) {
+    parent.insertBefore(element.firstChild, element);
+  }
+
+  parent.removeChild(element);
+
+  const newRange = document.createRange();
+  newRange.setStartAfter(startMarker);
+  newRange.setEndBefore(endMarker);
+
+  selection.removeAllRanges();
+  selection.addRange(newRange);
+
+  startMarker.remove();
+  endMarker.remove();
 }
 
 function bindButton(id, tag) {
-    const btn = document.querySelector(id);
-    if (!btn) return;
+  const btn = document.querySelector(id);
+  if (!btn) return;
 
-    btn.addEventListener("mousedown", (e) => {
-        e.preventDefault();
-        toggleWrap(tag);
-    });
+  btn.addEventListener("mousedown", (e) => {
+    e.preventDefault();
+    toggleWrap(tag);
+  });
 }
 
 bindButton("#bold-btn", "strong");
