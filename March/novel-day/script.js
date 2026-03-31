@@ -1,4 +1,7 @@
 const novelContent = document.getElementById("novel-content");
+const wordCountEl = document.getElementById("word-count");
+const charCountEl = document.getElementById("char-count");
+const paragraphCountEl = document.getElementById("paragraph-count");
 
 novelContent.addEventListener("input", () => {
   if (
@@ -7,7 +10,21 @@ novelContent.addEventListener("input", () => {
   ) {
     novelContent.innerHTML = "";
   }
+
+  updateCounters();
 });
+
+function updateCounters() {
+  const text = novelContent.innerText || "";
+
+  const charCount = text.length;
+  const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
+  const paragraphCount = text.split(/\n+/).filter(Boolean).length;
+
+  wordCountEl.textContent = wordCount;
+  charCountEl.textContent = charCount;
+  paragraphCountEl.textContent = paragraphCount;
+}
 
 function toggleWrap(tagName) {
   const selection = window.getSelection();

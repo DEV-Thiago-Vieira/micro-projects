@@ -82,3 +82,24 @@
     line-height: 1.6;
     outline: none;
 }
+
+.text-counter {
+    display: flex;
+    gap: 1em;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 1em;
+    margin-top: 1em;
+}
+
+.counter-item:first-child {
+    border-right: 1px solid #ccc;
+    padding-right: 1em;
+}               
+
+.counter-item:last-child {
+    padding-left: 1em;
+    border-left: 1px solid #ccc;
+}
