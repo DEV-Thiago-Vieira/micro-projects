@@ -114,4 +114,10 @@ const projectsByDate = {
       link: "March/novel-day/index.html",
     },
   ],
+  "2026-04-01": [
+    {
+      title: "Novel Day (Partial unwrapping / Bug fixes)",
+      link: "March/novel-day/index.html",
+    },
+  ],
 };
