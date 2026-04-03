@@ -534,6 +534,7 @@ h1 {
     grid-template-areas:
         'title title title title'
         'type days interval start'
+        'weekdays weekdays weekdays weekdays'
         'color submit submit submit';
     align-items: end;
     gap: 0.8em;
@@ -557,6 +558,10 @@ h1 {
 
 #goal-start-date-field {
     grid-area: start;
+}
+
+#goal-weekdays-field {
+    grid-area: weekdays;
 }
 
 #goal-color-field {
@@ -909,6 +914,9 @@ h1 {
 .goal-edit-form {
     display: none;
     grid-template-columns: minmax(0, 1fr) minmax(140px, 1fr) 90px 120px 150px 56px auto auto;
+    grid-template-areas:
+        'title type duration interval start color save cancel'
+        'weekdays weekdays weekdays weekdays weekdays weekdays save cancel';
     gap: 0.4em;
 }
 
@@ -966,6 +974,53 @@ h1 {
 
 #schedule-start-field {
     grid-area: auto;
+}
+
+#schedule-weekdays-field {
+    grid-area: auto;
+}
+
+.schedule-weekday-picker {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 0.42em;
+}
+
+.weekday-btn {
+    border: 1px solid #cfd8e5;
+    background: linear-gradient(180deg, #ffffff 0%, #f7fafc 100%);
+    color: #334155;
+    border-radius: 10px;
+    min-height: 34px;
+    padding: 0.45em 0.3em;
+    font-size: 0.74rem;
+    letter-spacing: 0.01em;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+    transition: all 0.18s ease;
+}
+
+.weekday-btn:hover {
+    border-color: #a7bad4;
+    background: linear-gradient(180deg, #f8fbff 0%, #eef4ff 100%);
+    transform: translateY(-1px);
+}
+
+.weekday-btn.is-active {
+    border-color: #78c59a;
+    background: linear-gradient(180deg, #f0fdf4 0%, #dcfce7 100%);
+    color: #166534;
+    box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.12);
+}
+
+.weekday-btn:focus-visible {
+    outline: 2px solid #22c55e;
+    outline-offset: 1px;
+}
+
+.schedule-edit-weekday-picker {
+    max-width: 100%;
 }
 
 #schedule-form .schedule-submit-btn {
@@ -1219,7 +1274,8 @@ body.is-progress-open .github-footer-link {
     grid-template-columns: minmax(0, 1.5fr) minmax(88px, 0.7fr) minmax(140px, 1fr) auto auto;
     grid-template-areas:
         'task task task task task'
-        'goal interval start save cancel';
+        'goal interval start save cancel'
+        'weekdays weekdays weekdays save cancel';
     align-items: end;
     gap: 0.6em;
     margin-top: 0.35rem;
@@ -1251,6 +1307,18 @@ body.is-progress-open .github-footer-link {
 
 .schedule-edit-start-date-input {
     grid-area: start;
+}
+
+.schedule-edit-weekdays-wrap {
+    grid-area: weekdays;
+    display: grid;
+    gap: 0.35em;
+}
+
+.schedule-edit-weekdays-label {
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: #556070;
 }
 
 .schedule-save-btn,
@@ -2113,6 +2181,17 @@ body.is-progress-open .github-footer-link {
     min-width: 0;
 }
 
+@media (max-width: 520px) {
+    .schedule-weekday-picker {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .weekday-btn {
+        min-height: 32px;
+        font-size: 0.72rem;
+    }
+}
+
 @media (max-width: 768px) {
     .completion-toast {
         bottom: calc(12px + env(safe-area-inset-bottom));
@@ -2425,6 +2504,37 @@ body.is-dark .finished-goal-task-list {
 
 body.is-dark .form-field label {
     color: #9aa7ba;
+}
+
+body.is-dark .schedule-edit-weekdays-label {
+    color: #9aa7ba;
+}
+
+body.is-dark .goal-edit-weekdays-label {
+    color: #9aa7ba;
+}
+
+body.is-dark .weekday-btn {
+    border-color: #334155;
+    background: linear-gradient(180deg, #111827 0%, #0b1220 100%);
+    color: #cbd5e1;
+    box-shadow: 0 1px 2px rgba(2, 6, 23, 0.55);
+}
+
+body.is-dark .weekday-btn:hover {
+    border-color: #4b617e;
+    background: linear-gradient(180deg, #172236 0%, #102033 100%);
+}
+
+body.is-dark .weekday-btn.is-active {
+    border-color: #16a34a;
+    background: linear-gradient(180deg, #14532d 0%, #0f3e24 100%);
+    color: #bbf7d0;
+    box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.22);
+}
+
+body.is-dark .weekday-btn:focus-visible {
+    outline-color: #4ade80;
 }
 
 body.is-dark .finished-goal-empty {
@@ -2820,6 +2930,7 @@ body.is-dark .todo-item:hover {
     #goal-duration-field,
     #goal-interval-field,
     #goal-start-date-field,
+    #goal-weekdays-field,
     #goal-color-field,
     #schedule-task-field,
     #schedule-goal-field,
@@ -2852,6 +2963,7 @@ body.is-dark .todo-item:hover {
     #goal-duration-field,
     #goal-interval-field,
     #goal-start-date-field,
+    #goal-weekdays-field,
     #goal-color-field,
     #schedule-task-field,
     #schedule-goal-field,
@@ -3039,4 +3151,49 @@ body.is-dark .todo-item:hover {
         background-color: #0b1220;
         border-bottom-color: #334155;
     }
+}
+
+.goal-edit-title-input {
+    grid-area: title;
+}
+
+.goal-edit-type-select {
+    grid-area: type;
+}
+
+.goal-edit-duration-input {
+    grid-area: duration;
+}
+
+.goal-edit-interval-input {
+    grid-area: interval;
+}
+
+.goal-edit-start-date-input {
+    grid-area: start;
+}
+
+.goal-edit-color-input {
+    grid-area: color;
+}
+
+.goal-item.is-editing .goal-edit-form > .goal-save-btn {
+    grid-area: save;
+}
+
+.goal-item.is-editing .goal-edit-form > .goal-cancel-btn {
+    grid-area: cancel;
+}
+
+.goal-edit-weekdays-wrap {
+    grid-area: weekdays;
+    display: grid;
+    gap: 0.35em;
+    min-width: 0;
+}
+
+.goal-edit-weekdays-label {
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: #556070;
 }

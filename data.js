@@ -120,4 +120,10 @@ const projectsByDate = {
       link: "March/novel-day/index.html",
     },
   ],
+  "2026-04-02": [
+    {
+      title: "To do List",
+      link: "March/todo-list-project/index.html",
+    },
+  ],
 };
