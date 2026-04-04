@@ -913,11 +913,14 @@ h1 {
 
 .goal-edit-form {
     display: none;
-    grid-template-columns: minmax(0, 1fr) minmax(140px, 1fr) 90px 120px 150px 56px auto auto;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     grid-template-areas:
-        'title type duration interval start color save cancel'
-        'weekdays weekdays weekdays weekdays weekdays weekdays save cancel';
-    gap: 0.4em;
+        'title title title title'
+        'type duration interval start'
+        'weekdays weekdays weekdays weekdays'
+        'color color color color'
+        'save save cancel cancel';
+    gap: 0.5em;
 }
 
 .goal-item.is-editing .goal-item-view {
@@ -1271,13 +1274,14 @@ body.is-progress-open .github-footer-link {
 
 .schedule-edit-form {
     display: none;
-    grid-template-columns: minmax(0, 1.5fr) minmax(88px, 0.7fr) minmax(140px, 1fr) auto auto;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     grid-template-areas:
-        'task task task task task'
-        'goal interval start save cancel'
-        'weekdays weekdays weekdays save cancel';
+        'task task task task'
+        'goal interval start start'
+        'weekdays weekdays weekdays weekdays'
+        'save save cancel cancel';
     align-items: end;
-    gap: 0.6em;
+    gap: 0.5em;
     margin-top: 0.35rem;
     padding: 0.7rem;
     border: 1px solid #d8e1ee;
@@ -1343,6 +1347,14 @@ body.is-progress-open .github-footer-link {
 .schedule-item.is-editing .schedule-edit-form > .schedule-cancel-btn {
     grid-area: cancel;
     align-self: stretch;
+}
+
+.goal-item.is-editing .goal-edit-form > .goal-save-btn,
+.goal-item.is-editing .goal-edit-form > .goal-cancel-btn,
+.schedule-item.is-editing .schedule-edit-form > .schedule-save-btn,
+.schedule-item.is-editing .schedule-edit-form > .schedule-cancel-btn {
+    width: 100%;
+    min-height: 42px;
 }
 
 .schedule-edit-input,
@@ -2182,13 +2194,16 @@ body.is-progress-open .github-footer-link {
 }
 
 @media (max-width: 520px) {
-    .schedule-weekday-picker {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
+    .schedule-weekday-picker,
+    .schedule-edit-weekday-picker {
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        gap: 0.3em;
     }
 
     .weekday-btn {
-        min-height: 32px;
-        font-size: 0.72rem;
+        min-height: 30px;
+        font-size: 0.68rem;
+        padding: 0.4em 0.2em;
     }
 }
 
@@ -2983,10 +2998,6 @@ body.is-dark .todo-item:hover {
         width: 100%;
     }
 
-    .goal-edit-form {
-        grid-template-columns: 1fr;
-    }
-
     .schedule-item-actions {
         flex-wrap: wrap;
         justify-content: flex-end;
@@ -3017,8 +3028,40 @@ body.is-dark .todo-item:hover {
 }
 
 @media (max-width: 768px) {
+    .goal-edit-form {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-areas: none;
+        gap: 0.55em;
+    }
+
+    .goal-edit-title-input,
+    .goal-edit-type-select,
+    .goal-edit-duration-input,
+    .goal-edit-interval-input,
+    .goal-edit-start-date-input,
+    .goal-edit-weekdays-wrap,
+    .goal-edit-color-input {
+        grid-area: auto;
+        grid-column: 1 / -1;
+    }
+
+    .goal-item.is-editing .goal-edit-form > .goal-save-btn,
+    .goal-item.is-editing .goal-edit-form > .goal-cancel-btn {
+        grid-area: auto;
+        width: 100%;
+        min-height: 40px;
+    }
+
+    .goal-item.is-editing .goal-edit-form > .goal-save-btn {
+        grid-column: 1;
+    }
+
+    .goal-item.is-editing .goal-edit-form > .goal-cancel-btn {
+        grid-column: 2;
+    }
+
     .schedule-edit-form {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         grid-template-areas: none;
         gap: 0.55em;
         padding: 0.6rem;
@@ -3031,11 +3074,28 @@ body.is-dark .todo-item:hover {
     .schedule-item.is-editing .schedule-edit-form > .schedule-save-btn,
     .schedule-item.is-editing .schedule-edit-form > .schedule-cancel-btn {
         grid-area: auto;
+        min-height: 40px;
+    }
+
+    .schedule-edit-input,
+    .schedule-edit-goal-select,
+    .schedule-edit-interval-input,
+    .schedule-edit-start-date-input,
+    .schedule-edit-weekdays-wrap {
+        grid-column: 1 / -1;
     }
 
     .schedule-item.is-editing .schedule-edit-form > .schedule-save-btn,
     .schedule-item.is-editing .schedule-edit-form > .schedule-cancel-btn {
         width: 100%;
+    }
+
+    .schedule-item.is-editing .schedule-edit-form > .schedule-save-btn {
+        grid-column: 1;
+    }
+
+    .schedule-item.is-editing .schedule-edit-form > .schedule-cancel-btn {
+        grid-column: 2;
     }
 
     #schedule-modal {
@@ -3197,3 +3257,31 @@ body.is-dark .todo-item:hover {
     font-weight: 600;
     color: #556070;
 }
+
+@media (max-width: 768px) {
+    .goal-edit-form {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-areas: none;
+        gap: 0.55em;
+    }
+
+    .goal-edit-title-input,
+    .goal-edit-type-select,
+    .goal-edit-duration-input,
+    .goal-edit-interval-input,
+    .goal-edit-start-date-input,
+    .goal-edit-weekdays-wrap,
+    .goal-edit-color-input {
+        grid-area: auto;
+        grid-column: 1 / -1;
+    }
+
+    .goal-item.is-editing .goal-edit-form > .goal-save-btn,
+    .goal-item.is-editing .goal-edit-form > .goal-cancel-btn {
+        grid-area: auto;
+        grid-column: span 1;
+        width: 100%;
+        min-height: 42px;
+    }
+}
+

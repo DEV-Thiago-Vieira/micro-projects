@@ -122,7 +122,13 @@ const projectsByDate = {
   ],
   "2026-04-02": [
     {
-      title: "To do List",
+      title: "To Do List (Select days of the week)",
+      link: "March/todo-list-project/index.html",
+    },
+  ],
+  "2026-04-03": [
+    {
+      title: "To Do List (Spacing fixed / UI improvements)",
       link: "March/todo-list-project/index.html",
     },
   ],
