@@ -138,4 +138,16 @@ const projectsByDate = {
       link: "March/novel-day/index.html",
     },
   ],
+  "2026-04-05": [
+    {
+      title: "Login system (Initial files / concept)",
+      link: "April/login/index.html",
+    },
+  ],
+  "2026-04-06": [
+    {
+      title: "Login system (Basic fields and style added)",
+      link: "April/login/index.html",
+    },
+  ],
 };
