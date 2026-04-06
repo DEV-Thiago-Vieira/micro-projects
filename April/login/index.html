@@ -7,11 +7,17 @@
     <title>Login Page</title>
   </head>
   <body>
-    <div class="login-card">
+    <form id="login-form" class="login-card">
       <h1>Login</h1>
-      <input type="text" placeholder="Username" class="field" />
-      <input type="password" placeholder="Password" class="field" />
-      <button type="submit" class="submit-btn">Login</button>
-    </div>
+      <input type="text" id="username" placeholder="Username" class="field" />
+      <input
+        type="password"
+        id="password"
+        placeholder="Password"
+        class="field"
+      />
+      <button type="submit" class="submit-btn" id="login-button">Login</button>
+    </form>
   </body>
+  <script src="script.js"></script>
 </html>

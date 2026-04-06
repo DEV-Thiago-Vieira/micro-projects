@@ -19,8 +19,10 @@ body {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    max-width: 550px;
     width: 100%;
+    max-width: 400px;
+    padding: 1em;
+    margin: 1em;
     height: 300px;
     border-radius: 10px;
     background-color: #fff;
@@ -42,7 +44,8 @@ body {
 }
 
 .submit-btn {
-    width: 250px;
+    width: 100%;
+    max-width: 250px;
     padding: 10px;
     border-radius: 10px;
     border: none;
@@ -51,6 +54,7 @@ body {
     font-size: 16px;
     cursor: pointer;
 }
+
 .submit-btn:hover {
     background-color: #0056b3;
 }
