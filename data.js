@@ -150,4 +150,10 @@ const projectsByDate = {
       link: "April/login/index.html",
     },
   ],
+  "2026-04-06": [
+    {
+      title: "Login system (Register added)",
+      link: "April/login/index.html",
+    },
+  ],
 };

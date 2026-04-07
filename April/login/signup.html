@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css" />
+    <title>Sign Up Page</title>
+  </head>
+  <body>
+    <form id="signup-form" class="login-card">
+      <h1>Sign Up</h1>
+      <input type="text" id="username" placeholder="Username" class="field" />
+      <input
+        type="password"
+        id="password"
+        placeholder="Password"
+        class="field"
+      />
+      <select name="role" id="role" class="field">
+        <option value="USER_ROLE">User</option>
+        <option value="ADMIN">Admin</option>
+      </select>
+      <button type="submit" class="submit-btn" id="signup-button">
+        Sign Up
+      </button>
+      <p>Already have an account?</p>
+      <a href="index.html" class="login-link">Login</a>
+    </form>
+  </body>
+  <script src="signup.js"></script>
+</html>
