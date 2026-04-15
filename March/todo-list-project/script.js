@@ -9,19 +9,32 @@ const backProjectsButton = document.querySelector(".back-projects-btn");
 const themeToggleButton = document.getElementById("theme-toggle-btn");
 const congratsMessage = document.getElementById("todo-congrats");
 const appSubtitle = document.getElementById("app-subtitle");
+const agendaPeriodFilters = document.getElementById("agenda-period-filters");
+const agendaTodoList = document.getElementById("agenda-todo-list");
+const agendaTodoCount = document.getElementById("agenda-todo-count");
+const openOverviewButton = document.getElementById("open-overview-btn");
+const overviewModal = document.getElementById("overview-modal");
+const closeOverviewButton = document.getElementById("close-overview-btn");
 
 const scheduleForm = document.getElementById("schedule-form");
 const scheduleInput = document.getElementById("schedule-input");
 const scheduleList = document.getElementById("schedule-list");
+const scheduleTypeSelect = document.getElementById("schedule-type-select");
 const scheduleGoalSelect = document.getElementById("schedule-goal-select");
 const scheduleIntervalInput = document.getElementById(
   "schedule-interval-input",
+);
+const scheduleIntervalField = document.getElementById(
+  "schedule-interval-field",
 );
 const scheduleStartDateInput = document.getElementById(
   "schedule-start-date-input",
 );
 const scheduleWeekdayPicker = document.getElementById(
   "schedule-weekday-picker",
+);
+const scheduleWeekdaysField = document.getElementById(
+  "schedule-weekdays-field",
 );
 const goalForm = document.getElementById("goal-form");
 const goalTitleInput = document.getElementById("goal-title-input");
@@ -100,6 +113,8 @@ const STATS_STORAGE_KEY = "todo-stats-v1";
 const THEME_STORAGE_KEY = "todo-theme-v1";
 const CUSTOM_QUOTE_STORAGE_KEY = "todo-custom-quote-v1";
 const SHOW_FINISHED_TASKS_STORAGE_KEY = "todo-show-finished-tasks-v1";
+const ACTIVITY_LOG_STORAGE_KEY = "todo-activity-log-v1";
+const AGENDA_PERIOD_STORAGE_KEY = "todo-agenda-period-v1";
 
 const resolveAppLanguage = (rawLanguage = "") =>
   typeof rawLanguage === "string" && rawLanguage.toLowerCase().startsWith("pt")
@@ -118,10 +133,27 @@ const I18N = {
     checkedLabel: "Checked:",
     uncheckedLabel: "Unchecked:",
     installApp: "Install app",
-    recurringSchedules: "Recurring schedules",
+    recurringSchedules: "Schedules",
     clearAllTasks: "Clear all tasks",
     allTasksCompleted: "Great job! You completed all your tasks.",
     writeTaskPlaceholder: "Write your task...",
+    viewOverview: "View overview",
+    closeOverview: "Close overview",
+    agendaOverview: "Activity Overview",
+    agendaOverviewSubtitle:
+      "Review activities by day in a cleaner calendar-style view.",
+    agendaToday: "Today",
+    agendaWeek: "7 Days",
+    agendaMonth: "30 Days",
+    agendaAll: "All",
+    agendaTodo: "Activities",
+    agendaDone: "Done",
+    agendaEmptyTodo: "Nothing to do in this period.",
+    agendaEmptyDone: "No completed activities in this period yet.",
+    agendaAnytime: "Anytime",
+    agendaManualTask: "Manual task",
+    agendaMoreItems: "Show {count} more",
+    agendaShowLess: "Show less",
     consistencyRewards: "Consistency Rewards",
     viewProgress: "View progress",
     currentStreak: "CURRENT STREAK",
@@ -148,9 +180,9 @@ const I18N = {
     switchToDarkMode: "Switch to dark mode",
     hideFinishedTasks: "Hide finished tasks",
     showFinishedTasks: "Show finished tasks",
-    closeRecurringSchedules: "Close recurring schedules",
+    closeRecurringSchedules: "Close schedules",
     scheduleSubtitle:
-      "Create schedules that start later, repeat every X days, and stay linked to goals.",
+      "Create recurring tasks or schedule one-time activities linked to goals.",
     goals: "Goals",
     goalName: "Goal Name",
     goalType: "Goal Type",
@@ -178,9 +210,15 @@ const I18N = {
     noFinishedGoalsYet: "No finished goals yet.",
     reactivate: "Reactivate",
     taskName: "Task Name",
+    scheduleType: "Schedule Type",
+    scheduleRecurring: "Recurring",
+    scheduleOneTime: "One time",
     goal: "Goal",
     noGoal: "No goal",
     createRecurringTask: "Create a recurring task...",
+    createOneTimeTask: "Schedule a one-time activity...",
+    activityDate: "Activity Date",
+    oneTimeOn: "One time on {date}",
     schedule: "Schedule",
     edit: "Edit",
     finish: "Finish",
@@ -246,7 +284,7 @@ const I18N = {
     appInstalled: "App installed successfully.",
     duplicateTask: "This task already exists.",
     duplicateSchedule: "This recurring schedule already exists.",
-    recurringScheduleCreated: "Recurring schedule created successfully.",
+    recurringScheduleCreated: "Scheduled activity created successfully.",
     duplicateGoal: "This goal already exists.",
     invalidGoalColor: "Choose a valid goal color.",
     goalColorInUse: "This color is already used by another goal.",
@@ -261,13 +299,12 @@ const I18N = {
     goalUpdated: "Goal updated successfully.",
     goalReactivated: "Goal reactivated.",
     scheduleTextEmpty: "Schedule text cannot be empty.",
-    recurringScheduleUpdated: "Recurring schedule updated successfully.",
+    recurringScheduleUpdated: "Scheduled activity updated successfully.",
     onlyTaskInGoal:
       "This is the only task in the goal. Add another task before removing it.",
     goalRemoved: "Goal removed successfully.",
     recurringScheduleRemoved: "Recurring schedule removed successfully.",
-    removeFromRecurringSchedules:
-      "Remove this from Recurring Schedules to delete it",
+    removeFromRecurringSchedules: "Remove this from Schedules to delete it",
     startDateLocked:
       "Start From is locked because this recurring task has already started and has completed entries.",
     taskSingular: "task",
@@ -283,10 +320,27 @@ const I18N = {
     checkedLabel: "Concluídas:",
     uncheckedLabel: "Pendentes:",
     installApp: "Instalar app",
-    recurringSchedules: "Tarefas recorrentes",
+    recurringSchedules: "Agendamentos",
     clearAllTasks: "Limpar tarefas",
     allTasksCompleted: "Ótimo trabalho! Você concluiu todas as tarefas.",
     writeTaskPlaceholder: "Escreva sua tarefa...",
+    viewOverview: "Ver visão geral",
+    closeOverview: "Fechar visão geral",
+    agendaOverview: "Visão geral das atividades",
+    agendaOverviewSubtitle:
+      "Revise as atividades por dia em uma visualização mais limpa, estilo calendário.",
+    agendaToday: "Hoje",
+    agendaWeek: "7 dias",
+    agendaMonth: "30 dias",
+    agendaAll: "Tudo",
+    agendaTodo: "Atividades",
+    agendaDone: "Concluído",
+    agendaEmptyTodo: "Nada para fazer neste período.",
+    agendaEmptyDone: "Nenhuma atividade concluída neste período ainda.",
+    agendaAnytime: "A qualquer momento",
+    agendaManualTask: "Tarefa manual",
+    agendaMoreItems: "Mostrar mais {count}",
+    agendaShowLess: "Mostrar menos",
     consistencyRewards: "Recompensas de consistência",
     viewProgress: "Ver progresso",
     currentStreak: "SEQUÊNCIA ATUAL",
@@ -313,9 +367,9 @@ const I18N = {
     switchToDarkMode: "Mudar para o tema escuro",
     hideFinishedTasks: "Ocultar tarefas concluídas",
     showFinishedTasks: "Mostrar tarefas concluídas",
-    closeRecurringSchedules: "Fechar tarefas recorrentes",
+    closeRecurringSchedules: "Fechar agendamentos",
     scheduleSubtitle:
-      "Crie tarefas que começam depois, se repetem a cada X dias e permanecem vinculadas a metas.",
+      "Crie tarefas recorrentes ou agende atividades únicas vinculadas a metas.",
     goals: "Metas",
     goalName: "Nome da meta",
     goalType: "Tipo de meta",
@@ -343,9 +397,15 @@ const I18N = {
     noFinishedGoalsYet: "Nenhuma meta concluída ainda.",
     reactivate: "Reativar",
     taskName: "Nome da tarefa",
+    scheduleType: "Tipo de agendamento",
+    scheduleRecurring: "Recorrente",
+    scheduleOneTime: "Uma vez",
     goal: "Meta",
     noGoal: "Sem meta",
     createRecurringTask: "Crie uma tarefa recorrente...",
+    createOneTimeTask: "Agende uma atividade única...",
+    activityDate: "Data da atividade",
+    oneTimeOn: "Uma vez em {date}",
     schedule: "Agendar",
     edit: "Editar",
     finish: "Concluir",
@@ -412,7 +472,7 @@ const I18N = {
     appInstalled: "App instalado com sucesso.",
     duplicateTask: "Esta tarefa já existe.",
     duplicateSchedule: "Esta tarefa recorrente já existe.",
-    recurringScheduleCreated: "Tarefa recorrente criada com sucesso.",
+    recurringScheduleCreated: "Atividade agendada com sucesso.",
     duplicateGoal: "Esta meta já existe.",
     invalidGoalColor: "Escolha uma cor de meta válida.",
     goalColorInUse: "Esta cor já está sendo usada por outra meta.",
@@ -429,7 +489,7 @@ const I18N = {
     goalUpdated: "Meta atualizada com sucesso.",
     goalReactivated: "Meta reativada.",
     scheduleTextEmpty: "O texto da tarefa recorrente não pode ficar vazio.",
-    recurringScheduleUpdated: "Tarefa recorrente atualizada com sucesso.",
+    recurringScheduleUpdated: "Atividade agendada atualizada com sucesso.",
     onlyTaskInGoal:
       "Esta é a única tarefa da meta. Adicione outra tarefa antes de remover.",
     goalRemoved: "Meta removida com sucesso.",
@@ -533,9 +593,11 @@ const state = {
   tasks: [],
   schedules: [],
   goals: [],
+  activityLog: [],
   lastSyncDate: null,
   customQuote: "",
   showFinishedTasks: true,
+  agendaPeriod: "week",
   stats: {
     dailyCompletions: {},
     goalDailyCompletions: {},
@@ -548,6 +610,7 @@ let pendingRemoveGoalId = null;
 let toastTimer = null;
 let deferredInstallPrompt = null;
 let isProgressQuoteEditing = false;
+let agendaExpandedGroups = {};
 
 const MODAL_TRANSITION_MS = 240;
 const PANEL_TRANSITION_MS = 220;
@@ -564,6 +627,11 @@ const getStoredShowFinishedTasks = () => {
   }
 
   return false;
+};
+
+const getStoredAgendaPeriod = () => {
+  const savedValue = localStorage.getItem(AGENDA_PERIOD_STORAGE_KEY);
+  return ["today", "week", "month"].includes(savedValue) ? savedValue : "week";
 };
 
 const syncFinishedTasksToggleButton = () => {
@@ -786,11 +854,55 @@ const applyStaticTranslations = () => {
     goalSubmitButton.textContent = t("createGoal");
   }
 
+  const agendaTitle = document.getElementById("agenda-title");
+  if (agendaTitle) {
+    agendaTitle.textContent = t("agendaOverview");
+  }
+  const agendaSubtitle = document.getElementById("agenda-subtitle");
+  if (agendaSubtitle) {
+    agendaSubtitle.textContent = t("agendaOverviewSubtitle");
+  }
+  const agendaTodoTitle = document.getElementById("agenda-todo-title");
+  if (agendaTodoTitle) {
+    agendaTodoTitle.textContent = t("agendaTodo");
+  }
+  const periodTodayBtn = document.querySelector('[data-period="today"]');
+  const periodWeekBtn = document.querySelector('[data-period="week"]');
+  const periodMonthBtn = document.querySelector('[data-period="month"]');
+  if (periodTodayBtn) {
+    periodTodayBtn.textContent = t("agendaToday");
+  }
+  if (periodWeekBtn) {
+    periodWeekBtn.textContent = t("agendaWeek");
+  }
+  if (periodMonthBtn) {
+    periodMonthBtn.textContent = t("agendaMonth");
+  }
+  if (openOverviewButton) {
+    openOverviewButton.textContent = t("viewOverview");
+  }
+  if (closeOverviewButton) {
+    closeOverviewButton.setAttribute("aria-label", t("closeOverview"));
+    closeOverviewButton.setAttribute("title", t("closeOverview"));
+  }
+
   const scheduleTaskLabel = document.querySelector(
     'label[for="schedule-input"]',
   );
   if (scheduleTaskLabel) {
     scheduleTaskLabel.textContent = t("taskName");
+  }
+  const scheduleTypeLabel = document.querySelector(
+    'label[for="schedule-type-select"]',
+  );
+  if (scheduleTypeLabel) {
+    scheduleTypeLabel.textContent = t("scheduleType");
+  }
+  if (scheduleTypeSelect?.options[0]) {
+    scheduleTypeSelect.options[0].textContent = t("scheduleRecurring");
+  }
+  if (scheduleTypeSelect?.options[1]) {
+    scheduleTypeSelect.options[1].textContent = t("scheduleOneTime");
   }
   if (scheduleInput) {
     scheduleInput.placeholder = t("createRecurringTask");
@@ -844,6 +956,7 @@ const applyStaticTranslations = () => {
   if (scheduleSubmitButton) {
     scheduleSubmitButton.textContent = t("schedule");
   }
+  syncPrimaryScheduleFormMode();
 
   const removeGoalTitle = document.getElementById("remove-goal-modal-title");
   if (removeGoalTitle) {
@@ -1262,6 +1375,9 @@ const ensureDistinctGoalColors = () => {
 
 const normalizeText = (text) => text.trim().toLowerCase();
 
+const normalizeScheduleType = (value) =>
+  value === "one-time" ? "one-time" : "recurring";
+
 const isDuplicateTaskText = (text, excludedTaskId = null) => {
   const normalizedText = normalizeText(text);
   return state.tasks.some(
@@ -1470,6 +1586,10 @@ const isRecurringScheduleActiveOnDate = (schedule, dateStamp) => {
   }
 
   const startDate = normalizeDateStamp(schedule.startDate);
+  if (normalizeScheduleType(schedule.type) === "one-time") {
+    return startDate === dateStamp;
+  }
+
   const diff = daysBetweenDateStamps(startDate, dateStamp);
   if (diff < 0) {
     return false;
@@ -1539,6 +1659,12 @@ const getScheduleTimingLabel = (schedule) => {
     return "";
   }
 
+  if (normalizeScheduleType(schedule.type) === "one-time") {
+    return t("oneTimeOn", {
+      date: formatDisplayDate(schedule.startDate),
+    });
+  }
+
   const weekdayLabel = formatWeekdaysLabel(schedule.weekdays);
   const intervalLabel = formatEveryXDays(schedule.intervalDays);
   const cadenceLabel =
@@ -1601,6 +1727,100 @@ const syncGoalFrequencyInputs = ({
   }
   if (durationInput.value) {
     durationInput.value = "";
+  }
+};
+
+const syncPrimaryScheduleFormMode = () => {
+  const scheduleType = normalizeScheduleType(scheduleTypeSelect?.value);
+  const isOneTime = scheduleType === "one-time";
+
+  if (scheduleIntervalField) {
+    scheduleIntervalField.hidden = isOneTime;
+  }
+  if (scheduleWeekdaysField) {
+    scheduleWeekdaysField.hidden = isOneTime;
+  }
+  if (scheduleInput) {
+    scheduleInput.placeholder = isOneTime
+      ? t("createOneTimeTask")
+      : t("createRecurringTask");
+  }
+
+  const scheduleStartLabel = document.querySelector(
+    'label[for="schedule-start-date-input"]',
+  );
+  const startLabel = isOneTime ? t("activityDate") : t("startFrom");
+  const startTitle = isOneTime ? t("activityDate") : t("startFromTitle");
+
+  if (scheduleStartLabel) {
+    scheduleStartLabel.textContent = startLabel;
+  }
+  if (scheduleStartDateInput) {
+    scheduleStartDateInput.setAttribute("aria-label", startLabel);
+    scheduleStartDateInput.setAttribute("title", startTitle);
+  }
+
+  if (!scheduleIntervalInput) {
+    return;
+  }
+
+  if (isOneTime) {
+    scheduleIntervalInput.value = "1";
+    scheduleIntervalInput.disabled = true;
+    scheduleIntervalInput.title = t("scheduleOneTime");
+    return;
+  }
+
+  syncScheduleIntervalLock(
+    scheduleGoalSelect?.value || null,
+    scheduleIntervalInput,
+  );
+};
+
+const syncScheduleItemFormMode = (
+  scheduleItem,
+  { type = "recurring", goalId = null, startDateLocked = false } = {},
+) => {
+  if (!scheduleItem) {
+    return;
+  }
+
+  const scheduleType = normalizeScheduleType(type);
+  const isOneTime = scheduleType === "one-time";
+  const typeSelect = scheduleItem.querySelector(".schedule-edit-type-select");
+  const intervalInput = scheduleItem.querySelector(
+    ".schedule-edit-interval-input",
+  );
+  const weekdaysWrap = scheduleItem.querySelector(
+    ".schedule-edit-weekdays-wrap",
+  );
+  const startDateInput = scheduleItem.querySelector(
+    ".schedule-edit-start-date-input",
+  );
+
+  if (typeSelect) {
+    typeSelect.value = scheduleType;
+  }
+  if (weekdaysWrap) {
+    weekdaysWrap.hidden = isOneTime;
+  }
+  if (intervalInput) {
+    intervalInput.hidden = isOneTime;
+    if (isOneTime) {
+      intervalInput.value = "1";
+      intervalInput.disabled = true;
+      intervalInput.title = t("scheduleOneTime");
+    } else {
+      syncScheduleIntervalLock(goalId, intervalInput);
+    }
+  }
+  if (startDateInput) {
+    const startLabel = isOneTime ? t("activityDate") : t("startFrom");
+    startDateInput.setAttribute("aria-label", startLabel);
+    startDateInput.setAttribute(
+      "title",
+      startDateLocked ? t("startDateLocked") : startLabel,
+    );
   }
 };
 
@@ -1731,7 +1951,15 @@ const isGoalFinished = (goal, dateStamp = getCurrentDateStamp()) => {
 };
 
 const isScheduleFinished = (schedule, dateStamp = getCurrentDateStamp()) => {
-  if (!schedule?.goalId) {
+  if (!schedule) {
+    return false;
+  }
+
+  if (normalizeScheduleType(schedule.type) === "one-time") {
+    return daysBetweenDateStamps(schedule.startDate, dateStamp) > 0;
+  }
+
+  if (!schedule.goalId) {
     return false;
   }
 
@@ -3024,6 +3252,10 @@ const saveStateToStorage = () => {
   localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(state.tasks));
   localStorage.setItem(SCHEDULES_STORAGE_KEY, JSON.stringify(state.schedules));
   localStorage.setItem(GOALS_STORAGE_KEY, JSON.stringify(state.goals));
+  localStorage.setItem(
+    ACTIVITY_LOG_STORAGE_KEY,
+    JSON.stringify(state.activityLog.slice(0, 600)),
+  );
   localStorage.setItem(LAST_SYNC_DATE_STORAGE_KEY, state.lastSyncDate || "");
   localStorage.setItem(STATS_STORAGE_KEY, JSON.stringify(state.stats));
   if (state.customQuote) {
@@ -3035,7 +3267,9 @@ const saveStateToStorage = () => {
     SHOW_FINISHED_TASKS_STORAGE_KEY,
     state.showFinishedTasks ? "1" : "0",
   );
+  localStorage.setItem(AGENDA_PERIOD_STORAGE_KEY, state.agendaPeriod || "week");
   updateTaskSummary();
+  renderAgendaOverview();
   renderStreakDashboard();
 };
 
@@ -3105,19 +3339,29 @@ const loadStoredSchedules = () => {
 
     return parsed
       .filter((schedule) => schedule && typeof schedule.text === "string")
-      .map((schedule) => ({
-        id:
-          typeof schedule.id === "string" ? schedule.id : createId("schedule"),
-        text: schedule.text.trim() || "Untitled scheduled task",
-        goalId: typeof schedule.goalId === "string" ? schedule.goalId : null,
-        startDate: normalizeDateStamp(schedule.startDate),
-        intervalDays: normalizePositiveInteger(schedule.intervalDays, 1),
-        weekdays: normalizeWeekdayList(schedule.weekdays),
-        createdAt:
-          typeof schedule.createdAt === "number"
-            ? schedule.createdAt
-            : Date.now(),
-      }));
+      .map((schedule) => {
+        const startDate = normalizeDateStamp(schedule.startDate);
+        const type = normalizeScheduleType(schedule.type);
+        return {
+          id:
+            typeof schedule.id === "string"
+              ? schedule.id
+              : createId("schedule"),
+          text: schedule.text.trim() || "Untitled scheduled task",
+          type,
+          goalId: typeof schedule.goalId === "string" ? schedule.goalId : null,
+          startDate,
+          intervalDays: normalizePositiveInteger(schedule.intervalDays, 1),
+          weekdays:
+            type === "one-time"
+              ? [getDateStampWeekday(startDate)]
+              : normalizeWeekdayList(schedule.weekdays),
+          createdAt:
+            typeof schedule.createdAt === "number"
+              ? schedule.createdAt
+              : Date.now(),
+        };
+      });
   } catch {
     return [];
   }
@@ -3231,6 +3475,47 @@ const loadStoredCustomQuote = () => {
   }
 
   return rawQuote.trim().slice(0, 180);
+};
+
+const loadStoredActivityLog = () => {
+  const rawLog = localStorage.getItem(ACTIVITY_LOG_STORAGE_KEY);
+  if (!rawLog) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(rawLog);
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed
+      .filter((entry) => entry && typeof entry.text === "string")
+      .map((entry) => ({
+        id: typeof entry.id === "string" ? entry.id : createId("activity"),
+        sourceTaskId:
+          typeof entry.sourceTaskId === "string" ? entry.sourceTaskId : null,
+        text: entry.text.trim() || "Untitled task",
+        date: normalizeDateStamp(entry.date),
+        goalId: typeof entry.goalId === "string" ? entry.goalId : null,
+        scheduleId:
+          typeof entry.scheduleId === "string" ? entry.scheduleId : null,
+        type:
+          entry.type === "one-time"
+            ? "one-time"
+            : entry.type === "recurring"
+              ? "recurring"
+              : "manual",
+        completedAt:
+          typeof entry.completedAt === "number"
+            ? entry.completedAt
+            : Date.now(),
+      }))
+      .sort((left, right) => right.completedAt - left.completedAt)
+      .slice(0, 600);
+  } catch {
+    return [];
+  }
 };
 
 const syncScheduledTasksForToday = () => {
@@ -3411,6 +3696,353 @@ const renderTasks = () => {
   syncFinishedTasksToggleButton();
 };
 
+const getAgendaPeriodWindow = (period = state.agendaPeriod) => {
+  switch (period) {
+    case "today":
+      return { pastDays: 0, futureDays: 0 };
+    case "month":
+      return { pastDays: 29, futureDays: 29 };
+    case "all":
+      return { pastDays: 3650, futureDays: 120 };
+    case "week":
+    default:
+      return { pastDays: 6, futureDays: 6 };
+  }
+};
+
+const isWithinFutureAgendaWindow = (dateStamp, futureDays) => {
+  if (!dateStamp) {
+    return true;
+  }
+
+  const diff = daysBetweenDateStamps(getCurrentDateStamp(), dateStamp);
+  return diff >= 0 && diff <= futureDays;
+};
+
+const isWithinPastAgendaWindow = (dateStamp, pastDays) => {
+  if (!dateStamp) {
+    return false;
+  }
+
+  const diff = daysBetweenDateStamps(dateStamp, getCurrentDateStamp());
+  return diff >= 0 && diff <= pastDays;
+};
+
+const buildAgendaMetaText = (entry) => {
+  if (entry.goalId) {
+    const goal = state.goals.find((item) => item.id === entry.goalId);
+    if (goal) {
+      return goal.title;
+    }
+  }
+
+  return entry.type === "manual" ? t("agendaManualTask") : "";
+};
+
+const getAgendaTypeLabel = (entry) => {
+  if (entry.type === "one-time") {
+    return t("scheduleOneTime");
+  }
+
+  if (entry.type === "recurring") {
+    return t("scheduleRecurring");
+  }
+
+  return t("agendaManualTask");
+};
+
+const createAgendaItem = (entry, { isDone = false } = {}) => {
+  const listItem = document.createElement("li");
+  listItem.className = `agenda-item${isDone ? " is-done" : ""}`;
+
+  const content = document.createElement("div");
+  content.className = "agenda-item-content";
+
+  const title = document.createElement("strong");
+  title.textContent = entry.text;
+  content.appendChild(title);
+
+  const row = document.createElement("div");
+  row.className = "agenda-item-row";
+
+  const metaText = buildAgendaMetaText(entry);
+  if (metaText) {
+    const meta = document.createElement("small");
+    meta.textContent = metaText;
+    row.appendChild(meta);
+  }
+
+  const entryType =
+    entry.type === "one-time"
+      ? "one-time"
+      : entry.type === "recurring"
+        ? "recurring"
+        : "manual";
+  const typeBadge = document.createElement("span");
+  typeBadge.className = `agenda-entry-type agenda-entry-type--${entryType}${isDone ? " is-done" : ""}`;
+  typeBadge.textContent = getAgendaTypeLabel(entry);
+
+  row.appendChild(typeBadge);
+  content.appendChild(row);
+
+  listItem.appendChild(content);
+  return listItem;
+};
+
+const buildUpcomingAgendaEntries = () => {
+  const { futureDays } = getAgendaPeriodWindow();
+  const today = getCurrentDateStamp();
+  const entries = [];
+  const seenKeys = new Set();
+
+  const addEntry = (entry, key) => {
+    if (seenKeys.has(key)) {
+      return;
+    }
+    seenKeys.add(key);
+    entries.push(entry);
+  };
+
+  state.tasks
+    .filter((task) => !task.done && !task.isScheduled)
+    .forEach((task) => {
+      addEntry(
+        {
+          text: task.text,
+          date: today,
+          goalId: null,
+          type: "manual",
+        },
+        `manual|${task.id}`,
+      );
+    });
+
+  state.tasks
+    .filter((task) => task.isScheduled && !task.done)
+    .forEach((task) => {
+      const schedule = state.schedules.find(
+        (item) => item.id === task.scheduleId,
+      );
+      const taskDate = task.createdForDate || today;
+      if (!isWithinFutureAgendaWindow(taskDate, futureDays)) {
+        return;
+      }
+
+      addEntry(
+        {
+          text: task.text,
+          date: taskDate,
+          goalId: getGoalIdFromTask(task),
+          type: schedule ? normalizeScheduleType(schedule.type) : "recurring",
+        },
+        `scheduled|${task.scheduleId || task.id}|${taskDate}`,
+      );
+    });
+
+  getOrderedActiveSchedules(today).forEach((schedule) => {
+    for (let offset = 1; offset <= futureDays; offset += 1) {
+      const dateStamp = addDaysToDateStamp(today, offset);
+      if (!isRecurringScheduleActiveOnDate(schedule, dateStamp)) {
+        continue;
+      }
+
+      if (schedule.goalId) {
+        const goal = state.goals.find((item) => item.id === schedule.goalId);
+        if (goal && !isDateWithinGoalBounds(goal, dateStamp)) {
+          continue;
+        }
+      }
+
+      addEntry(
+        {
+          text: schedule.text,
+          date: dateStamp,
+          goalId: schedule.goalId || null,
+          type: normalizeScheduleType(schedule.type),
+        },
+        `future|${schedule.id}|${dateStamp}`,
+      );
+    }
+  });
+
+  return entries.sort((left, right) => {
+    if (!left.date && right.date) {
+      return -1;
+    }
+    if (left.date && !right.date) {
+      return 1;
+    }
+    if ((left.date || "") !== (right.date || "")) {
+      return (left.date || "").localeCompare(right.date || "");
+    }
+    return left.text.localeCompare(right.text);
+  });
+};
+
+const buildCompletedAgendaEntries = () => {
+  const { pastDays } = getAgendaPeriodWindow();
+  const entries = [];
+  const seenKeys = new Set();
+
+  const addEntry = (entry, key) => {
+    if (seenKeys.has(key)) {
+      return;
+    }
+    seenKeys.add(key);
+    entries.push(entry);
+  };
+
+  state.activityLog.forEach((entry) => {
+    if (!isWithinPastAgendaWindow(entry.date, pastDays)) {
+      return;
+    }
+
+    addEntry(entry, `${entry.sourceTaskId || entry.id}|${entry.date}`);
+  });
+
+  state.tasks
+    .filter((task) => task.done)
+    .forEach((task) => {
+      const completionDate = task.createdForDate || getCurrentDateStamp();
+      if (!isWithinPastAgendaWindow(completionDate, pastDays)) {
+        return;
+      }
+
+      const schedule = task.scheduleId
+        ? state.schedules.find((item) => item.id === task.scheduleId)
+        : null;
+
+      addEntry(
+        {
+          text: task.text,
+          date: completionDate,
+          goalId: getGoalIdFromTask(task),
+          type: schedule ? normalizeScheduleType(schedule.type) : "manual",
+          completedAt: Date.now(),
+        },
+        `${task.id}|${completionDate}`,
+      );
+    });
+
+  return entries.sort((left, right) => {
+    if ((left.date || "") !== (right.date || "")) {
+      return (right.date || "").localeCompare(left.date || "");
+    }
+    return left.text.localeCompare(right.text);
+  });
+};
+
+const getAgendaGroupLabel = (dateStamp) => {
+  if (!dateStamp) {
+    return t("agendaAnytime");
+  }
+
+  const today = getCurrentDateStamp();
+  return dateStamp === today
+    ? `${t("agendaToday")} • ${formatDisplayDate(dateStamp)}`
+    : formatDisplayDate(dateStamp);
+};
+
+const renderAgendaList = (listElement, entries, emptyTextKey, options = {}) => {
+  if (!listElement) {
+    return;
+  }
+
+  listElement.innerHTML = "";
+  if (entries.length === 0) {
+    const emptyItem = document.createElement("li");
+    emptyItem.className = "agenda-empty";
+    emptyItem.textContent = t(emptyTextKey);
+    listElement.appendChild(emptyItem);
+    return;
+  }
+
+  const groupedEntries = new Map();
+  entries.slice(0, 18).forEach((entry) => {
+    const key = entry.date || "";
+    if (!groupedEntries.has(key)) {
+      groupedEntries.set(key, []);
+    }
+    groupedEntries.get(key).push(entry);
+  });
+
+  groupedEntries.forEach((groupEntries, dateKey) => {
+    const dayGroupItem = document.createElement("li");
+    dayGroupItem.className = "agenda-day-group";
+    if (dateKey === getCurrentDateStamp()) {
+      dayGroupItem.classList.add("is-today");
+    }
+
+    const dayHead = document.createElement("div");
+    dayHead.className = "agenda-day-group-head";
+
+    const dayTitle = document.createElement("strong");
+    dayTitle.textContent = getAgendaGroupLabel(dateKey);
+
+    const dayCount = document.createElement("span");
+    dayCount.className = `agenda-day-count${options.isDone ? " is-done" : ""}`;
+    dayCount.textContent = String(groupEntries.length);
+
+    dayHead.append(dayTitle, dayCount);
+
+    const dayEntries = document.createElement("ul");
+    dayEntries.className = "agenda-day-entries";
+
+    const groupKey = `${state.agendaPeriod}|${dateKey || "anytime"}`;
+    const isExpanded = Boolean(agendaExpandedGroups[groupKey]);
+    const visibleEntries = isExpanded ? groupEntries : groupEntries.slice(0, 3);
+
+    visibleEntries.forEach((entry) => {
+      dayEntries.appendChild(createAgendaItem(entry, options));
+    });
+
+    if (groupEntries.length > 3) {
+      const moreItem = document.createElement("li");
+      moreItem.className = "agenda-more";
+
+      const toggleButton = document.createElement("button");
+      toggleButton.type = "button";
+      toggleButton.className = "agenda-more-btn";
+      toggleButton.dataset.groupKey = groupKey;
+      toggleButton.textContent = isExpanded
+        ? t("agendaShowLess")
+        : t("agendaMoreItems", {
+            count: groupEntries.length - 3,
+          });
+
+      moreItem.appendChild(toggleButton);
+      dayEntries.appendChild(moreItem);
+    }
+
+    dayGroupItem.append(dayHead, dayEntries);
+    listElement.appendChild(dayGroupItem);
+  });
+};
+
+const renderAgendaOverview = () => {
+  if (!agendaTodoList) {
+    return;
+  }
+
+  if (agendaPeriodFilters) {
+    agendaPeriodFilters
+      .querySelectorAll(".agenda-filter-btn")
+      .forEach((button) => {
+        const isActive = button.dataset.period === state.agendaPeriod;
+        button.classList.toggle("is-active", isActive);
+        button.setAttribute("aria-pressed", String(isActive));
+      });
+  }
+
+  const upcomingEntries = buildUpcomingAgendaEntries();
+
+  if (agendaTodoCount) {
+    agendaTodoCount.textContent = String(upcomingEntries.length);
+  }
+
+  renderAgendaList(agendaTodoList, upcomingEntries, "agendaEmptyTodo");
+};
+
 const renderSchedules = () => {
   scheduleList.innerHTML = "";
   const orderedSchedules = getOrderedActiveSchedules();
@@ -3471,6 +4103,10 @@ const renderSchedules = () => {
 			</div>
 			<form class="schedule-edit-form">
 				<input type="text" class="schedule-edit-input" required />
+				<select class="schedule-edit-type-select goal-select" aria-label="${t("scheduleType")}">
+					<option value="recurring">${t("scheduleRecurring")}</option>
+					<option value="one-time">${t("scheduleOneTime")}</option>
+				</select>
 				<select class="schedule-edit-goal-select">${buildGoalOptionsMarkup(schedule.goalId || "")}</select>
 				<input type="number" class="schedule-edit-interval-input" min="1" placeholder="${t("everyXDays")}" />
 				<input type="date" class="schedule-edit-start-date-input" aria-label="${t("startFrom")}" title="${t("startFromTitle")}" />
@@ -3494,6 +4130,10 @@ const renderSchedules = () => {
     const editInput = scheduleItem.querySelector(".schedule-edit-input");
     if (editInput) {
       editInput.value = schedule.text;
+    }
+    const typeSelect = scheduleItem.querySelector(".schedule-edit-type-select");
+    if (typeSelect) {
+      typeSelect.value = normalizeScheduleType(schedule.type);
     }
     const intervalInput = scheduleItem.querySelector(
       ".schedule-edit-interval-input",
@@ -3519,6 +4159,11 @@ const renderSchedules = () => {
       ".schedule-edit-weekday-picker",
     );
     renderWeekdayPickerButtons(weekdayPicker, schedule.weekdays);
+    syncScheduleItemFormMode(scheduleItem, {
+      type: schedule.type,
+      goalId: schedule.goalId || null,
+      startDateLocked: shouldLockScheduleStartDate(schedule),
+    });
     scheduleList.appendChild(scheduleItem);
   });
 };
@@ -3552,6 +4197,11 @@ const updateScheduleItemView = (scheduleItem, schedule) => {
     editInput.value = schedule.text;
   }
 
+  const typeSelect = scheduleItem.querySelector(".schedule-edit-type-select");
+  if (typeSelect) {
+    typeSelect.value = normalizeScheduleType(schedule.type);
+  }
+
   const goalSelect = scheduleItem.querySelector(".schedule-edit-goal-select");
   if (goalSelect) {
     goalSelect.innerHTML = buildGoalOptionsMarkup(schedule.goalId || "");
@@ -3572,6 +4222,12 @@ const updateScheduleItemView = (scheduleItem, schedule) => {
   if (startDateInput) {
     startDateInput.value = schedule.startDate;
   }
+
+  syncScheduleItemFormMode(scheduleItem, {
+    type: schedule.type,
+    goalId: schedule.goalId || null,
+    startDateLocked: shouldLockScheduleStartDate(schedule),
+  });
 };
 
 const initializeState = () => {
@@ -3581,15 +4237,21 @@ const initializeState = () => {
   state.schedules = loadStoredSchedules();
   state.schedules = state.schedules.map((schedule) => ({
     ...schedule,
+    type: normalizeScheduleType(schedule.type),
     goalId:
       schedule.goalId && state.goals.some((goal) => goal.id === schedule.goalId)
         ? schedule.goalId
         : null,
-    weekdays: normalizeWeekdayList(schedule.weekdays),
+    weekdays:
+      normalizeScheduleType(schedule.type) === "one-time"
+        ? [getDateStampWeekday(normalizeDateStamp(schedule.startDate))]
+        : normalizeWeekdayList(schedule.weekdays),
   }));
   state.stats = loadStoredStats();
+  state.activityLog = loadStoredActivityLog();
   state.customQuote = loadStoredCustomQuote();
   state.showFinishedTasks = getStoredShowFinishedTasks();
+  state.agendaPeriod = getStoredAgendaPeriod();
   state.lastSyncDate = localStorage.getItem(LAST_SYNC_DATE_STORAGE_KEY) || null;
 
   syncScheduledTasksForToday();
@@ -3672,6 +4334,15 @@ const showScheduleModal = () => {
 
 const hideScheduleModal = () => {
   closeModalOverlay(scheduleModal, "is-schedule-open");
+};
+
+const showOverviewModal = () => {
+  renderAgendaOverview();
+  openModalOverlay(overviewModal, "is-overview-open");
+};
+
+const hideOverviewModal = () => {
+  closeModalOverlay(overviewModal, "is-overview-open");
 };
 
 const showProgressModal = () => {
@@ -3759,6 +4430,51 @@ const transferCompletedScheduleScoresToGoal = (
     });
 };
 
+const syncActivityLogForTask = (task) => {
+  if (!task) {
+    return;
+  }
+
+  const completionDate = task.createdForDate || getCurrentDateStamp();
+  const matchingIndex = state.activityLog.findIndex(
+    (entry) => entry.sourceTaskId === task.id && entry.date === completionDate,
+  );
+
+  if (!task.done) {
+    if (matchingIndex >= 0) {
+      state.activityLog.splice(matchingIndex, 1);
+    }
+    return;
+  }
+
+  const schedule = task.scheduleId
+    ? state.schedules.find((item) => item.id === task.scheduleId)
+    : null;
+  const nextEntry = {
+    id:
+      matchingIndex >= 0
+        ? state.activityLog[matchingIndex].id
+        : createId("activity"),
+    sourceTaskId: task.id,
+    text: task.text,
+    date: completionDate,
+    goalId: getGoalIdFromTask(task),
+    scheduleId: task.scheduleId || null,
+    type: schedule ? normalizeScheduleType(schedule.type) : "manual",
+    completedAt: Date.now(),
+  };
+
+  if (matchingIndex >= 0) {
+    state.activityLog[matchingIndex] = nextEntry;
+  } else {
+    state.activityLog.unshift(nextEntry);
+  }
+
+  state.activityLog = state.activityLog
+    .sort((left, right) => right.completedAt - left.completedAt)
+    .slice(0, 600);
+};
+
 const applyTaskDoneState = (task, isDone) => {
   const wasDone = Boolean(task.done);
   task.done = Boolean(isDone);
@@ -3767,11 +4483,13 @@ const applyTaskDoneState = (task, isDone) => {
   if (!wasDone && task.done) {
     adjustTodayCompletionCount(1);
     adjustGoalCompletionCount(taskGoalId, completionDate, 1);
+    syncActivityLogForTask(task);
     showCompletionToast();
   }
   if (wasDone && !task.done) {
     adjustTodayCompletionCount(-1);
     adjustGoalCompletionCount(taskGoalId, completionDate, -1);
+    syncActivityLogForTask(task);
   }
 };
 
@@ -3786,6 +4504,9 @@ const finishTaskEditing = (taskItem, task) => {
   const nextText = taskText.textContent.trim() || "Untitled task";
 
   task.text = nextText;
+  if (task.done) {
+    syncActivityLogForTask(task);
+  }
   taskText.textContent = nextText;
   taskText.contentEditable = "false";
   taskItem.classList.remove("is-editing");
@@ -3808,6 +4529,12 @@ const finishTaskEditing = (taskItem, task) => {
 clearAllButton.addEventListener("click", showClearAllModal);
 openScheduleButton.addEventListener("click", showScheduleModal);
 closeScheduleButton.addEventListener("click", hideScheduleModal);
+if (openOverviewButton) {
+  openOverviewButton.addEventListener("click", showOverviewModal);
+}
+if (closeOverviewButton) {
+  closeOverviewButton.addEventListener("click", hideOverviewModal);
+}
 openProgressButton.addEventListener("click", showProgressModal);
 closeProgressButton.addEventListener("click", hideProgressModal);
 
@@ -3821,6 +4548,42 @@ if (toggleFinishedTasksButton) {
         : t("finishedTasksHidden"),
     );
     saveStateToStorage();
+  });
+}
+
+if (agendaPeriodFilters) {
+  agendaPeriodFilters.addEventListener("click", (event) => {
+    const filterButton = event.target.closest(".agenda-filter-btn");
+    if (!filterButton) {
+      return;
+    }
+
+    const nextPeriod = filterButton.dataset.period;
+    if (!["today", "week", "month"].includes(nextPeriod)) {
+      return;
+    }
+
+    agendaExpandedGroups = {};
+    state.agendaPeriod = nextPeriod;
+    renderAgendaOverview();
+    saveStateToStorage();
+  });
+}
+
+if (agendaTodoList) {
+  agendaTodoList.addEventListener("click", (event) => {
+    const toggleButton = event.target.closest(".agenda-more-btn");
+    if (!toggleButton) {
+      return;
+    }
+
+    const { groupKey } = toggleButton.dataset;
+    if (!groupKey) {
+      return;
+    }
+
+    agendaExpandedGroups[groupKey] = !agendaExpandedGroups[groupKey];
+    renderAgendaOverview();
   });
 }
 
@@ -3936,13 +4699,20 @@ scheduleForm.addEventListener("submit", (event) => {
     return;
   }
   const selectedGoalId = scheduleGoalSelect?.value || null;
+  const scheduleType = normalizeScheduleType(scheduleTypeSelect?.value);
   let startDate = normalizeDateStamp(scheduleStartDateInput?.value);
-  const intervalDays = shouldLockScheduleIntervalToGoal(selectedGoalId)
-    ? 1
-    : normalizePositiveInteger(scheduleIntervalInput?.value, 1);
-  const weekdays = getSelectedWeekdaysFromPicker(scheduleWeekdayPicker);
+  const intervalDays =
+    scheduleType === "one-time"
+      ? 1
+      : shouldLockScheduleIntervalToGoal(selectedGoalId)
+        ? 1
+        : normalizePositiveInteger(scheduleIntervalInput?.value, 1);
+  const weekdays =
+    scheduleType === "one-time"
+      ? [getDateStampWeekday(startDate)]
+      : getSelectedWeekdaysFromPicker(scheduleWeekdayPicker);
 
-  if (weekdays.length === 0) {
+  if (scheduleType !== "one-time" && weekdays.length === 0) {
     showDuplicateWarning(t("selectAtLeastOneWeekday"));
     return;
   }
@@ -3961,12 +4731,21 @@ scheduleForm.addEventListener("submit", (event) => {
       }
 
       startDate = aligned.startDate;
+
+      if (
+        scheduleType === "one-time" &&
+        !isDateWithinGoalBounds(goal, startDate)
+      ) {
+        showDuplicateWarning(t("scheduleOutsideGoalRange"));
+        return;
+      }
     }
   }
 
   const newSchedule = {
     id: createId("schedule"),
     text,
+    type: scheduleType,
     goalId: selectedGoalId,
     startDate,
     intervalDays,
@@ -3994,7 +4773,11 @@ scheduleForm.addEventListener("submit", (event) => {
   if (scheduleGoalSelect) {
     scheduleGoalSelect.value = "";
   }
+  if (scheduleTypeSelect) {
+    scheduleTypeSelect.value = "recurring";
+  }
   syncScheduleDateBounds(null, scheduleStartDateInput);
+  syncPrimaryScheduleFormMode();
   scheduleInput.focus();
   showSuccessToast(t("recurringScheduleCreated"));
   saveStateToStorage();
@@ -4011,8 +4794,29 @@ if (scheduleGoalSelect && scheduleIntervalInput) {
       scheduleStartDateInput,
       { enforceValue: true },
     );
+    syncPrimaryScheduleFormMode();
     if (boundsResult.adjusted) {
       showToast(t("scheduleStartAdjustedToGoal"), "ℹ️", "warning");
+    }
+    if (boundsResult.invalid) {
+      showDuplicateWarning(t("scheduleOutsideGoalRange"));
+    }
+  });
+}
+
+if (scheduleTypeSelect) {
+  scheduleTypeSelect.addEventListener("change", () => {
+    const boundsResult = syncScheduleDateBounds(
+      scheduleGoalSelect?.value || null,
+      scheduleStartDateInput,
+      { enforceValue: true },
+    );
+    syncPrimaryScheduleFormMode();
+    if (boundsResult.adjusted) {
+      showToast(t("scheduleStartAdjustedToGoal"), "ℹ️", "warning");
+    }
+    if (boundsResult.invalid) {
+      showDuplicateWarning(t("scheduleOutsideGoalRange"));
     }
   });
 }
@@ -4490,10 +5294,18 @@ scheduleList.addEventListener("click", (event) => {
     if (schedule && goalSelect) {
       goalSelect.innerHTML = buildGoalOptionsMarkup(schedule.goalId || "");
     }
+    const typeSelect = scheduleItem.querySelector(".schedule-edit-type-select");
+    if (typeSelect) {
+      typeSelect.value = normalizeScheduleType(schedule?.type);
+    }
     const intervalInput = scheduleItem.querySelector(
       ".schedule-edit-interval-input",
     );
-    syncScheduleIntervalLock(schedule?.goalId || null, intervalInput);
+    syncScheduleItemFormMode(scheduleItem, {
+      type: typeSelect?.value || schedule?.type,
+      goalId: schedule?.goalId || null,
+      startDateLocked: shouldLockScheduleStartDate(schedule),
+    });
 
     scheduleItem.classList.add("is-editing");
     const editInput = scheduleItem.querySelector(".schedule-edit-input");
@@ -4528,6 +5340,7 @@ scheduleList.addEventListener("click", (event) => {
     }
 
     const editInput = scheduleItem.querySelector(".schedule-edit-input");
+    const typeSelect = scheduleItem.querySelector(".schedule-edit-type-select");
     const goalSelect = scheduleItem.querySelector(".schedule-edit-goal-select");
     const intervalInput = scheduleItem.querySelector(
       ".schedule-edit-interval-input",
@@ -4540,19 +5353,27 @@ scheduleList.addEventListener("click", (event) => {
     );
     const isStartDateLocked = shouldLockScheduleStartDate(schedule);
     const nextText = editInput?.value.trim() || "";
+    const nextType = normalizeScheduleType(typeSelect?.value);
     const nextGoalId = goalSelect?.value || null;
-    const nextIntervalDays = shouldLockScheduleIntervalToGoal(nextGoalId)
-      ? 1
-      : normalizePositiveInteger(intervalInput?.value, 1);
-    const selectedWeekdays = getSelectedWeekdaysFromPicker(weekdayPicker);
-    if (selectedWeekdays.length === 0) {
-      showDuplicateWarning(t("selectAtLeastOneWeekday"));
-      return;
-    }
 
     let nextStartDate = isStartDateLocked
       ? schedule.startDate
       : normalizeDateStamp(startDateInput?.value);
+
+    const nextIntervalDays =
+      nextType === "one-time"
+        ? 1
+        : shouldLockScheduleIntervalToGoal(nextGoalId)
+          ? 1
+          : normalizePositiveInteger(intervalInput?.value, 1);
+    const selectedWeekdays =
+      nextType === "one-time"
+        ? [getDateStampWeekday(nextStartDate)]
+        : getSelectedWeekdaysFromPicker(weekdayPicker);
+    if (nextType !== "one-time" && selectedWeekdays.length === 0) {
+      showDuplicateWarning(t("selectAtLeastOneWeekday"));
+      return;
+    }
 
     if (!nextText) {
       showDuplicateWarning(t("scheduleTextEmpty"));
@@ -4574,11 +5395,20 @@ scheduleList.addEventListener("click", (event) => {
         }
 
         nextStartDate = aligned.startDate;
+
+        if (
+          nextType === "one-time" &&
+          !isDateWithinGoalBounds(goal, nextStartDate)
+        ) {
+          showDuplicateWarning(t("scheduleOutsideGoalRange"));
+          return;
+        }
       }
     }
 
     const previousGoalId = schedule.goalId || null;
     schedule.text = nextText;
+    schedule.type = nextType;
     schedule.goalId = nextGoalId;
     schedule.intervalDays = nextIntervalDays;
     schedule.startDate = nextStartDate;
@@ -4663,30 +5493,44 @@ scheduleList.addEventListener("keydown", (event) => {
 });
 
 scheduleList.addEventListener("change", (event) => {
-  const goalSelect = event.target.closest(".schedule-edit-goal-select");
-  if (!goalSelect) {
-    return;
-  }
-
-  const scheduleItem = goalSelect.closest(".schedule-item");
+  const scheduleItem = event.target.closest(".schedule-item");
   if (!scheduleItem) {
     return;
   }
 
-  const intervalInput = scheduleItem.querySelector(
-    ".schedule-edit-interval-input",
-  );
-  syncScheduleIntervalLock(goalSelect.value || null, intervalInput);
+  const scheduleId = scheduleItem.dataset.scheduleId;
+  const schedule = state.schedules.find((item) => item.id === scheduleId);
+  const goalSelect = scheduleItem.querySelector(".schedule-edit-goal-select");
+  const typeSelect = scheduleItem.querySelector(".schedule-edit-type-select");
   const startDateInput = scheduleItem.querySelector(
     ".schedule-edit-start-date-input",
   );
+
+  if (event.target.closest(".schedule-edit-type-select")) {
+    syncScheduleItemFormMode(scheduleItem, {
+      type: typeSelect?.value,
+      goalId: goalSelect?.value || null,
+      startDateLocked: shouldLockScheduleStartDate(schedule),
+    });
+    return;
+  }
+
+  if (!event.target.closest(".schedule-edit-goal-select")) {
+    return;
+  }
+
   const boundsResult = syncScheduleDateBounds(
-    goalSelect.value || null,
+    goalSelect?.value || null,
     startDateInput,
     {
       enforceValue: true,
     },
   );
+  syncScheduleItemFormMode(scheduleItem, {
+    type: typeSelect?.value,
+    goalId: goalSelect?.value || null,
+    startDateLocked: shouldLockScheduleStartDate(schedule),
+  });
   if (boundsResult.invalid) {
     showDuplicateWarning(t("scheduleOutsideGoalRange"));
   }
@@ -5040,6 +5884,14 @@ progressModal.addEventListener("click", (event) => {
     hideProgressModal();
   }
 });
+
+if (overviewModal) {
+  overviewModal.addEventListener("click", (event) => {
+    if (event.target === overviewModal) {
+      hideOverviewModal();
+    }
+  });
+}
 
 removeGoalModal.addEventListener("click", (event) => {
   if (event.target === removeGoalModal) {

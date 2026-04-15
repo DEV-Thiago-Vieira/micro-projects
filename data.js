@@ -162,4 +162,10 @@ const projectsByDate = {
       link: "April/login/index.html",
     },
   ],
+  "2026-04-15": [
+    {
+      title: "Dynamic task size, overview and one time activities added",
+      link: "March/todo-list-project/index.html",
+    },
+  ],
 };

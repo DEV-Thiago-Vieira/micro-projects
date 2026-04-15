@@ -54,7 +54,7 @@
             Install app
           </button>
           <button type="button" class="clear-all-btn" id="open-schedule-btn">
-            Recurring schedules
+            Schedules
           </button>
           <button type="button" class="clear-all-btn" id="clear-all-btn">
             Clear all tasks
@@ -105,6 +105,12 @@
         />
         <button class="confirm-task">+</button>
       </form>
+
+      <div class="overview-launcher">
+        <button type="button" class="clear-all-btn" id="open-overview-btn">
+          View overview
+        </button>
+      </div>
 
       <section class="streak-card" aria-live="polite">
         <div class="streak-head">
@@ -224,7 +230,7 @@
           aria-labelledby="schedule-modal-title"
         >
           <div class="schedule-modal-head">
-            <h2 id="schedule-modal-title">Recurring Schedules</h2>
+            <h2 id="schedule-modal-title">Schedules</h2>
             <div class="schedule-head-actions">
               <button
                 type="button"
@@ -240,15 +246,15 @@
                 type="button"
                 class="schedule-close-btn"
                 id="close-schedule-btn"
-                aria-label="Close recurring schedules"
+                aria-label="Close schedules"
               >
                 <i class="fa-solid fa-xmark" aria-hidden="true"></i>
               </button>
             </div>
           </div>
           <p class="schedule-subtitle">
-            Create schedules that start later, repeat every X days, and stay
-            linked to goals.
+            Create recurring tasks or schedule one-time activities linked to
+            goals.
           </p>
 
           <div class="goal-section">
@@ -381,6 +387,13 @@
                 required
               />
             </div>
+            <div class="form-field" id="schedule-type-field">
+              <label for="schedule-type-select">Schedule Type</label>
+              <select id="schedule-type-select" class="goal-select">
+                <option value="recurring">Recurring</option>
+                <option value="one-time">One time</option>
+              </select>
+            </div>
             <div class="form-field" id="schedule-goal-field">
               <label for="schedule-goal-select">Goal</label>
               <select id="schedule-goal-select" class="goal-select">
@@ -445,6 +458,56 @@
             <button type="submit" class="schedule-submit-btn">Schedule</button>
           </form>
           <ul class="schedule-list" id="schedule-list"></ul>
+        </div>
+      </div>
+
+      <div class="modal-overlay" id="overview-modal" aria-hidden="true">
+        <div
+          class="modal-card overview-modal-card"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="agenda-title"
+        >
+          <div class="schedule-modal-head">
+            <div>
+              <h2 id="agenda-title">Activity Overview</h2>
+              <p class="overview-modal-subtitle" id="agenda-subtitle">
+                Review activities by day in a cleaner calendar-style view.
+              </p>
+            </div>
+            <button
+              type="button"
+              class="schedule-close-btn"
+              id="close-overview-btn"
+              aria-label="Close overview"
+            >
+              <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+            </button>
+          </div>
+          <div class="agenda-period-filters" id="agenda-period-filters">
+            <button
+              type="button"
+              class="agenda-filter-btn is-active"
+              data-period="today"
+            >
+              Today
+            </button>
+            <button type="button" class="agenda-filter-btn" data-period="week">
+              7 Days
+            </button>
+            <button type="button" class="agenda-filter-btn" data-period="month">
+              30 Days
+            </button>
+          </div>
+          <div class="agenda-overview-grid agenda-overview-grid--single">
+            <section class="agenda-column agenda-column--full">
+              <div class="agenda-column-head">
+                <h3 id="agenda-todo-title">Activities</h3>
+                <span class="agenda-count-pill" id="agenda-todo-count">0</span>
+              </div>
+              <ul class="agenda-list" id="agenda-todo-list"></ul>
+            </section>
+          </div>
         </div>
       </div>
 

@@ -45,6 +45,101 @@ body.is-dark {
     scrollbar-color: rgba(148, 163, 184, 0.2) transparent;
 }
 
+body.is-dark .agenda-overview-card,
+body.is-dark .agenda-column,
+body.is-dark .agenda-item,
+body.is-dark .agenda-day-group,
+body.is-dark .overview-modal-card {
+    background-color: #0b1220;
+    border-color: #243244;
+    color: #e5e7eb;
+}
+
+body.is-dark .agenda-day-group.is-today {
+    background: linear-gradient(180deg, #0b1220 0%, #10243c 100%);
+}
+
+body.is-dark .agenda-overview-subtitle,
+body.is-dark .overview-modal-subtitle,
+body.is-dark .agenda-item-content small,
+body.is-dark .agenda-empty,
+body.is-dark .agenda-more {
+    color: #a9b7ca;
+}
+
+body.is-dark .agenda-filter-btn {
+    background-color: #111b2d;
+    border-color: #334155;
+    color: #e5e7eb;
+}
+
+body.is-dark .agenda-filter-btn:hover {
+    background-color: #1e293b;
+}
+
+body.is-dark .agenda-filter-btn.is-active {
+    background-color: #16a34a;
+    border-color: #16a34a;
+    color: #f8fafc;
+}
+
+body.is-dark .agenda-day-group-head strong,
+body.is-dark .agenda-column-head h3,
+body.is-dark .overview-modal-card h2 {
+    color: #f8fafc;
+}
+
+body.is-dark .agenda-entry-type--recurring {
+    background: #19324d;
+    color: #93c5fd;
+}
+
+body.is-dark .agenda-entry-type--one-time {
+    background: #3a2412;
+    color: #fdba74;
+}
+
+body.is-dark .agenda-entry-type--manual {
+    background: #1f2937;
+    color: #cbd5e1;
+}
+
+body.is-dark .agenda-entry-type.is-done {
+    background: #113322;
+    color: #86efac;
+}
+
+body.is-dark #overview-modal .schedule-modal-head {
+    background-color: #0b1220;
+    border-bottom-color: #243244;
+}
+
+body.is-dark .agenda-more-btn {
+    color: #93c5fd;
+}
+
+@media (max-width: 860px) {
+    .overview-modal-card {
+        width: min(100%, 96vw);
+        max-width: min(100%, 96vw);
+    }
+
+    .agenda-overview-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .agenda-column {
+        max-height: none;
+    }
+}
+
+body.is-overview-open .back-projects-btn,
+body.is-overview-open .theme-toggle-btn,
+body.is-overview-open .github-footer-link {
+    opacity: 0;
+    pointer-events: none;
+}
+
 /* ── Page loader ─────────────────────────────── */
 .page-loader {
     position: fixed;
@@ -189,6 +284,7 @@ main {
     }
 }
 
+
 h1 {
     font-size: 2rem;
     line-height: 1.1;
@@ -293,9 +389,9 @@ h1 {
     padding-right: 130px;
     gap: 10px;
     cursor: pointer;
-    height: 100%;
     width: 100%;
     min-width: 0;
+    min-height: var(--task-row-height);
     align-items: center;
     border-radius: 10px;
     border: 2px solid #cfd4dc;
@@ -370,6 +466,295 @@ h1 {
     border: 2px solid #cfd4dc;
     border-radius: 12px;
     background-color: #ffffff;
+}
+
+.overview-launcher {
+    width: 80%;
+    display: flex;
+    justify-content: center;
+    margin-top: 0.7em;
+}
+
+#overview-modal {
+    padding: 0.6rem;
+}
+
+.overview-modal-card {
+    background-color: #f7faff;
+    border-color: #d8e1ee;
+    width: min(96vw, 1100px);
+    max-height: 90vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-bottom: 1rem;
+}
+.overview-modal-subtitle {
+    color: #64748b;
+    font-size: 0.84rem;
+    margin-top: 0.2em;
+    margin-bottom: 0.55em;
+}
+
+.agenda-overview-card {
+    width: 80%;
+    margin-top: 0.8em;
+    border: 2px solid #cfd4dc;
+    border-radius: 14px;
+    background: #ffffff;
+    padding: 0.85em;
+    box-shadow: 0 8px 22px rgba(16, 24, 40, 0.06);
+}
+
+.agenda-overview-head {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7em;
+    margin-bottom: 0.7em;
+}
+
+.agenda-overview-head h2 {
+    font-size: 1.02rem;
+}
+
+.agenda-overview-subtitle {
+    color: #64748b;
+    font-size: 0.86rem;
+    margin-top: 0.18em;
+}
+
+.agenda-period-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55em;
+    margin: 0.45em 0 0.9em;
+}
+
+.agenda-filter-btn {
+    border: 1px solid #cfd4dc;
+    background: #fff;
+    color: #2f3a4d;
+    border-radius: 999px;
+    padding: 0.35em 0.65em;
+    font-size: 0.77rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.agenda-filter-btn:hover {
+    background: #f4f6f9;
+}
+
+.agenda-filter-btn.is-active {
+    background: #22c55e;
+    color: #fff;
+    border-color: #22c55e;
+}
+
+.agenda-overview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1rem;
+    align-items: start;
+}
+
+.agenda-overview-grid--single {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.agenda-column {
+    min-width: 0;
+    border: 1px solid #dbe3ef;
+    border-radius: 14px;
+    background: #f8fbff;
+    padding: 0.9em;
+    min-height: 210px;
+    max-height: 68vh;
+    overflow: auto;
+}
+
+.agenda-column--full {
+    width: 100%;
+}
+
+.agenda-day-group {
+    border: 1px solid #dbe3ef;
+    border-left: 4px solid #22c55e;
+    border-radius: 12px;
+    padding: 0.7em;
+    background: #fff;
+}
+.agenda-day-group-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5em;
+    margin-bottom: 0.65em;
+}
+
+.agenda-day-group-head strong {
+    font-size: 0.82rem;
+    color: #334155;
+}
+
+.agenda-day-group.is-today {
+    border-left-color: #0ea5e9;
+    background: linear-gradient(180deg, #ffffff 0%, #f0f9ff 100%);
+}
+
+.agenda-day-count {
+    min-width: 24px;
+    padding: 0.18em 0.42em;
+    border-radius: 999px;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-align: center;
+}
+
+.agenda-day-count.is-done {
+    background: #ecfdf3;
+    color: #166534;
+}
+
+.agenda-day-entries {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55em;
+}
+
+.agenda-more {
+    font-size: 0.74rem;
+    color: #64748b;
+    padding: 0.2em 0.15em 0;
+}
+
+.agenda-column-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5em;
+    margin-bottom: 0.8em;
+}
+
+.agenda-column-head h3 {
+    font-size: 0.95rem;
+}
+
+.agenda-count-pill {
+    min-width: 30px;
+    padding: 0.22em 0.5em;
+    border-radius: 999px;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-align: center;
+}
+
+.agenda-count-pill.is-done {
+    background: #ecfdf3;
+    color: #166534;
+}
+
+.agenda-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65em;
+}
+
+.agenda-item {
+    padding: 0.68em 0.75em;
+    border: 1px solid #e5edf7;
+    border-radius: 10px;
+    background: #fff;
+}
+
+.agenda-item.is-done {
+    background: #f8fafc;
+}
+
+.agenda-item-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.45em 0.6em;
+}
+
+.agenda-item-content {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45em;
+}
+
+.agenda-item-content strong {
+    font-size: 0.87rem;
+    line-height: 1.35;
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}
+
+.agenda-item-content small {
+    color: #64748b;
+    font-size: 0.74rem;
+    flex: 1 1 120px;
+    min-width: 0;
+}
+
+.agenda-entry-type {
+    flex-shrink: 0;
+    margin-left: auto;
+    max-width: 100%;
+    border-radius: 999px;
+    padding: 0.2em 0.5em;
+    font-size: 0.68rem;
+    font-weight: 700;
+}
+
+.agenda-entry-type--recurring {
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+
+.agenda-entry-type--one-time {
+    background: #fff7ed;
+    color: #c2410c;
+}
+
+.agenda-entry-type--manual {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.agenda-entry-type.is-done {
+    background: #ecfdf3;
+    color: #166534;
+}
+
+.agenda-more-btn {
+    border: none;
+    background: transparent;
+    color: #2563eb;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 0;
+}
+
+.agenda-more-btn:hover {
+    text-decoration: underline;
+}
+
+.agenda-empty {
+    color: #64748b;
+    font-size: 0.84rem;
+    padding: 0.4em 0.1em;
 }
 
 .streak-card {
@@ -1277,7 +1662,7 @@ body.is-progress-open .github-footer-link {
     grid-template-columns: repeat(4, minmax(0, 1fr));
     grid-template-areas:
         'task task task task'
-        'goal interval start start'
+        'type goal interval start'
         'weekdays weekdays weekdays weekdays'
         'save save cancel cancel';
     align-items: end;
@@ -1299,6 +1684,10 @@ body.is-progress-open .github-footer-link {
 
 .schedule-edit-input {
     grid-area: task;
+}
+
+.schedule-edit-type-select {
+    grid-area: type;
 }
 
 .schedule-edit-goal-select {
@@ -1358,6 +1747,7 @@ body.is-progress-open .github-footer-link {
 }
 
 .schedule-edit-input,
+.schedule-edit-type-select,
 .schedule-edit-goal-select,
 .schedule-edit-interval-input,
 .schedule-edit-start-date-input {
@@ -1371,6 +1761,7 @@ body.is-progress-open .github-footer-link {
 }
 
 .schedule-edit-input:focus,
+.schedule-edit-type-select:focus,
 .schedule-edit-goal-select:focus,
 .schedule-edit-interval-input:focus,
 .schedule-edit-start-date-input:focus {
@@ -1985,8 +2376,8 @@ body.is-progress-open .github-footer-link {
 .todo-item {
     position: relative;
     min-height: var(--task-row-height);
-    max-height: var(--task-row-height);
-    flex: 0 0 var(--task-row-height);
+    height: auto;
+    flex: 0 0 auto;
     border-radius: 10px;
     overflow: hidden;
     transform-origin: top center;
@@ -2092,9 +2483,10 @@ body.is-progress-open .github-footer-link {
     border: 1.5px solid currentColor;
     line-height: 1.4;
     opacity: 0.85;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    overflow-wrap: anywhere;
     max-width: 100%;
 }
 
@@ -2103,7 +2495,7 @@ body.is-progress-open .github-footer-link {
 }
 
 .todo-item-text {
-    display: block;
+    display: -webkit-box;
     min-width: 0;
     outline: none;
     padding: 2px 4px;
@@ -2111,7 +2503,13 @@ body.is-progress-open .github-footer-link {
     user-select: none;
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap;
+    white-space: normal;
+    line-height: 1.35;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
 }
 
 .todo-item.is-editing .todo-item-text {
@@ -2470,6 +2868,7 @@ body.is-dark .todo-item.is-done .todo-item-label {
 body.is-dark .new-task-input,
 body.is-dark .schedule-input,
 body.is-dark .schedule-edit-input,
+body.is-dark .schedule-edit-type-select,
 body.is-dark .schedule-edit-goal-select,
 body.is-dark .schedule-edit-interval-input,
 body.is-dark .schedule-edit-start-date-input,
@@ -3068,6 +3467,7 @@ body.is-dark .todo-item:hover {
     }
 
     .schedule-edit-input,
+    .schedule-edit-type-select,
     .schedule-edit-goal-select,
     .schedule-edit-interval-input,
     .schedule-edit-start-date-input,
@@ -3078,6 +3478,7 @@ body.is-dark .todo-item:hover {
     }
 
     .schedule-edit-input,
+    .schedule-edit-type-select,
     .schedule-edit-goal-select,
     .schedule-edit-interval-input,
     .schedule-edit-start-date-input,
@@ -3098,13 +3499,15 @@ body.is-dark .todo-item:hover {
         grid-column: 2;
     }
 
-    #schedule-modal {
+    #schedule-modal,
+    #overview-modal {
         padding: 0;
         align-items: stretch;
         justify-content: stretch;
     }
 
-    #schedule-modal .schedule-modal-card {
+    #schedule-modal .schedule-modal-card,
+    #overview-modal .overview-modal-card {
         width: 100vw;
         max-width: 100vw;
         height: 100dvh;
@@ -3117,7 +3520,8 @@ body.is-dark .todo-item:hover {
         padding-bottom: calc(1rem + env(safe-area-inset-bottom));
     }
 
-    #schedule-modal .schedule-modal-head {
+    #schedule-modal .schedule-modal-head,
+    #overview-modal .schedule-modal-head {
         position: sticky;
         top: 0;
         z-index: 6;
@@ -3129,7 +3533,8 @@ body.is-dark .todo-item:hover {
         padding: max(1rem, env(safe-area-inset-top)) 1rem 0.8rem;
     }
 
-    #schedule-modal .schedule-modal-card > :not(.schedule-modal-head) {
+    #schedule-modal .schedule-modal-card > :not(.schedule-modal-head),
+    #overview-modal .overview-modal-card > :not(.schedule-modal-head) {
         margin-left: 1rem;
         margin-right: 1rem;
     }
@@ -3138,7 +3543,8 @@ body.is-dark .todo-item:hover {
         margin-top: 0.65rem;
     }
 
-    #schedule-modal.is-open .schedule-modal-card {
+    #schedule-modal.is-open .schedule-modal-card,
+    #overview-modal.is-open .overview-modal-card {
         animation: schedule-modal-mobile-enter 0.3s ease;
     }
 
