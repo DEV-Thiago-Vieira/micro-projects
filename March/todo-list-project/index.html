@@ -11,6 +11,7 @@
       name="description"
       content="Installable to-do list with flexible recurring schedules, goal planning, and streak tracking."
     />
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="To Do List" />
@@ -105,12 +106,6 @@
         />
         <button class="confirm-task">+</button>
       </form>
-
-      <div class="overview-launcher">
-        <button type="button" class="clear-all-btn" id="open-overview-btn">
-          View overview
-        </button>
-      </div>
 
       <section class="streak-card" aria-live="polite">
         <div class="streak-head">
@@ -461,56 +456,6 @@
         </div>
       </div>
 
-      <div class="modal-overlay" id="overview-modal" aria-hidden="true">
-        <div
-          class="modal-card overview-modal-card"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="agenda-title"
-        >
-          <div class="schedule-modal-head">
-            <div>
-              <h2 id="agenda-title">Activity Overview</h2>
-              <p class="overview-modal-subtitle" id="agenda-subtitle">
-                Review activities by day in a cleaner calendar-style view.
-              </p>
-            </div>
-            <button
-              type="button"
-              class="schedule-close-btn"
-              id="close-overview-btn"
-              aria-label="Close overview"
-            >
-              <i class="fa-solid fa-xmark" aria-hidden="true"></i>
-            </button>
-          </div>
-          <div class="agenda-period-filters" id="agenda-period-filters">
-            <button
-              type="button"
-              class="agenda-filter-btn is-active"
-              data-period="today"
-            >
-              Today
-            </button>
-            <button type="button" class="agenda-filter-btn" data-period="week">
-              7 Days
-            </button>
-            <button type="button" class="agenda-filter-btn" data-period="month">
-              30 Days
-            </button>
-          </div>
-          <div class="agenda-overview-grid agenda-overview-grid--single">
-            <section class="agenda-column agenda-column--full">
-              <div class="agenda-column-head">
-                <h3 id="agenda-todo-title">Activities</h3>
-                <span class="agenda-count-pill" id="agenda-todo-count">0</span>
-              </div>
-              <ul class="agenda-list" id="agenda-todo-list"></ul>
-            </section>
-          </div>
-        </div>
-      </div>
-
       <div class="modal-overlay" id="remove-goal-modal" aria-hidden="true">
         <div
           class="modal-card"
@@ -666,5 +611,5 @@
     src="https://kit.fontawesome.com/afda6c43b4.js"
     crossorigin="anonymous"
   ></script>
-  <script src="script.js"></script>
+  <script type="module" src="script.js"></script>
 </html>
