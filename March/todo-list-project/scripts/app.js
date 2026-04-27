@@ -271,6 +271,12 @@ const updateInstallButtonState = () => {
 const getTaskTextElement = (taskItem) =>
   taskItem?.querySelector(".todo-item-text") || null;
 
+const getSaveButton = (taskItem) =>
+  taskItem?.querySelector(".todo-save-btn") || null;
+
+const getEditButton = (taskItem) =>
+  taskItem?.querySelector(".todo-edit-btn") || null;
+
 const cancelTouchDragActivation = () => {
   if (touchDragActivationTimer) {
     clearTimeout(touchDragActivationTimer);
