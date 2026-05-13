@@ -60,6 +60,35 @@
           <button type="button" class="clear-all-btn" id="clear-all-btn">
             Clear all tasks
           </button>
+          <div class="more-actions-wrap">
+            <button
+              type="button"
+              class="clear-all-btn more-actions-btn"
+              id="more-actions-btn"
+              aria-label="More options"
+              aria-expanded="false"
+            >
+              ⋮
+            </button>
+            <div class="more-actions-dropdown" id="more-actions-dropdown">
+              <button
+                type="button"
+                class="more-action-item"
+                id="export-data-btn"
+              >
+                Export data
+              </button>
+              <label class="more-action-item">
+                Import data
+                <input
+                  type="file"
+                  id="import-data-input"
+                  accept=".txt"
+                  style="display: none"
+                />
+              </label>
+            </div>
+          </div>
         </div>
         <p class="todo-congrats" id="todo-congrats" hidden>
           Great job! You completed all your tasks.

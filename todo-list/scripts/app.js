@@ -48,6 +48,9 @@ import {
   deleteModalMessage,
   deleteModalTitle,
   editProgressQuoteButton,
+  exportDataButton,
+  moreActionsButton,
+  moreActionsDropdown,
   finishedGoalsList,
   finishedGoalsPanel,
   goalColorInput,
@@ -60,6 +63,7 @@ import {
   goalTitleInput,
   goalTypeSelect,
   goalWeekdayPicker,
+  importDataInput,
   installAppButton,
   monthChart,
   openProgressButton,
@@ -2187,6 +2191,79 @@ if (goalTypeSelect && goalDurationInput) {
       intervalInput: goalIntervalInput,
       intervalValue: goalTypeSelect.value === "period" ? "" : "1",
     });
+  });
+}
+
+const closeMoreActions = () => {
+  moreActionsDropdown?.classList.remove("is-open");
+  moreActionsButton?.setAttribute("aria-expanded", "false");
+};
+
+if (moreActionsButton && moreActionsDropdown) {
+  moreActionsButton.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const isOpen = moreActionsDropdown.classList.toggle("is-open");
+    moreActionsButton.setAttribute("aria-expanded", String(isOpen));
+  });
+
+  document.addEventListener("click", () => {
+    closeMoreActions();
+  });
+
+  moreActionsDropdown.addEventListener("click", (e) => {
+    e.stopPropagation();
+  });
+}
+
+if (exportDataButton) {
+  exportDataButton.addEventListener("click", () => {
+    const data = Object.fromEntries(
+      Object.keys(localStorage)
+        .filter((k) => k.startsWith("todo-"))
+        .map((k) => [k, localStorage.getItem(k)]),
+    );
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
+      type: "text/plain",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `todo-backup-${getCurrentDateStamp()}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+    closeMoreActions();
+    showSuccessToast("Data exported!");
+  });
+}
+
+if (importDataInput) {
+  importDataInput.addEventListener("change", (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        if (typeof data !== "object" || data === null || Array.isArray(data)) {
+          throw new Error("Invalid format");
+        }
+        const validKeys = Object.keys(data).filter((k) =>
+          k.startsWith("todo-"),
+        );
+        if (validKeys.length === 0) {
+          throw new Error("No todo data found");
+        }
+        if (!confirm("Replace all current data with this backup?")) {
+          return;
+        }
+        validKeys.forEach((k) => localStorage.setItem(k, data[k]));
+        location.reload();
+      } catch {
+        showWarningToast("Could not read backup file.");
+      }
+    };
+    reader.readAsText(file);
+    importDataInput.value = "";
   });
 }
 

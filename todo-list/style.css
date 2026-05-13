@@ -260,6 +260,61 @@ h1 {
     background-color: #dcfce7;
 }
 
+.more-actions-wrap {
+    position: relative;
+    margin-left: auto;
+    align-self: stretch;
+    display: flex;
+}
+
+.more-actions-wrap .more-actions-btn {
+    flex: 1;
+}
+
+.more-actions-btn {
+    font-size: 1.1rem;
+    line-height: 1;
+    padding: 0.3em 0.6em;
+}
+
+.more-actions-dropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    background: #fff;
+    border: 1px solid #cfd4dc;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    min-width: 140px;
+    z-index: 200;
+    padding: 4px;
+    display: none;
+    flex-direction: column;
+}
+
+.more-actions-dropdown.is-open {
+    display: flex;
+}
+
+.more-action-item {
+    display: block;
+    width: 100%;
+    padding: 0.5em 0.8em;
+    text-align: left;
+    background: none;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: #2f3a4d;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.more-action-item:hover {
+    background-color: #f4f6f9;
+}
+
 .todo-congrats {
     width: 100%;
     color: #2f8f5b;
@@ -2432,6 +2487,20 @@ body.is-dark .install-app-btn {
 
 body.is-dark .install-app-btn:hover {
     background-color: #14532d;
+}
+
+body.is-dark .more-actions-dropdown {
+    background-color: #111827;
+    border-color: #334155;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+body.is-dark .more-action-item {
+    color: #e2e8f0;
+}
+
+body.is-dark .more-action-item:hover {
+    background-color: #1f2937;
 }
 
 body.is-dark .todo-item-label,

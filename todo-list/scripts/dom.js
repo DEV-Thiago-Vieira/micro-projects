@@ -78,6 +78,12 @@ export const progressQuoteEditor = document.getElementById(
 export const progressQuoteInput = document.getElementById(
   "progress-quote-input",
 );
+export const moreActionsButton = document.getElementById("more-actions-btn");
+export const moreActionsDropdown = document.getElementById(
+  "more-actions-dropdown",
+);
+export const exportDataButton = document.getElementById("export-data-btn");
+export const importDataInput = document.getElementById("import-data-input");
 export const editProgressQuoteButton = document.getElementById(
   "edit-progress-quote-btn",
 );
