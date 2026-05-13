@@ -22,6 +22,6 @@ A simple daily task manager built as part of the Project Calendar challenge.
 
 ## Previews
 
-![To Do List](../../assets/todo/todo.png)
+![To Do List](./assets/todo.png)
 
-![To Do List - Alternate](../../assets/todo/todo-2.png)
+![To Do List - Alternate](./assets/todo-2.png)
